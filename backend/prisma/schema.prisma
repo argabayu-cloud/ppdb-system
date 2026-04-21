@@ -1,0 +1,210 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ENUMS - Definisi tipe data khusus
+// ============================================
+
+enum Role {
+  USER          // Calon siswa (pendaftar)
+  ADMIN         // Admin sekolah
+  SUPER_ADMIN   // Dinas Pendidikan
+}
+
+enum StatusPendaftaran {
+  MENUNGGU      // Baru submit, belum diproses
+  DIPROSES_1    // Sedang diproses di pilihan 1
+  DITOLAK_1     // Ditolak di pilihan 1, lanjut ke pilihan 2
+  DIPROSES_2    // Sedang diproses di pilihan 2
+  DITERIMA      // Diterima (di salah satu pilihan)
+  DITOLAK       // Ditolak di kedua pilihan
+}
+
+enum StatusPilihan {
+  MENUNGGU      // Belum diproses
+  DIPROSES      // Sedang dalam proses seleksi
+  DITERIMA      // Diterima di sekolah ini
+  DITOLAK       // Ditolak di sekolah ini
+}
+
+enum StatusFinal {
+  DITERIMA      // Hasil akhir: DITERIMA
+  DITOLAK       // Hasil akhir: DITOLAK
+}
+
+// ============================================
+// MODEL USER - Data pengguna sistem
+// ============================================
+
+model User {
+  id            String         @id @default(uuid())
+  nama          String
+  email         String         @unique
+  password      String         // Password di-hash dengan bcrypt
+  role          Role           @default(USER)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  
+  // Relations
+  adminSekolah  AdminSekolah?  // Jika user adalah admin sekolah
+  pendaftaran   Pendaftaran[]  // Jika user adalah calon siswa
+  
+  @@map("users")
+}
+
+// ============================================
+// MODEL SEKOLAH - Data sekolah SMP
+// ============================================
+
+model Sekolah {
+  id String @id @default(uuid())
+  namaSekolah String
+  alamat String
+  latitude Float // Untuk perhitungan zonasi
+  longitude Float // Untuk perhitungan zonasi
+  kuota Int @default(100) // Kuota penerimaan siswa
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  adminSekolah AdminSekolah[] // Admin sekolah yang mengelola sekolah ini
+  pilihanSekolah PilihanSekolah[] // Siswa yang memilih sekolah ini
+  hasilSeleksi HasilSeleksi[] // Siswa yang diterima di sekolah ini
+
+  @@map("sekolah")
+}
+
+// ============================================
+// MODEL ADMIN_SEKOLAH - Relasi User & sekolah
+// ============================================
+
+model AdminSekolah {
+  id String @id @default(uuid())
+  userId String @unique //Satu admin hanya bisa mengelola satu sekolah
+  sekolahId String
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sekolah Sekolah @relation(fields: [sekolahId], references: [id], onDelete: Cascade)
+
+  @@map("admin_sekolah")
+}
+
+// ============================================
+// MODEL PENDAFTARAN - Data pendaftaran siswa
+// ============================================ 
+
+model Pendaftaran {
+  id String @id @default(uuid())
+  userId String
+
+  // ===== Data Siswa =====
+  nisn String @unique
+  nik String @unique
+  namaLengkap String
+  tempatLahir String
+  tanggalLahir DateTime
+  jenisKelamin String
+  agama String
+  alamatLengkap String
+  nomorTelepon String
+  latitude Float // Untuk perhitungan zonasi
+  longitude Float // Untuk perhitungan zonasi
+
+  // ===== Data Ortu =====
+  namaAyah String
+  namaIbu String
+  pekerjaanAyah String
+  pekerjaanIbu String
+  penghasilanAyah Int
+  penghasilanIbu Int
+  nomorTeleponOrtu String
+
+  // ===== Status Pendaftaran =====
+  status StatusPendaftaran @default(MENUNGGU)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pilihanSekolah PilihanSekolah[] // 2 Pilihan sekolah yang diajukan siswa
+  dokumen Dokumen[] // Upload dokumen persyaratan
+  hasilSeleksi HasilSeleksi? // Hasil seleksi akhir (diterima di sekolah mana)
+
+  @@map("pendaftaran")
+}
+
+// ============================================
+// MODEL PILIHAN SEKOLAH - Pilihan 1 & 2
+// ============================================
+
+model PilihanSekolah {
+  id String @id @default(uuid())
+  pendaftaranId String
+  sekolahId String
+  pilihanKe Int // 1 atau 2 
+  jarak Float? // Dalam KM (hasil perhitungan Haversine)
+  status StatusPilihan @default(MENUNGGU)
+  alasanPenolakan String? // Jika ditolak, alasan dari sekolah
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  pendaftaran Pendaftaran @relation(fields: [pendaftaranId], references: [id], onDelete: Cascade)
+  sekolah Sekolah @relation(fields: [sekolahId], references: [id], onDelete: Cascade)
+
+  // Constraint: Satu pendaftaran hanya bisa punya 1 pilihan pertama dan 1 pilihan kedua
+  @@unique([pendaftaranId, pilihanKe])
+  @@map("pilihan_sekolah")
+}
+
+// ============================================
+// MODEL DOKUMEN - Upload dokumen persyaratan
+// ============================================
+
+model Dokumen {
+  id String @id @default(uuid())
+  pendaftaranId String
+  namaFile String // Contoh: "Kartu Keluarga", "Ijazah", dll
+  urlFile String // path/URL diserver
+  tipeFile String // Contoh: "pdf", "jpg", dll
+  createdAt DateTime @default(now())
+
+  // Relations
+  pendaftaran Pendaftaran @relation(fields: [pendaftaranId], references: [id], onDelete: Cascade)
+
+  @@map("dokumen")
+}
+
+// ============================================
+// MODEL HASIL SELEKSI - Keputusan akhir 
+// ============================================
+
+model HasilSeleksi {
+  id String @id @default(uuid())
+  pendaftaranId String @unique // Satu pendaftaran hanya punya satu hasil seleksi akhir
+  sekolahId String? // Null jika ditolak di kedua pilihan
+  statusFinal StatusFinal
+  catatan String? // Catatan dari sekolah (misal: alasan penolakan)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  pendaftaran Pendaftaran @relation(fields: [pendaftaranId], references: [id], onDelete: Cascade)
+  sekolahDiterima Sekolah? @relation(fields: [sekolahId], references: [id], onDelete: Cascade)
+
+  @@map("hasil_seleksi")
+}
