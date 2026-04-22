@@ -1,0 +1,138 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum StatusPendaftaran {
+  MENUNGGU
+  DIPROSES_1
+  DITOLAK_1
+  DIPROSES_2
+  DITERIMA
+  DITOLAK
+}
+
+enum StatusPilihan {
+  MENUNGGU
+  DIPROSES
+  DITERIMA
+  DITOLAK
+}
+
+enum StatusFinal {
+  DITERIMA
+  DITOLAK
+}
+
+model User {
+  id        String   @id @default(uuid())
+  nama      String
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
+
+  latitude  Float?
+  longitude Float?
+  
+  createdAt DateTime @default(now())
+
+  adminSekolah AdminSekolah?
+  pendaftaran  Pendaftaran?
+  pengumuman Pengumuman[]
+}
+
+model Sekolah {
+  id        String   @id @default(uuid())
+  nama      String @unique
+  alamat    String
+  latitude  Float
+  longitude Float
+  createdAt DateTime @default(now())
+
+  adminSekolah AdminSekolah?
+  pilihan      PilihanSekolah[]
+  hasil        HasilSeleksi[]
+}
+
+model AdminSekolah {
+  id         String  @id @default(uuid())
+  userId     String  @unique
+  sekolahId  String  @unique
+
+  user       User    @relation(fields: [userId], references: [id])
+  sekolah    Sekolah @relation(fields: [sekolahId], references: [id])
+}
+
+model Pendaftaran {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  status    StatusPendaftaran @default(MENUNGGU)
+  createdAt DateTime @default(now())
+
+  user       User             @relation(fields: [userId], references: [id])
+  pilihan    PilihanSekolah[]
+  dokumen    Dokumen[]
+  hasil      HasilSeleksi?
+  pengumuman Pengumuman[]
+}
+
+model PilihanSekolah {
+  id              String   @id @default(uuid())
+  pendaftaranId   String
+  sekolahId       String
+  pilihanKe       Int      // 1 atau 2
+  status          StatusPilihan @default(MENUNGGU)
+  jarak           Float?
+  alasanPenolakan String?
+
+  pendaftaran Pendaftaran @relation(fields: [pendaftaranId], references: [id])
+  sekolah     Sekolah     @relation(fields: [sekolahId], references: [id])
+}
+
+model Dokumen {
+  id             String   @id @default(uuid())
+  pendaftaranId  String
+  namaFile       String
+  urlFile        String
+
+  pendaftaran Pendaftaran @relation(fields: [pendaftaranId], references: [id])
+}
+
+model HasilSeleksi {
+  id                  String   @id @default(uuid())
+  pendaftaranId       String   @unique
+  sekolahDiterimaId   String?
+  statusFinal         StatusFinal
+  catatan             String?
+
+  pendaftaran Pendaftaran @relation(fields: [pendaftaranId], references: [id])
+  sekolah     Sekolah?    @relation(fields: [sekolahDiterimaId], references: [id])
+}
+
+model Pengumuman {
+  id String @id @default(uuid())
+  userId String 
+  pendaftaranId String
+  judul String
+  pesan String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  pendaftaran Pendaftaran @relation(fields: [pendaftaranId], references: [id])
+}
+  

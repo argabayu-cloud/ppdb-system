@@ -1,0 +1,20 @@
+import { Router } from "express";
+import authRoutes from "./auth.routes";
+import pendaftaranRoutes from "./pendaftaran.routes";
+import adminRoutes from "./admin.routes";
+import superAdminRoutes from "./superAdmin.routes";
+import userRoutes from "./user.routes";
+
+const router = Router();
+
+router.use("/auth", authRoutes);
+router.use("/pendaftaran", pendaftaranRoutes);
+router.use("/admin", adminRoutes);
+router.use("/super-admin", superAdminRoutes);
+router.use("/user", userRoutes);
+
+router.get("/health", (req, res) => {
+  res.json({ message: "API OK" });
+});
+
+export default router;

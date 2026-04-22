@@ -1,0 +1,77 @@
+import prisma from "../config/prisma";
+import { haversineDistance } from "../utils/distance";
+
+export const createPendaftaran = async (userId: string, data: any) => {
+  const { sekolah1Id, sekolah2Id } = data;
+
+  const existing = await prisma.pendaftaran.findUnique({
+    where: { userId },
+  });
+
+  if (existing) {
+    throw new Error("User sudah melakukan pendaftaran");
+  }
+
+  // 🔥 ambil user
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user?.latitude || !user?.longitude) {
+    throw new Error("Koordinat user belum diisi");
+  }
+
+  // 🔥 ambil sekolah
+  const sekolah1 = await prisma.sekolah.findUnique({
+    where: { id: sekolah1Id },
+  });
+
+  const sekolah2 = await prisma.sekolah.findUnique({
+    where: { id: sekolah2Id },
+  });
+
+  if (!sekolah1 || !sekolah2) {
+    throw new Error("Sekolah tidak ditemukan");
+  }
+
+  // 📍 hitung jarak
+  const jarak1 = haversineDistance(
+    user.latitude,
+    user.longitude,
+    sekolah1.latitude,
+    sekolah1.longitude
+  );
+
+  const jarak2 = haversineDistance(
+    user.latitude,
+    user.longitude,
+    sekolah2.latitude,
+    sekolah2.longitude
+  );
+
+  const pendaftaran = await prisma.pendaftaran.create({
+    data: {
+      userId,
+      status: "DIPROSES_1",
+      pilihan: {
+        create: [
+          {
+            sekolahId: sekolah1Id,
+            pilihanKe: 1,
+            jarak: jarak1,
+          },
+          {
+            sekolahId: sekolah2Id,
+            pilihanKe: 2,
+            jarak: jarak2,
+          },
+        ],
+      },
+    },
+    include: {
+      pilihan: true,
+    },
+  });
+
+  return pendaftaran;
+};
