@@ -97,7 +97,6 @@ async function main() {
         sekolahId: createdSekolah.id,
       },
     });
-    console.log(`✔ Sekolah & admin dibuat: ${sekolah.nama}`);
 
     // ========================
     // 👑 SUPER ADMIN
