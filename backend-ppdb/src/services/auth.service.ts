@@ -1,9 +1,28 @@
+// src/services/auth.service.ts
 import prisma from "../config/prisma";
 import bcrypt from "bcrypt";
 import { generateToken } from "../utils/jwt";
 
-export const registerUser = async (data: any) => {
-  const { nama, email, password } = data;
+// Tipe sederhana (boleh nanti diganti Zod/Joi)
+type RegisterInput = {
+  nama: string;
+  email: string;
+  password: string;
+};
+
+type LoginInput = {
+  email: string;
+  password: string;
+};
+
+export const registerUser = async (data: RegisterInput) => {
+  let { nama, email, password } = data;
+
+  if (!nama || !email || !password) {
+    throw new Error("Semua field wajib diisi");
+  }
+
+  email = email.toLowerCase().trim();
 
   const existingUser = await prisma.user.findUnique({
     where: { email },
@@ -20,14 +39,28 @@ export const registerUser = async (data: any) => {
       nama,
       email,
       password: hashedPassword,
+      // role default USER dari schema → tidak perlu di-set di sini
+    },
+    select: {
+      id: true,
+      nama: true,
+      email: true,
+      role: true,
+      createdAt: true,
     },
   });
 
   return user;
 };
 
-export const loginUser = async (data: any) => {
-  const { email, password } = data;
+export const loginUser = async (data: LoginInput) => {
+  let { email, password } = data;
+
+  if (!email || !password) {
+    throw new Error("Email dan password wajib diisi");
+  }
+
+  email = email.toLowerCase().trim();
 
   const user = await prisma.user.findUnique({
     where: { email },
@@ -48,8 +81,16 @@ export const loginUser = async (data: any) => {
     role: user.role,
   });
 
+  // jangan kirim password ke client
+  const safeUser = {
+    id: user.id,
+    nama: user.nama,
+    email: user.email,
+    role: user.role,
+  };
+
   return {
     token,
-    user,
+    user: safeUser,
   };
 };
