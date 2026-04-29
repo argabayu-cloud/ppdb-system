@@ -2,8 +2,14 @@ import prisma from "../config/prisma";
 import { haversineDistance } from "../utils/distance";
 
 export const createPendaftaran = async (userId: string, data: any) => {
-  const { sekolah1Id, sekolah2Id } = data;
+  const { sekolah1Id, sekolah2Id, jalur } = data;
 
+  // ❗ validasi sekolah tidak boleh sama
+  if (sekolah1Id === sekolah2Id) {
+    throw new Error("Pilihan sekolah tidak boleh sama");
+  }
+
+  // ❗ cek sudah daftar atau belum
   const existing = await prisma.pendaftaran.findUnique({
     where: { userId },
   });
@@ -17,7 +23,11 @@ export const createPendaftaran = async (userId: string, data: any) => {
     where: { id: userId },
   });
 
-  if (!user?.latitude || !user?.longitude) {
+  if (!user) {
+    throw new Error("User tidak ditemukan");
+  }
+
+  if (!user.latitude || !user.longitude) {
     throw new Error("Koordinat user belum diisi");
   }
 
@@ -49,29 +59,35 @@ export const createPendaftaran = async (userId: string, data: any) => {
     sekolah2.longitude
   );
 
-  const pendaftaran = await prisma.pendaftaran.create({
-    data: {
-      userId,
-      status: "DIPROSES_1",
-      pilihan: {
-        create: [
-          {
-            sekolahId: sekolah1Id,
-            pilihanKe: 1,
-            jarak: jarak1,
-          },
-          {
-            sekolahId: sekolah2Id,
-            pilihanKe: 2,
-            jarak: jarak2,
-          },
-        ],
+  // 🔥 TRANSACTION (AMAN)
+  const result = await prisma.$transaction(async (tx: any) => {
+    const pendaftaran = await tx.pendaftaran.create({
+      data: {
+        userId,
+        jalur,
+        status: "DIPROSES_1", // sementara pakai string biar tidak error
       },
-    },
-    include: {
-      pilihan: true,
-    },
+    });
+
+    await tx.pilihanSekolah.createMany({
+      data: [
+        {
+          pendaftaranId: pendaftaran.id,
+          sekolahId: sekolah1Id,
+          pilihanKe: 1,
+          jarak: jarak1,
+        },
+        {
+          pendaftaranId: pendaftaran.id,
+          sekolahId: sekolah2Id,
+          pilihanKe: 2,
+          jarak: jarak2,
+        },
+      ],
+    });
+
+    return pendaftaran;
   });
 
-  return pendaftaran;
+  return result;
 };

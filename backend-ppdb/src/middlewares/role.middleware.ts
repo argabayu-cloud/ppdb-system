@@ -1,13 +1,15 @@
-export const requireAdmin = (req: any, res: any, next: any) => {
-  if (req.user.role !== "ADMIN") {
-    return res.status(403).json({ message: "Akses ditolak" });
-  }
-  next();
-};
+import { Response, NextFunction } from "express";
 
-export const requireSuperAdmin = (req: any, res: any, next: any) => {
-  if (req.user.role !== "SUPER_ADMIN") {
-    return res.status(403).json({ message: "Akses ditolak" });
-  }
-  next();
+export const roleMiddleware = (roles: string[]) => {
+  return (req: any, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return res.status(401).json({ message: "User tidak terautentikasi" });
+    }
+
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ message: "Akses ditolak" });
+    }
+
+    next();
+  };
 };

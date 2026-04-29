@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { create } from "../controllers/pendaftaran.controller";
-import { authMiddleware } from "../middlewares/auth.middlewares";
+import { authMiddleware } from "../middlewares/auth.middlewares"; // ✅ fix
 
 const router = Router();
 
