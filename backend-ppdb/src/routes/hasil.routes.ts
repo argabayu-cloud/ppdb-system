@@ -4,6 +4,6 @@ import { authMiddleware } from "../middlewares/auth.middlewares";
 
 const router = Router();
 
-router.get("/", authMiddleware, getHasil);
+router.get("/hasil-saya", authMiddleware, getHasil);
 
 export default router;

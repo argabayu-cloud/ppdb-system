@@ -35,7 +35,6 @@ export const validasiFinal = async (
   pendaftaranId: string,
   status: "DITERIMA" | "DITOLAK"
 ) => {
-
   const data = await prisma.pendaftaran.findUnique({
     where: { id: pendaftaranId },
     include: {
@@ -50,27 +49,31 @@ export const validasiFinal = async (
 
   if (!data) throw new Error("Pendaftaran tidak ditemukan");
 
-  // 🔥 update hasil final
-  await prisma.hasilSeleksi.update({
+  // 🔥 aman pakai upsert
+  await prisma.hasilSeleksi.upsert({
     where: { pendaftaranId },
-    data: {
+    update: {
+      statusFinal: status,
+    },
+    create: {
+      pendaftaranId,
       statusFinal: status,
     },
   });
 
-  // 🔔 bikin pesan otomatis
   let judul = "";
   let pesan = "";
 
   if (status === "DITERIMA") {
     judul = "Selamat! Anda Diterima 🎉";
-    pesan = `Anda diterima di ${data.hasil?.sekolah?.nama}`;
+    pesan = `Anda diterima di ${
+      data.hasil?.sekolah?.nama || "sekolah pilihan"
+    }`;
   } else {
     judul = "Mohon Maaf";
     pesan = "Anda belum diterima di sekolah pilihan manapun";
   }
 
-  // 💾 simpan pengumuman
   await prisma.pengumuman.create({
     data: {
       userId: data.userId,
