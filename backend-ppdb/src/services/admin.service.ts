@@ -1,5 +1,31 @@
 import prisma from "../config/prisma";
 
+// 🔥 GET PENDAFTAR (WAJIB TAMBAH INI)
+export const getPendaftar = async (adminId: string) => {
+  const admin = await prisma.adminSekolah.findUnique({
+    where: { userId: adminId },
+  });
+
+  if (!admin) throw new Error("Admin tidak ditemukan");
+
+  const data = await prisma.pilihanSekolah.findMany({
+    where: {
+      sekolahId: admin.sekolahId,
+    },
+    include: {
+      pendaftaran: {
+        include: {
+          user: true,
+        },
+      },
+      sekolah: true,
+    },
+  });
+
+  return data;
+};
+
+// 🔥 SELEKSI SISWA (punya kamu, sudah oke)
 export const seleksiSiswa = async (
   adminId: string,
   pilihanId: string,
