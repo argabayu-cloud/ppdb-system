@@ -6,15 +6,30 @@ import {
 } from "../controllers/superAdmin.controller";
 
 import { authMiddleware } from "../middlewares/auth.middlewares";
-import { requireSuperAdmin } from "../middlewares/role.middleware";
+import { roleMiddleware } from "../middlewares/role.middleware";
 
 const router = Router();
 
-// 🔥 WAJIB: authMiddleware dulu baru role
-router.get("/pendaftaran", authMiddleware, requireSuperAdmin, handleGetAll);
+// 🔥 WAJIB: auth dulu baru role
+router.get(
+  "/pendaftaran",
+  authMiddleware,
+  roleMiddleware(["SUPER_ADMIN"]),
+  handleGetAll
+);
 
-router.get("/hasil", authMiddleware, requireSuperAdmin, handleHasil);
+router.get(
+  "/hasil",
+  authMiddleware,
+  roleMiddleware(["SUPER_ADMIN"]),
+  handleHasil
+);
 
-router.post("/validasi", authMiddleware, requireSuperAdmin, handleValidasi);
+router.post(
+  "/validasi",
+  authMiddleware,
+  roleMiddleware(["SUPER_ADMIN"]),
+  handleValidasi
+);
 
 export default router;
