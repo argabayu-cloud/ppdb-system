@@ -1,7 +1,28 @@
-export async function apiRequest<T = unknown>(url: string, options?: RequestInit) {
-  const response = await fetch(url, options)
-  if (!response.ok) {
-    throw new Error(`Request failed with status ${response.status}`)
+export const BASE_URL = "http://localhost:3000/api";
+
+export async function fetcher(
+  url: string,
+  options: RequestInit = {}
+) {
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem("token")
+      : null;
+
+  const res = await fetch(`${BASE_URL}${url}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }),
+      ...(options.headers || {}),
+    },
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.message || "Terjadi kesalahan");
   }
-  return response.json() as Promise<T>
+
+  return data;
 }
