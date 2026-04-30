@@ -1,6 +1,8 @@
 import prisma from "../config/prisma";
 
-// Seleksi Pilihan 1
+// ===============================
+// 🔥 SELEKSI ZONASI (PILIHAN 1)
+// ===============================
 export const seleksiZonasi = async () => {
   const sekolahList = await prisma.sekolah.findMany({
     include: {
@@ -16,7 +18,7 @@ export const seleksiZonasi = async () => {
   for (const sekolah of sekolahList) {
     const kuota = sekolah.kuota;
 
-    // 🔥 urutkan berdasarkan jarak
+    // urutkan berdasarkan jarak
     const sorted = sekolah.pilihan.sort(
       (a: any, b: any) => (a.jarak || 0) - (b.jarak || 0)
     );
@@ -24,37 +26,47 @@ export const seleksiZonasi = async () => {
     const diterima = sorted.slice(0, kuota);
     const ditolak = sorted.slice(kuota);
 
-    // ✅ update yang diterima
+    // ===============================
+    // ✅ YANG DITERIMA (FINAL)
+    // ===============================
     for (const item of diterima) {
       await prisma.pilihanSekolah.update({
         where: { id: item.id },
-        data: {
-          status: "DITERIMA",
-        },
+        data: { status: "DITERIMA" },
       });
 
       await prisma.pendaftaran.update({
         where: { id: item.pendaftaranId },
-        data: {
-          status: "DITERIMA",
+        data: { status: "DITERIMA" },
+      });
+
+      // 🔥 SIMPAN HASIL FINAL
+      await prisma.hasilSeleksi.upsert({
+        where: { pendaftaranId: item.pendaftaranId },
+        update: {
+          statusFinal: "DITERIMA",
+          sekolahDiterimaId: sekolah.id,
+        },
+        create: {
+          pendaftaranId: item.pendaftaranId,
+          statusFinal: "DITERIMA",
+          sekolahDiterimaId: sekolah.id,
         },
       });
     }
 
-    // ❌ update yang ditolak → lanjut ke pilihan 2
+    // ===============================
+    // ❌ YANG DITOLAK → KE PILIHAN 2
+    // ===============================
     for (const item of ditolak) {
       await prisma.pilihanSekolah.update({
         where: { id: item.id },
-        data: {
-          status: "DITOLAK",
-        },
+        data: { status: "DITOLAK" },
       });
 
       await prisma.pendaftaran.update({
         where: { id: item.pendaftaranId },
-        data: {
-          status: "DITOLAK_1",
-        },
+        data: { status: "DITOLAK_1" },
       });
     }
   }
@@ -62,7 +74,9 @@ export const seleksiZonasi = async () => {
   return { message: "Seleksi zonasi selesai" };
 };
 
-// Seleksi Pilihan 2
+// ===============================
+// 🔥 SELEKSI CASCADING (PILIHAN 2)
+// ===============================
 export const seleksiCascading = async () => {
   const sekolahList = await prisma.sekolah.findMany({
     include: {
@@ -76,9 +90,19 @@ export const seleksiCascading = async () => {
   });
 
   for (const sekolah of sekolahList) {
-    const kuota = sekolah.kuota;
+    // 🔥 HITUNG SISA KUOTA (FIX PENTING)
+    const sudahDiterima = await prisma.pilihanSekolah.count({
+      where: {
+        sekolahId: sekolah.id,
+        status: "DITERIMA",
+      },
+    });
 
-    // hanya yang ditolak di pilihan 1
+    const sisaKuota = sekolah.kuota - sudahDiterima;
+
+    if (sisaKuota <= 0) continue;
+
+    // hanya kandidat yang gagal di pilihan 1
     const kandidat = sekolah.pilihan.filter(
       (p: any) => p.pendaftaran.status === "DITOLAK_1"
     );
@@ -87,10 +111,12 @@ export const seleksiCascading = async () => {
       (a: any, b: any) => (a.jarak || 0) - (b.jarak || 0)
     );
 
-    const diterima = sorted.slice(0, kuota);
-    const ditolak = sorted.slice(kuota);
+    const diterima = sorted.slice(0, sisaKuota);
+    const ditolak = sorted.slice(sisaKuota);
 
-    // ✅ diterima final
+    // ===============================
+    // ✅ DITERIMA FINAL
+    // ===============================
     for (const item of diterima) {
       await prisma.pilihanSekolah.update({
         where: { id: item.id },
@@ -116,7 +142,9 @@ export const seleksiCascading = async () => {
       });
     }
 
-    // ❌ ditolak final
+    // ===============================
+    // ❌ DITOLAK FINAL
+    // ===============================
     for (const item of ditolak) {
       await prisma.pilihanSekolah.update({
         where: { id: item.id },
