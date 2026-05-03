@@ -41,6 +41,14 @@ enum StatusFinal {
   DITOLAK
 }
 
+// 🔥 OPTIONAL (untuk dokumen lebih real)
+enum TipeDokumen {
+  KK
+  AKTA
+  RAPOR
+  PRESTASI
+}
+
 model User {
   id        String   @id @default(uuid())
   nama      String
@@ -48,7 +56,6 @@ model User {
   password  String
   role      Role     @default(USER)
 
-  // alamat & geolokasi
   alamat    String?
   kelurahan String?
   kecamatan String?
@@ -85,8 +92,8 @@ model AdminSekolah {
   userId     String  @unique
   sekolahId  String  @unique
 
-  user       User    @relation(fields: [userId], references: [id])
-  sekolah    Sekolah @relation(fields: [sekolahId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+  sekolah Sekolah @relation(fields: [sekolahId], references: [id])
 }
 
 model Pendaftaran {
@@ -96,9 +103,8 @@ model Pendaftaran {
   jalur     Jalur
   status    StatusPendaftaran @default(MENUNGGU)
 
-  // khusus jalur prestasi
-  nilaiRapor     Float?
-  nilaiPrestasi  Float?
+  nilaiRapor    Float?
+  nilaiPrestasi Float?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -112,19 +118,16 @@ model Pendaftaran {
 }
 
 model PilihanSekolah {
-  id              String   @id @default(uuid())
-  pendaftaranId   String
-  sekolahId       String
+  id            String   @id @default(uuid())
+  pendaftaranId String
+  sekolahId     String
 
-  pilihanKe       Int      // 1 atau 2
-  status          StatusPilihan @default(MENUNGGU)
+  pilihanKe     Int
+  status        StatusPilihan @default(MENUNGGU)
 
-  // khusus zonasi
-  jarak           Float?
+  jarak         Float?
 
-  // cascading control
-  isLocked        Boolean @default(false)
-
+  isLocked      Boolean @default(false)
   alasanPenolakan String?
 
   createdAt DateTime @default(now())
@@ -142,19 +145,24 @@ model Dokumen {
 
   namaFile       String
   urlFile        String
+  tipe           String     // mimetype
+  ukuran         Int        // size file (byte)
+  tipeDokumen    TipeDokumen?
 
-  createdAt DateTime @default(now())
+  createdAt      DateTime @default(now())
 
   pendaftaran Pendaftaran @relation(fields: [pendaftaranId], references: [id])
+
+  @@index([pendaftaranId])
 }
 
 model HasilSeleksi {
-  id                  String   @id @default(uuid())
-  pendaftaranId       String   @unique
-  sekolahDiterimaId   String?
+  id                String   @id @default(uuid())
+  pendaftaranId     String   @unique
+  sekolahDiterimaId String?
 
-  statusFinal         StatusFinal
-  catatan             String?
+  statusFinal       StatusFinal
+  catatan           String?
 
   createdAt DateTime @default(now())
 
@@ -163,13 +171,13 @@ model HasilSeleksi {
 }
 
 model VerifikasiLog {
-  id              String   @id @default(uuid())
-  pendaftaranId   String
-  actorId         String
+  id            String   @id @default(uuid())
+  pendaftaranId String
+  actorId       String
 
-  role            Role
-  status          String
-  catatan         String?
+  role          Role
+  status        String
+  catatan       String?
 
   createdAt DateTime @default(now())
 
@@ -178,12 +186,12 @@ model VerifikasiLog {
 }
 
 model Pengumuman {
-  id             String   @id @default(uuid())
-  userId         String
-  pendaftaranId  String
+  id            String   @id @default(uuid())
+  userId        String
+  pendaftaranId String
 
-  judul          String
-  pesan          String
+  judul         String
+  pesan         String
 
   createdAt DateTime @default(now())
 
