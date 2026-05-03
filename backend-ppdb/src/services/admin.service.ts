@@ -44,22 +44,30 @@ export const seleksiSiswa = async (
 
   if (!pilihan) throw new Error("Data tidak ditemukan");
 
-  // 🔥 validasi akses
+  // 🔥 validasi akses sekolah
   if (pilihan.sekolahId !== admin.sekolahId) {
     throw new Error("Akses ditolak");
   }
 
-  // 🔥 update pilihan
-  await prisma.pilihanSekolah.update({
-    where: { id: pilihanId },
-    data: {
-      status,
-      alasanPenolakan: status === "DITOLAK" ? alasan : null,
-    },
-  });
+  // 🔒 VALIDASI LOCK
+  if (pilihan.isLocked) {
+    throw new Error("Data sudah dikunci, tidak bisa diubah");
+  }
 
-  // 🔁 logic utama
+  // 🔁 LOGIC UTAMA
   if (status === "DITERIMA") {
+
+    // 🔥 lock semua pilihan (1 & 2)
+    await prisma.pilihanSekolah.updateMany({
+      where: {
+        pendaftaranId: pilihan.pendaftaranId,
+      },
+      data: {
+        status: "DITERIMA",
+        isLocked: true,
+      },
+    });
+
     await prisma.pendaftaran.update({
       where: { id: pilihan.pendaftaranId },
       data: { status: "DITERIMA" },
@@ -79,7 +87,17 @@ export const seleksiSiswa = async (
     });
 
   } else {
+    // ❌ DITOLAK
+    await prisma.pilihanSekolah.update({
+      where: { id: pilihanId },
+      data: {
+        status: "DITOLAK",
+        alasanPenolakan: alasan || null,
+      },
+    });
+
     if (pilihan.pilihanKe === 1) {
+      // 👉 lanjut ke pilihan 2
       await prisma.pendaftaran.update({
         where: { id: pilihan.pendaftaranId },
         data: { status: "DITOLAK_1" },
@@ -90,10 +108,13 @@ export const seleksiSiswa = async (
           pendaftaranId: pilihan.pendaftaranId,
           pilihanKe: 2,
         },
-        data: { status: "DIPROSES" },
+        data: {
+          status: "DIPROSES",
+        },
       });
 
     } else {
+      // ❌ ditolak final
       await prisma.pendaftaran.update({
         where: { id: pilihan.pendaftaranId },
         data: { status: "DITOLAK" },
