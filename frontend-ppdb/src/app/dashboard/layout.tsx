@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 
 const menuItems = [
   { label: "Dashboard", href: "/dashboard", icon: "🏠" },
@@ -24,9 +25,13 @@ export default function DashboardLayout({
       <nav className="w-full bg-blue-700 text-white px-6 py-3 flex items-center justify-between shadow-md fixed top-0 left-0 right-0 z-50">
         {/* Logo */}
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center">
-            <span className="text-blue-700 font-bold text-sm">P</span>
-          </div>
+          <Image
+            src="/images/logo-ppdb.jpeg"
+            alt="Logo"
+            width={28}
+            height={28}
+            className="rounded-full"
+          />
           <span className="font-bold text-sm tracking-wide uppercase hidden sm:block">
             PPDB SMP Terpadu
           </span>
