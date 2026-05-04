@@ -51,13 +51,13 @@ export default function LandingPage() {
             {/* Tombol */}
             <div className="flex items-center gap-4 mt-2">
               <Link
-                href="/register"
+                href="auth/register"
                 className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-7 py-3 rounded-xl transition-colors shadow-md shadow-blue-200 text-sm"
               >
                 Daftar
               </Link>
               <Link
-                href="/login"
+                href="auth/login"
                 className="border border-blue-600 text-blue-600 hover:bg-blue-50 font-semibold px-7 py-3 rounded-xl transition-colors text-sm"
               >
                 Masuk
