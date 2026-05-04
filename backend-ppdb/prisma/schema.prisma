@@ -50,6 +50,7 @@ enum TipeDokumen {
   PRESTASI
 }
 
+
 model User {
   id        String   @id @default(uuid())
   nama      String
@@ -149,6 +150,8 @@ model Dokumen {
   tipe           String     // mimetype
   ukuran         Int        // size file (byte)
   tipeDokumen    TipeDokumen?
+
+  status         String   @default("MENUNGGU")
 
   createdAt      DateTime @default(now())
 

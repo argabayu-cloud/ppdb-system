@@ -1,5 +1,8 @@
 import { Request, Response } from "express";
+import { PrismaClient } from "@prisma/client";
 import { getPendaftar, seleksiSiswa } from "../services/admin.service";
+
+const prisma = new PrismaClient();
 
 // 🔹 ambil pendaftar
 export const handleGetPendaftar = async (req: any, res: Response) => {
