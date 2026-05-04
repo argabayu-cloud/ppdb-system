@@ -31,7 +31,7 @@ export default function DashboardPage() {
       <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl p-6 text-white shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <p className="text-blue-200 text-sm mb-1">Selamat Datang 👋</p>
-          <h1 className="text-2xl font-bold">ARGA BAYU</h1>
+          <h1 className="text-2xl font-bold">ARGA BAYU R</h1>
           <p className="text-blue-100 text-sm mt-1">
             Tahun Ajaran 2025/2026 · PPDB SMP Terpadu
           </p>

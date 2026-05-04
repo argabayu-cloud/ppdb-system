@@ -17,7 +17,7 @@ export default function LoginPage() {
   const handleLogin = async () => {
     if (!form.email || !form.password) {
       setError("Email dan password wajib diisi!");
-      return;
+      return;  
     }
     setLoading(true);
     try {
@@ -25,15 +25,14 @@ export default function LoginPage() {
         email: form.email,
         password: form.password,
       });
-      if (res.token) {
-        localStorage.setItem("token", res.token);
-        window.location.href = "/dashboard";
-      } else {
-        setError(res.message || "Email atau password salah!");
+
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("user", JSON.stringify(res.data.user));
+      window.location.href = "/dashboard";
+      } catch (error) {
+        setError("Email atau password salah!");
       }
-    } catch (_err) {
-      setError("Tidak bisa terhubung ke server!");
-    }
+  
     setLoading(false);
   };
 

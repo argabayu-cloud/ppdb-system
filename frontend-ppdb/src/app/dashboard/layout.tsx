@@ -35,7 +35,7 @@ export default function DashboardLayout({
         {/* Info User */}
         <div className="flex items-center gap-4 text-sm">
           <div className="hidden sm:flex flex-col items-end leading-tight">
-            <span className="font-semibold">Budi Santoso</span>
+            <span className="font-semibold">Arga Bayu R</span>
             <span className="text-blue-200 text-xs">Tahun Ajaran 2025/2026</span>
           </div>
           {/* Avatar */}
