@@ -100,7 +100,7 @@ export default function RegisterPage() {
 
         <p className="text-sm mt-3 text-center">
           Sudah punya akun?{" "}
-          <Link href="auth/login" className="text-blue-600">
+          <Link href="" className="text-blue-600">
             Login
           </Link>
         </p>
