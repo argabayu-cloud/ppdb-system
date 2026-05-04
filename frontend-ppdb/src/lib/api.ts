@@ -42,7 +42,7 @@ export async function registerUser(data: {
 }
 
 export async function loginUser(data: {
-  username: string;
+  email: string;
   password: string;
 }) {
   return fetcher("/auth/login", {
