@@ -1,14 +1,13 @@
-// src/services/auth.service.ts
 import prisma from "../config/prisma";
 import bcrypt from "bcrypt";
 import { generateToken } from "../utils/jwt";
 
-// Tipe sederhana (boleh nanti diganti Zod/Joi)
 type RegisterInput = {
   nama: string;
   email: string;
   noTlpn: string;
   password: string;
+  konfirmasiPassword: string;
 };
 
 type LoginInput = {

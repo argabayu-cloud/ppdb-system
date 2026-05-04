@@ -3,10 +3,10 @@ import { registerUser, loginUser } from "../services/auth.service";
 
 export const register = async (req: Request, res: Response) => {
   try {
-    const { nama, email, noTlpn, password } = req.body;
+    console.log("BODY:", req.body);
+    const { nama, email, noTlpn, password, konfirmasiPassword } = req.body;
 
-    // ✅ validasi input
-    if (!nama || !email || !noTlpn || !password) {
+    if (!nama || !email || !noTlpn || !password || !konfirmasiPassword) {
       return res.status(400).json({
         message: "Semua field wajib diisi",
       });
@@ -17,6 +17,7 @@ export const register = async (req: Request, res: Response) => {
       email,
       noTlpn,
       password,
+      konfirmasiPassword,
     });
 
     res.status(201).json({
