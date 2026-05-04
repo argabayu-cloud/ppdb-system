@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetcher } from "@/lib/api";
+import Link from "next/link";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -85,9 +86,9 @@ export default function RegisterPage() {
 
         <p className="text-sm mt-3 text-center">
           Sudah punya akun?{" "}
-          <a href="/login" className="text-blue-600">
+          <Link href="/login" className="text-blue-600">
             Login
-          </a>
+          </Link>
         </p>
       </form>
     </div>
