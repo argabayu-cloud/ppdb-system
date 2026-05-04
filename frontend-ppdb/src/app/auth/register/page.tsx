@@ -9,6 +9,7 @@ export default function RegisterPage() {
 
   const [nama, setNama] = useState("");
   const [email, setEmail] = useState("");
+  const [noTlpn, setNoTlpn] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -21,7 +22,12 @@ export default function RegisterPage() {
     try {
       await fetcher("/auth/register", {
         method: "POST",
-        body: JSON.stringify({ nama, email, password }),
+        body: JSON.stringify({
+          nama,
+          email,
+          noTlpn,
+          password
+        }),
       });
 
       alert("Register berhasil, silakan login");

@@ -7,6 +7,7 @@ import { generateToken } from "../utils/jwt";
 type RegisterInput = {
   nama: string;
   email: string;
+  noTlpn: string;
   password: string;
 };
 
@@ -16,9 +17,9 @@ type LoginInput = {
 };
 
 export const registerUser = async (data: RegisterInput) => {
-  let { nama, email, password } = data;
+  let { nama, email, noTlpn, password } = data;
 
-  if (!nama || !email || !password) {
+  if (!nama || !email || !noTlpn || !password) {
     throw new Error("Semua field wajib diisi");
   }
 
@@ -38,6 +39,7 @@ export const registerUser = async (data: RegisterInput) => {
     data: {
       nama,
       email,
+      noTlpn,
       password: hashedPassword,
       // role default USER dari schema → tidak perlu di-set di sini
     },
