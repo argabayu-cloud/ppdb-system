@@ -1,4 +1,6 @@
-export const BASE_URL = "http://localhost:3000/api";
+import process from "process";
+
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export async function fetcher(
   url: string,
