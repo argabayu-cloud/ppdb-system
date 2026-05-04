@@ -4,8 +4,14 @@ import { getPendaftar, seleksiSiswa } from "../services/admin.service";
 
 const prisma = new PrismaClient();
 
+interface AuthRequest extends Request {
+  user: {
+    id: string;
+  };
+}
+
 // 🔹 ambil pendaftar
-export const handleGetPendaftar = async (req: any, res: Response) => {
+export const handleGetPendaftar = async (req: AuthRequest, res: Response) => {
   try {
     const adminId = req.user.id;
 
