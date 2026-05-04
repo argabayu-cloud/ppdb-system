@@ -19,22 +19,31 @@ export default function LoginPage() {
       setError("Email dan password wajib diisi!");
       return;
     }
+
     setLoading(true);
     try {
       const res = await loginUser({
         email: form.email,
         password: form.password,
       });
-      if (res.token) {
-        localStorage.setItem("token", res.token);
+
+      const token = res.token ?? res.data?.token;
+      const user = res.data?.user;
+
+      if (token) {
+        localStorage.setItem("token", token);
+        if (user) {
+          localStorage.setItem("user", JSON.stringify(user));
+        }
         window.location.href = "/dashboard";
       } else {
         setError(res.message || "Email atau password salah!");
       }
     } catch (err) {
       setError("Tidak bisa terhubung ke server!");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -54,8 +63,8 @@ export default function LoginPage() {
       {/* Main */}
       <main className="flex-1 flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 flex flex-col gap-6">
-
           {/* Header Form */}
+          {/* Header */}
           <div className="text-center">
             <div className="w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center mx-auto mb-4">
               <span className="text-white text-2xl">🔐</span>
@@ -65,8 +74,8 @@ export default function LoginPage() {
               Masuk ke portal PPDB SMP Terpadu
             </p>
           </div>
-
           {/* Error Message */}
+          {/* Error */}
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-xl">
               ⚠️ {error}
@@ -76,9 +85,10 @@ export default function LoginPage() {
           {/* Form */}
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-slate-700">
+           <label className="text-sm font-medium text-slate-700">
                 Email
               </label>
+              <label className="text-sm font-medium text-slate-700">Email</label>
               <input
                 type="email"
                 name="email"
@@ -93,6 +103,7 @@ export default function LoginPage() {
               <label className="text-sm font-medium text-slate-700">
                 Password
               </label>
+              <label className="text-sm font-medium text-slate-700">Password</label>
               <input
                 type="password"
                 name="password"
@@ -115,7 +126,9 @@ export default function LoginPage() {
           <p className="text-center text-sm text-slate-500">
             Belum punya akun?{" "}
             <Link href="/register" className="text-blue-600 font-semibold hover:underline">
+            <Link href="auth/register" className="text-blue-600 font-semibold hover:underline">
               Daftar di sini
+            </Link>
             </Link>
           </p>
         </div>
