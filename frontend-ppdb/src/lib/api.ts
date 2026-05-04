@@ -1,6 +1,6 @@
 import process from "process";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 export async function fetcher(
   url: string,
@@ -27,4 +27,26 @@ export async function fetcher(
   }
 
   return data;
+}
+
+export async function registerUser(data: {
+  namaLengkap: string;
+  email: string;
+  noHp: string;
+  password: string;
+}) {
+  return fetcher("/auth/register", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function loginUser(data: {
+  username: string;
+  password: string;
+}) {
+  return fetcher("/auth/login", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
 }
