@@ -6,22 +6,51 @@ import {
 } from "../services/superAdmin.service";
 
 export const handleGetAll = async (req: Request, res: Response) => {
-  const data = await getAllPendaftaran();
-  res.json(data);
+  try {
+    const data = await getAllPendaftaran();
+    res.json(data);
+  } catch (error: any) {
+    res.status(500).json({
+      message: error?.message || "Terjadi kesalahan",
+    });
+  }
 };
 
 export const handleHasil = async (req: Request, res: Response) => {
-  const data = await getHasilSeleksi();
-  res.json(data);
+  try {
+    const data = await getHasilSeleksi();
+    res.json(data);
+  } catch (error: any) {
+    res.status(500).json({
+      message: error?.message || "Terjadi kesalahan",
+    });
+  }
 };
 
 export const handleValidasi = async (req: Request, res: Response) => {
-  const { pendaftaranId, status } = req.body;
+  try {
+    const { pendaftaranId, status } = req.body;
 
-  const result = await validasiFinal(pendaftaranId, status);
+    // 🔥 VALIDASI INPUT
+    if (!pendaftaranId || !status) {
+      return res.status(400).json({
+        message: "pendaftaranId dan status wajib diisi",
+      });
+    }
 
-  res.json({
-    message: "Validasi berhasil",
-    data: result,
-  });
+    // 🔥 VALIDASI STATUS
+    if (!["DITERIMA", "DITOLAK"].includes(status)) {
+      return res.status(400).json({
+        message: "Status harus DITERIMA atau DITOLAK",
+      });
+    }
+
+    const result = await validasiFinal(pendaftaranId, status);
+
+    res.json(result);
+  } catch (error: any) {
+    res.status(500).json({
+      message: error?.message || "Terjadi kesalahan",
+    });
+  }
 };

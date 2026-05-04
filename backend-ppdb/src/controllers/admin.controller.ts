@@ -1,16 +1,30 @@
 import { Request, Response } from "express";
+import { PrismaClient } from "@prisma/client";
 import { getPendaftar, seleksiSiswa } from "../services/admin.service";
 
+const prisma = new PrismaClient();
+
+interface AuthRequest extends Request {
+  user: {
+    id: string;
+  };
+}
+
 // 🔹 ambil pendaftar
-export const handleGetPendaftar = async (req: any, res: Response) => {
+export const handleGetPendaftar = async (req: AuthRequest, res: Response) => {
   try {
     const adminId = req.user.id;
 
     const data = await getPendaftar(adminId);
 
-    res.json({ data });
+    res.json({
+      message: "Berhasil mengambil data pendaftar",
+      data,
+    });
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: error.message || "Terjadi kesalahan",
+    });
   }
 };
 
@@ -19,6 +33,20 @@ export const handleSeleksi = async (req: any, res: Response) => {
   try {
     const adminId = req.user.id;
     const { pilihanId, status, alasan } = req.body;
+
+    // 🔥 VALIDASI INPUT
+    if (!pilihanId || !status) {
+      return res.status(400).json({
+        message: "pilihanId dan status wajib diisi",
+      });
+    }
+
+    // 🔥 VALIDASI STATUS
+    if (!["DITERIMA", "DITOLAK"].includes(status)) {
+      return res.status(400).json({
+        message: "Status harus DITERIMA atau DITOLAK",
+      });
+    }
 
     const result = await seleksiSiswa(
       adminId,
@@ -29,6 +57,8 @@ export const handleSeleksi = async (req: any, res: Response) => {
 
     res.json(result);
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: error.message || "Terjadi kesalahan",
+    });
   }
 };

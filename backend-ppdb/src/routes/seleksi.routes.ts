@@ -1,35 +1,23 @@
 import { Router } from "express";
-import {
-  handleGetAll,
-  handleHasil,
-  handleValidasi,
-} from "../controllers/superAdmin.controller";
-
+import { runSeleksiZonasi, runCascading } from "../controllers/seleksi.controller";
 import { authMiddleware } from "../middlewares/auth.middlewares";
 import { roleMiddleware } from "../middlewares/role.middleware";
 
 const router = Router();
 
-// 🔥 WAJIB: auth dulu baru role
-router.get(
-  "/pendaftaran",
-  authMiddleware,
-  roleMiddleware(["SUPER_ADMIN"]),
-  handleGetAll
-);
-
-router.get(
-  "/hasil",
-  authMiddleware,
-  roleMiddleware(["SUPER_ADMIN"]),
-  handleHasil
-);
-
+// 1. SELEKSI ZONASI (PILIHAN 1)
 router.post(
-  "/validasi",
+  "/zonasi",
   authMiddleware,
   roleMiddleware(["SUPER_ADMIN"]),
-  handleValidasi
+  runSeleksiZonasi
 );
 
+// 2. CASCADING (PILIHAN 2)
+router.post(
+  "/cascading",
+  authMiddleware,
+  roleMiddleware(["SUPER_ADMIN"]),
+  runCascading
+);
 export default router;

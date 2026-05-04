@@ -1,4 +1,33 @@
-const BASE_URL = "http://localhost:5000/api";
+import process from "process";
+
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+
+export async function fetcher(
+  url: string,
+  options: RequestInit = {}
+) {
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem("token")
+      : null;
+
+  const res = await fetch(`${BASE_URL}${url}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }),
+      ...(options.headers || {}),
+    },
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.message || "Terjadi kesalahan");
+  }
+
+  return data;
+}
 
 export async function registerUser(data: {
   namaLengkap: string;
@@ -6,22 +35,18 @@ export async function registerUser(data: {
   noHp: string;
   password: string;
 }) {
-  const res = await fetch(`${BASE_URL}/auth/register`, {
+  return fetcher("/auth/register", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  return res.json();
 }
 
 export async function loginUser(data: {
   username: string;
   password: string;
 }) {
-  const res = await fetch(`${BASE_URL}/auth/login`, {
+  return fetcher("/auth/login", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  return res.json();
 }

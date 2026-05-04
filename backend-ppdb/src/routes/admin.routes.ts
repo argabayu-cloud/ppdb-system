@@ -4,15 +4,23 @@ import {
   handleSeleksi,
 } from "../controllers/admin.controller";
 
-import { verifyToken } from "../middlewares/auth.middlewares";
-import { requireAdmin } from "../middlewares/role.middleware";
+import { authMiddleware } from "../middlewares/auth.middlewares";
+import { roleMiddleware } from "../middlewares/role.middleware";
 
 const router = Router();
 
-// 🔹 ambil pendaftar
-router.get("/pendaftar", verifyToken, requireAdmin, handleGetPendaftar);
+router.get(
+  "/pendaftar",
+  authMiddleware,
+  roleMiddleware(["ADMIN"]),
+  handleGetPendaftar
+);
 
-// 🔹 seleksi siswa
-router.post("/seleksi", verifyToken, requireAdmin, handleSeleksi);
+router.post(
+  "/seleksi",
+  authMiddleware,
+  roleMiddleware(["ADMIN"]),
+  handleSeleksi
+);
 
 export default router;
