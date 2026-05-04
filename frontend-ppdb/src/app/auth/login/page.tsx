@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetcher } from "@/lib/api";
+import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -12,10 +13,16 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleLogin = async (e: any) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
+
+    if (!email || !password) {
+      setError("Email dan password wajib diisi");
+      setLoading
+      return;
+    }
 
     try {
       const res = await fetcher("/auth/login", {
@@ -26,9 +33,13 @@ export default function LoginPage() {
       localStorage.setItem("token", res.token);
 
       // redirect sesuai role (optional)
-      router.push("/dashboard");
-    } catch (err: any) {
-      setError(err.message);
+       router.push("/dashboard");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Terjadi kesalahan");
+      }
     } finally {
       setLoading(false);
     }
@@ -69,9 +80,9 @@ export default function LoginPage() {
 
         <p className="text-sm mt-3 text-center">
           Belum punya akun?{" "}
-          <a href="/register" className="text-blue-600">
+          <Link href="/register" className="text-blue-600">
             Register
-          </a>
+          </Link>
         </p>
       </form>
     </div>
