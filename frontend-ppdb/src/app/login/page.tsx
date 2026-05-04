@@ -5,7 +5,7 @@ import Link from "next/link";
 import { loginUser } from "@/lib/api";
 
 export default function LoginPage() {
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ username: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -15,8 +15,8 @@ export default function LoginPage() {
   };
 
   const handleLogin = async () => {
-    if (!form.email || !form.password) {
-      setError("Email dan password wajib diisi!");
+    if (!form.username || !form.password) {
+      setError("Username dan password wajib diisi!");
       return;
     }
     setLoading(true);
@@ -29,7 +29,7 @@ export default function LoginPage() {
         localStorage.setItem("token", res.token);
         window.location.href = "/dashboard";
       } else {
-        setError(res.message || "Email atau password salah!");
+        setError(res.message || "Username atau password salah!");
       }
     } catch (err) {
       setError("Tidak bisa terhubung ke server!");
@@ -55,7 +55,7 @@ export default function LoginPage() {
       <main className="flex-1 flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 flex flex-col gap-6">
 
-          {/* Header */}
+          {/* Header Form */}
           <div className="text-center">
             <div className="w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center mx-auto mb-4">
               <span className="text-white text-2xl">🔐</span>
@@ -66,7 +66,7 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Error */}
+          {/* Error Message */}
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-xl">
               ⚠️ {error}
@@ -76,19 +76,23 @@ export default function LoginPage() {
           {/* Form */}
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-slate-700">Email</label>
+              <label className="text-sm font-medium text-slate-700">
+                Username / No. Peserta
+              </label>
               <input
-                type="email"
-                name="email"
-                value={form.email}
+                type="text"
+                name="username"
+                value={form.username}
                 onChange={handleChange}
-                placeholder="Masukkan email kamu"
+                placeholder="Masukkan username atau no. peserta"
                 className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-slate-700">Password</label>
+              <label className="text-sm font-medium text-slate-700">
+                Password
+              </label>
               <input
                 type="password"
                 name="password"
