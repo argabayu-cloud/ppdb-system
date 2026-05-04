@@ -3,16 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetcher } from "@/lib/api";
-import Link from "next/link";
 
 export default function RegisterPage() {
   const router = useRouter();
 
   const [nama, setNama] = useState("");
   const [email, setEmail] = useState("");
-  const [noTlpn, setNoTlpn] = useState("");
   const [password, setPassword] = useState("");
-  const [konfirmasiPassword, setKonfirmasiPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -24,13 +21,7 @@ export default function RegisterPage() {
     try {
       await fetcher("/auth/register", {
         method: "POST",
-        body: JSON.stringify({
-          nama,
-          email,
-          noTlpn,
-          password,
-          konfirmasiPassword,
-        }),
+        body: JSON.stringify({ nama, email, password }),
       });
 
       alert("Register berhasil, silakan login");
@@ -54,7 +45,9 @@ export default function RegisterPage() {
       >
         <h1 className="text-xl font-bold mb-4">Register PPDB</h1>
 
-        {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
+        {error && (
+          <p className="text-red-500 text-sm mb-3">{error}</p>
+        )}
 
         <input
           type="text"
@@ -71,24 +64,10 @@ export default function RegisterPage() {
         />
 
         <input
-          type="text"
-          placeholder="No. Telepon"
-          className="w-full mb-3 p-2 border rounded"
-          onChange={(e) => setNoTlpn(e.target.value)}
-        />
-
-        <input
           type="password"
           placeholder="Password"
           className="w-full mb-4 p-2 border rounded"
           onChange={(e) => setPassword(e.target.value)}
-        />
-
-        <input
-          type="password"
-          placeholder="Konfirmasi Password"
-          className="w-full mb-4 p-2 border rounded"
-          onChange={(e) => setKonfirmasiPassword(e.target.value)}
         />
 
         <button
@@ -100,9 +79,9 @@ export default function RegisterPage() {
 
         <p className="text-sm mt-3 text-center">
           Sudah punya akun?{" "}
-          <Link href="/login" className="text-blue-600">
+          <a href="/login" className="text-blue-600">
             Login
-          </Link>
+          </a>
         </p>
       </form>
     </div>
