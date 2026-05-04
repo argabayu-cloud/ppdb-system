@@ -45,7 +45,7 @@ export default function DashboardLayout({
           </div>
           {/* Avatar */}
           <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center font-bold text-sm">
-            B
+            A
           </div>
           {/* Logout */}
           <button
