@@ -1,6 +1,6 @@
-import process from "process";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL!;
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+console.log("BASE_URL:", BASE_URL);
 
 export async function fetcher(
   url: string,
@@ -30,9 +30,9 @@ export async function fetcher(
 }
 
 export async function registerUser(data: {
-  namaLengkap: string;
+  nama: string;
   email: string;
-  noHp: string;
+  noTlpn: string;
   password: string;
 }) {
   return fetcher("/auth/register", {
