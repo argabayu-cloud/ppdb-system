@@ -40,9 +40,37 @@ export const seleksiSiswa = async (
 
   const pilihan = await prisma.pilihanSekolah.findUnique({
     where: { id: pilihanId },
+    include: {
+      pendaftaran: {
+        include: {
+          dokumen: true,
+        },
+      },
+    },
   });
 
   if (!pilihan) throw new Error("Data tidak ditemukan");
+
+  // Validasi Dokumen Sebelum Seleksi
+  const dokumen = pilihan.pendaftaran.dokumen;
+
+  if (!dokumen || dokumen.length === 0) {
+    throw new Error("Dokumen belum diupload");
+  }
+
+  // Jika ada dokumen belum diterima
+  const adaYangBelumValid = dokumen.some((d) => d.status !== "DITERIMA");
+
+  if (adaYangBelumValid) {
+    throw new Error("Semua dokumen harus divalidasi terlebih dahulu");
+  }
+
+  if (status === "DITOLAK") {
+    await prisma.dokumen.updateMany({
+      where: { pendaftaranId: pilihan.pendaftaranId },
+      data: { status: "DITOLAK" },
+    });
+  }
 
   // 🔥 validasi akses sekolah
   if (pilihan.sekolahId !== admin.sekolahId) {
