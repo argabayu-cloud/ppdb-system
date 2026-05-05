@@ -323,7 +323,7 @@ export default function PengumumanPage() {
                 <p className="text-sm font-semibold text-slate-800">{p.sekolah}</p>
                 <p className="text-xs text-slate-400 mt-0.5">Pilihan ke-{p.urutan}</p>
               </div>
-              <div className={`text-xs font-bold px-3 py-1 rounded-full flex-shrink-0
+              <div className={`text-xs font-bold px-3 py-1 rounded-full shrink-0
                 ${p.status === "diterima" ? "bg-green-500 text-white" : "bg-red-100 text-red-600"}`}>
                 {p.status === "diterima" ? "✅ Diterima" : "❌ Gugur"}
               </div>
