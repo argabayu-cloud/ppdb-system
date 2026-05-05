@@ -27,8 +27,8 @@ export default function DashboardPage() {
   const progressPercent = Math.round((doneCount / steps.length) * 100);
 
   return (
-    <div className="flex flex-col gap-6">
-
+    <div className="flex flex-col gap-6 bg-slate-50 min-h-screen p-6">
+      
       {/* 🔷 WELCOME */}
       <section className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl p-6 text-white shadow-lg flex flex-col sm:flex-row justify-between gap-4">
         <div>
@@ -82,9 +82,7 @@ export default function DashboardPage() {
 
               <span
                 className={`text-xs ${
-                  step.done
-                    ? "text-blue-700 font-semibold"
-                    : "text-slate-400"
+                  step.done ? "text-blue-700 font-semibold" : "text-slate-400"
                 }`}
               >
                 {step.label}
@@ -135,12 +133,8 @@ export default function DashboardPage() {
             className={`${item.bg} rounded-2xl p-4 flex flex-col gap-2`}
           >
             <span className="text-2xl">{item.icon}</span>
-            <p className="text-sm font-semibold text-slate-700">
-              {item.label}
-            </p>
-            <p className={`text-xs font-medium ${item.color}`}>
-              {item.status}
-            </p>
+            <p className="text-sm font-semibold text-slate-700">{item.label}</p>
+            <p className={`text-xs font-medium ${item.color}`}>{item.status}</p>
           </div>
         ))}
       </section>
@@ -163,7 +157,6 @@ export default function DashboardPage() {
           ))}
         </div>
       </section>
-
     </div>
   );
 }
