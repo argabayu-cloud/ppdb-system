@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { runSeleksiZonasi, runCascading } from "../controllers/seleksi.controller";
 import { authMiddleware } from "../middlewares/auth.middlewares";
-import { roleMiddleware } from "../middlewares/role.middleware";
+import { requireRole } from "../middlewares/role.middleware";
 
 const router = Router();
 
@@ -9,7 +9,7 @@ const router = Router();
 router.post(
   "/zonasi",
   authMiddleware,
-  roleMiddleware(["SUPER_ADMIN"]),
+  requireRole("SUPER_ADMIN"),
   runSeleksiZonasi
 );
 
@@ -17,7 +17,7 @@ router.post(
 router.post(
   "/cascading",
   authMiddleware,
-  roleMiddleware(["SUPER_ADMIN"]),
+  requireRole("SUPER_ADMIN"),
   runCascading
 );
 export default router;

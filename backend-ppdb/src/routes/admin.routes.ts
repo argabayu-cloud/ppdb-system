@@ -6,7 +6,7 @@ import {
 } from "../controllers/admin.controller";
 
 import { authMiddleware } from "../middlewares/auth.middlewares";
-import { roleMiddleware } from "../middlewares/role.middleware";
+import { requireRole } from "../middlewares/role.middleware";
 
 const router = Router();
 
@@ -14,7 +14,7 @@ const router = Router();
 router.get(
   "/pendaftar",
   authMiddleware,
-  roleMiddleware(["ADMIN"]),
+  requireRole("ADMIN"),
   handleGetPendaftar,
 );
 
@@ -22,7 +22,7 @@ router.get(
 router.post(
   "/seleksi",
   authMiddleware,
-  roleMiddleware(["ADMIN"]),
+  requireRole("ADMIN"),
   handleSeleksi,
 );
 
@@ -30,7 +30,7 @@ router.post(
 router.post(
   "/validasi-dokumen",
   authMiddleware,
-  roleMiddleware(["ADMIN"]),
+  requireRole("ADMIN"),
   handleValidasiDokumen,
 );
 
