@@ -221,7 +221,7 @@ export default function PendaftaranPage() {
           {jalur === "mutasi" && (
             <div className="bg-orange-50 border border-orange-200 rounded-2xl p-6 flex flex-col gap-4">
               <h2 className="font-semibold text-orange-700 text-sm uppercase tracking-wide border-b border-orange-200 pb-2">
-                🏠 Data Mutasi / Domisili
+                🏠 Data Domisili
               </h2>
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-slate-700">Alasan Mutasi</label>
