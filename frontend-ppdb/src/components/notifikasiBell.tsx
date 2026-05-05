@@ -15,11 +15,28 @@ export default function NotificationBell() {
 
   const fetchNotif = async () => {
     try {
+      const token = localStorage.getItem("token");
+
+      if (!token) return;
+
       const res = await fetch("http://localhost:5000/notifikasi", {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${token}`,
         },
       });
+
+      if (!res.ok) {
+        console.error("Status error:", res.status);
+        return;
+      }
+
+      const contentType = res.headers.get("content-type");
+
+      if (!contentType?.includes("application/json")) {
+        const text = await res.text();
+        console.error("Bukan JSON:", text);
+        return;
+      }
 
       const data = await res.json();
       setNotif(data.data || []);
