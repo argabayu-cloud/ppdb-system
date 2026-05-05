@@ -1,12 +1,15 @@
 import prisma from "../config/prisma";
 
-export const createNotifikasi = async (userId: string, pesan: string) => {
-    return await prisma.notifikasi.create({
-        data: {
-            userId,
-            pesan,
-        },
-    });
+type NotifInput = {
+  userId: string;
+  judul: string;
+  pesan: string;
+};
+
+export const createNotifikasi = async (data: NotifInput) => {
+  return await prisma.notifikasi.create({
+    data,
+  });
 };
 
 export const getNotifikasiByUser = async (userId: string) => {
