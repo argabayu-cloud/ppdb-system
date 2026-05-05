@@ -142,6 +142,12 @@ model PilihanSekolah {
   @@unique([pendaftaranId, pilihanKe])
 }
 
+enum StatusDokumen {
+  MENUNGGU
+  DITERIMA
+  DITOLAK
+}
+
 model Dokumen {
   id             String   @id @default(uuid())
   pendaftaranId  String
@@ -152,7 +158,7 @@ model Dokumen {
   ukuran         Int        // size file (byte)
   tipeDokumen    TipeDokumen?
 
-  status         String   @default("MENUNGGU")
+  status         StatusDokumen @default(MENUNGGU) // ubah ke enum
 
   createdAt      DateTime @default(now())
 

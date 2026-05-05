@@ -56,7 +56,6 @@ export const seleksiSiswa = async (
 
   // 🔁 LOGIC UTAMA
   if (status === "DITERIMA") {
-
     // 🔥 lock semua pilihan (1 & 2)
     await prisma.pilihanSekolah.updateMany({
       where: {
@@ -85,7 +84,6 @@ export const seleksiSiswa = async (
         statusFinal: "DITERIMA",
       },
     });
-
   } else {
     // ❌ DITOLAK
     await prisma.pilihanSekolah.update({
@@ -112,7 +110,6 @@ export const seleksiSiswa = async (
           status: "DIPROSES",
         },
       });
-
     } else {
       // ❌ ditolak final
       await prisma.pendaftaran.update({
@@ -138,4 +135,56 @@ export const seleksiSiswa = async (
   return {
     message: "Seleksi berhasil",
   };
+};
+
+// 🔥 VALIDASI DOKUMEN ADMIN
+export const validasiDokumen = async (
+  adminId: string,
+  dokumenId: string,
+  status: "DITERIMA" | "DITOLAK",
+) => {
+  // 🔍 cek admin
+  const admin = await prisma.adminSekolah.findUnique({
+    where: { userId: adminId },
+  });
+
+  if (!admin) throw new Error("Admin tidak ditemukan");
+
+  // 🔍 ambil dokumen + relasi pendaftaran + pilihan
+  const dokumen = await prisma.dokumen.findUnique({
+    where: { id: dokumenId },
+    include: {
+      pendaftaran: {
+        include: {
+          pilihan: true,
+        },
+      },
+    },
+  });
+
+  if (!dokumen) throw new Error("Dokumen tidak ditemukan");
+
+  // 🔐 VALIDASI AKSES SEKOLAH
+  const punyaAkses = dokumen.pendaftaran.pilihan.some(
+    (p) => p.sekolahId === admin.sekolahId,
+  );
+
+  if (!punyaAkses) {
+    throw new Error("Akses ditolak");
+  }
+
+  // 🔒 CEK SUDAH DIVALIDASI ATAU BELUM
+  if (dokumen.status !== "MENUNGGU") {
+    throw new Error("Dokumen sudah divalidasi sebelumnya");
+  }
+
+  // 🔥 UPDATE STATUS DOKUMEN
+  const updated = await prisma.dokumen.update({
+    where: { id: dokumenId },
+    data: {
+      status,
+    },
+  });
+
+  return updated;
 };
