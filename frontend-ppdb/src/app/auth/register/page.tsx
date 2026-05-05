@@ -1,61 +1,55 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { registerUser } from "@/lib/api";
+import { fetcher } from "@/lib/api";
 
 export default function RegisterPage() {
-  const [form, setForm] = useState({
-    nama: "",
-    email: "",
-    noTlpn: "",
-    password: "",
-    konfirmasiPassword: "",
-  });
+  const router = useRouter();
 
+  const [nama, setNama] = useState("");
+  const [email, setEmail] = useState("");
+  const [noTlpn, setNoTlpn] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-    setError("");
-  };
-
-  const handleRegister = async () => {
-    const { nama, email, noTlpn, password, konfirmasiPassword } = form;
-
-    // validasi
-    if (!nama || !email || !noTlpn || !password || !konfirmasiPassword) {
-      setError("Semua field wajib diisi!");
-      return;
-    }
-
-    if (password !== konfirmasiPassword) {
-      setError("Konfirmasi password tidak cocok!");
-      return;
-    }
-
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLoading(true);
+    setError("");
+
+    if (!nama || !email || !noTlpn || !password || !confirmPassword) {
+      setError("Semua field wajib diisi");
+      setLoading(false);
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Konfirmasi password tidak cocok");
+      setLoading(false);
+      return;
+    }
 
     try {
-      const res = await registerUser({
-        nama,
-        email,
-        noTlpn,
-        password,
+      await fetcher("/auth/register", {
+        method: "POST",
+        body: JSON.stringify({ nama, email, noTlpn, password }),
       });
 
-      if (res.data) {
-        alert("Register berhasil, silakan login");
-        window.location.href = "/login";
+      alert("Register berhasil, silakan login");
+      router.push("/auth/login");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
       } else {
-        setError(res.message || "Register gagal!");
+        setError("Terjadi kesalahan");
       }
-    } catch (_err) {
-      setError("Tidak bisa terhubung ke server!");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
@@ -95,16 +89,14 @@ export default function RegisterPage() {
           )}
 
           {/* Form */}
-          <div className="flex flex-col gap-4">
+          <form onSubmit={handleRegister} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Nama Lengkap</label>
               <input
                 type="text"
-                name="nama"
-                value={form.nama}
-                onChange={handleChange}
                 placeholder="Masukkan nama lengkap"
-                className="border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                onChange={(e) => setNama(e.target.value)}
+                className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
               />
             </div>
 
@@ -112,23 +104,19 @@ export default function RegisterPage() {
               <label className="text-sm font-medium text-slate-700">Email</label>
               <input
                 type="email"
-                name="email"
-                value={form.email}
-                onChange={handleChange}
-                placeholder="Masukkan email"
-                className="border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                placeholder="Masukkan email aktif"
+                onChange={(e) => setEmail(e.target.value)}
+                className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-slate-700">No. HP / WhatsApp</label>
+              <label className="text-sm font-medium text-slate-700">No. Telepon / WhatsApp</label>
               <input
                 type="text"
-                name="noTlpn"
-                value={form.noTlpn}
-                onChange={handleChange}
                 placeholder="Contoh: 08123456789"
-                className="border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                onChange={(e) => setNoTlpn(e.target.value)}
+                className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
               />
             </div>
 
@@ -136,11 +124,9 @@ export default function RegisterPage() {
               <label className="text-sm font-medium text-slate-700">Password</label>
               <input
                 type="password"
-                name="password"
-                value={form.password}
-                onChange={handleChange}
                 placeholder="Buat password"
-                className="border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                onChange={(e) => setPassword(e.target.value)}
+                className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
               />
             </div>
 
@@ -148,34 +134,32 @@ export default function RegisterPage() {
               <label className="text-sm font-medium text-slate-700">Konfirmasi Password</label>
               <input
                 type="password"
-                name="konfirmasiPassword"
-                value={form.konfirmasiPassword}
-                onChange={handleChange}
                 placeholder="Ulangi password"
-                className="border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
               />
             </div>
 
             <button
-              onClick={handleRegister}
+              type="submit"
               disabled={loading}
-              className="mt-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-semibold py-3 rounded-xl shadow-md text-sm"
+              className="mt-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-semibold py-3 rounded-xl transition-colors shadow-md shadow-blue-100 text-sm"
             >
               {loading ? "Memproses..." : "Daftar Sekarang"}
             </button>
-          </div>
+          </form>
 
           <p className="text-center text-sm text-slate-500">
             Sudah punya akun?{" "}
-            <Link href="auth/login" className="text-blue-600 font-semibold hover:underline">
+            <Link href="/auth/login" className="text-blue-600 font-semibold hover:underline">
               Masuk di sini
             </Link>
           </p>
         </div>
       </main>
 
-      <footer className="text-center py-4 text-xs text-slate-400 border-t bg-white">
-        © 2025 Dinas Pendidikan · PPDB SMP Terpadu
+      <footer className="text-center py-4 text-xs text-slate-400 border-t border-slate-100 bg-white">
+        © 2025 Dinas Pendidikan · PPDB SMP Terpadu. All rights reserved.
       </footer>
     </div>
   );
