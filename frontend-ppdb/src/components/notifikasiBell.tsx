@@ -41,6 +41,8 @@ export default function NotificationBell() {
 
   useEffect(() => {
     fetchNotif();
+    const interval = setInterval(fetchNotif, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const unreadCount = notif.filter((n) => !n.isRead).length;
