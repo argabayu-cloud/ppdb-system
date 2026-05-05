@@ -8,6 +8,7 @@ import seleksiRoutes from "./seleksi.routes";
 import hasilRoutes from "./hasil.routes";
 import dokumenRoutes from "./dokumen.routes";
 import sekolahRoutes from "./sekolah.routes";
+import notifikasiRoutes from "./notifikasi.routes";
 
 const router = Router();
 
@@ -20,6 +21,7 @@ router.use("/seleksi", seleksiRoutes);
 router.use("/hasil", hasilRoutes);
 router.use("/dokumen", dokumenRoutes);
 router.use("/sekolah", sekolahRoutes);
+router.use("/notifikasi", notifikasiRoutes);
 
 router.get("/health", (req, res) => {
   res.json({ message: "API OK" });
