@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import NotificationBell from "./notifikasiBell";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -10,7 +11,7 @@ export default function Navbar() {
     <nav className="w-full bg-white/80 backdrop-blur-md border-b border-slate-200 fixed top-0 left-0 right-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         
-        {/* LEFT: Logo + School Info */}
+        {/* LEFT */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <Image
@@ -32,15 +33,18 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* CENTER (optional info badge) */}
+        {/* CENTER */}
         <div className="hidden md:flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">
           Tahun Ajaran 2025 / 2026
         </div>
 
-        {/* RIGHT: User */}
+        {/* RIGHT */}
         <div className="flex items-center gap-4 relative">
-          
-          {/* Notifikasi / status */}
+
+          {/* 🔔 NOTIFICATION (BARU) */}
+          <NotificationBell />
+
+          {/* Status */}
           <div className="hidden sm:flex items-center gap-2 text-xs text-slate-600 bg-slate-100 px-3 py-1 rounded-full">
             <span className="w-2 h-2 bg-green-500 rounded-full"></span>
             Online
