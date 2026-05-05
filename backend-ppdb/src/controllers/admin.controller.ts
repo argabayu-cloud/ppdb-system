@@ -12,7 +12,7 @@ interface AuthRequest extends Request {
 }
 
 // 🔹 ambil pendaftar
-export const handleGetPendaftar = async (req: AuthRequest, res: Response) => {
+export const handleGetPendaftar = async (req: any, res: Response) => {
   try {
     const adminId = req.user.id;
 
@@ -60,10 +60,7 @@ export const handleSeleksi = async (req: any, res: Response) => {
 };
 
 // 🔥 VALIDASI DOKUMEN ADMIN
-export const handleValidasiDokumen = async (
-  req: AuthRequest,
-  res: Response,
-) => {
+export const handleValidasiDokumen = async (req: any, res: Response) => {
   try {
     const adminId = req.user.id;
     const { dokumenId, status } = req.body;
