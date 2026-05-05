@@ -6,7 +6,7 @@ import {
 } from "../controllers/superAdmin.controller";
 
 import { authMiddleware } from "../middlewares/auth.middlewares";
-import { roleMiddleware } from "../middlewares/role.middleware";
+import { requireRole } from "../middlewares/role.middleware";
 
 const router = Router();
 
@@ -14,21 +14,21 @@ const router = Router();
 router.get(
   "/pendaftaran",
   authMiddleware,
-  roleMiddleware(["SUPER_ADMIN"]),
+  requireRole("SUPER_ADMIN"),
   handleGetAll
 );
 
 router.get(
   "/hasil",
   authMiddleware,
-  roleMiddleware(["SUPER_ADMIN"]),
+  requireRole("SUPER_ADMIN"),
   handleHasil
 );
 
 router.post(
   "/validasi",
   authMiddleware,
-  roleMiddleware(["SUPER_ADMIN"]),
+  requireRole("SUPER_ADMIN"),
   handleValidasi
 );
 
