@@ -25,3 +25,5 @@ export const authMiddleware = (req: any, res: Response, next: NextFunction) => {
     return res.status(401).json({ message: "Token tidak valid atau expired" });
   }
 };
+
+export { verifyToken };
