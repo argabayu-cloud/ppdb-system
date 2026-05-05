@@ -3,6 +3,8 @@ import prisma from "../config/prisma"
 type SekolahInput = {
     nama: string;
     alamat: string;
+    latitude: number;
+    longitude: number;
     kuota: number;
 }
 
@@ -12,7 +14,7 @@ export const createSekolah = async (data: SekolahInput) => {
 
 export const getAllSekolah = async () => {
     return await prisma.sekolah.findMany({
-        orderBy: { createAt: "desc"},
+        orderBy: { createdAt: "desc"},
     });
 };
 
