@@ -33,7 +33,7 @@ export const getHasilSeleksi = async () => {
 
 export const validasiFinal = async (
   pendaftaranId: string,
-  status: "DITERIMA" | "DITOLAK"
+  status: "DITERIMA" | "DITOLAK",
 ) => {
   const data = await prisma.pendaftaran.findUnique({
     where: { id: pendaftaranId },
@@ -48,6 +48,11 @@ export const validasiFinal = async (
   });
 
   if (!data) throw new Error("Pendaftaran tidak ditemukan");
+
+  // Wajib sudah diseleksi admin
+  if (!data.hasil) {
+    throw new Error("Siswa belum di seleksi oleh admin sekolah");
+  }
 
   // 🔥 aman pakai upsert
   await prisma.hasilSeleksi.upsert({
