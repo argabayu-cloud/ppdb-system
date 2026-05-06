@@ -1,48 +1,34 @@
-import { Skeleton } from "@/components/ui/skeleton"
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Loading() {
   return (
-    <div className="flex flex-col gap-6 bg-slate-50 min-h-screen p-6">
-      
-      {/* 🔷 WELCOME SKELETON */}
-      <Skeleton className="h-[120px] w-full rounded-2xl" />
+    <div className="space-y-6">
 
-      {/* 🔷 PROGRESS SKELETON */}
-      <div className="bg-white rounded-2xl shadow p-6 flex flex-col gap-4">
-        <Skeleton className="h-6 w-48" />
-        <Skeleton className="h-3 w-full rounded-full" />
-        <div className="flex gap-2">
-          <Skeleton className="h-5 w-24 rounded-full" />
-          <Skeleton className="h-5 w-24 rounded-full" />
-          <Skeleton className="h-5 w-24 rounded-full" />
-        </div>
-      </div>
-
-      {/* 🔷 STATUS CARDS SKELETON */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="bg-white rounded-2xl shadow p-4 flex flex-col gap-2">
-            <Skeleton className="h-8 w-8 rounded-full" />
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-3 w-20" />
-          </div>
-        ))}
-      </div>
-
-      {/* 🔷 PENGUMUMAN SKELETON */}
-      <div>
-        <Skeleton className="h-6 w-48 mb-3" />
-        <div className="flex flex-col gap-3">
-          {Array.from({ length: 2 }).map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl shadow p-5 flex flex-col gap-2">
-              <Skeleton className="h-3 w-24" />
-              <Skeleton className="h-5 w-64" />
-              <Skeleton className="h-4 w-full" />
-            </div>
+      {/* Step Progress */}
+      <div className="bg-white p-6 rounded-2xl shadow">
+        <Skeleton className="h-6 w-1/3 mb-4" />
+        <div className="flex justify-between">
+          {[...Array(5)].map((_, i) => (
+            <Skeleton key={i} className="h-10 w-16 rounded-xl" />
           ))}
         </div>
       </div>
-      
+
+      {/* Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {[...Array(3)].map((_, i) => (
+          <Skeleton key={i} className="h-24 w-full rounded-2xl" />
+        ))}
+      </div>
+
+      {/* Pengumuman */}
+      <div className="bg-white p-6 rounded-2xl shadow space-y-3">
+        <Skeleton className="h-6 w-1/4 mb-2" />
+        {[...Array(3)].map((_, i) => (
+          <Skeleton key={i} className="h-16 w-full rounded-xl" />
+        ))}
+      </div>
+
     </div>
-  )
+  );
 }
