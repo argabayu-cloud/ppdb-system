@@ -22,7 +22,7 @@ export const handleGetNotif = async (req: Request, res: Response) => {
 
 export const handleMarkRead = async (req: Request, res: Response) => {
   try {
-    const id = (req.params.id, "ID notifikasi");
+    const id = getParam(req.params.id, "ID notifikasi");
     await NotifService.markAsRead(id);
 
     return res.json({

@@ -25,13 +25,19 @@ export default function LoginPage() {
     }
 
     try {
-      const res = await fetcher("/auth/login", {
+      const res = await fetcher("/api/auth/login", {
         method: "POST",
         body: JSON.stringify({ email, password }),
       });
 
-      if (res.token) {
-        localStorage.setItem("token", res.token);
+      if (res.data?.token) {
+        localStorage.setItem("token", res.data.token);
+
+        // opsional simpan user
+        if (res.data.user) {
+          localStorage.setItem("user", JSON.stringify(res.data.user));
+        }
+
         router.push("/dashboard");
       } else {
         setError(res.message || "Email atau password salah!");
@@ -64,7 +70,6 @@ export default function LoginPage() {
       {/* Main */}
       <main className="flex-1 flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 flex flex-col gap-6">
-
           {/* Header */}
           <div className="text-center">
             <div className="w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center mx-auto mb-4">
@@ -86,7 +91,9 @@ export default function LoginPage() {
           {/* Form */}
           <form onSubmit={handleLogin} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-slate-700">Email</label>
+              <label className="text-sm font-medium text-slate-700">
+                Email
+              </label>
               <input
                 type="email"
                 placeholder="Masukkan email kamu"
@@ -96,7 +103,9 @@ export default function LoginPage() {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-slate-700">Password</label>
+              <label className="text-sm font-medium text-slate-700">
+                Password
+              </label>
               <input
                 type="password"
                 placeholder="Masukkan password"
@@ -116,7 +125,10 @@ export default function LoginPage() {
 
           <p className="text-center text-sm text-slate-500">
             Belum punya akun?{" "}
-            <Link href="/auth/register" className="text-blue-600 font-semibold hover:underline">
+            <Link
+              href="/auth/register"
+              className="text-blue-600 font-semibold hover:underline"
+            >
               Daftar di sini
             </Link>
           </p>

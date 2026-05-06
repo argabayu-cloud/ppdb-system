@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { fetcher } from "@/lib/api";
+import { fetcher, registerUser } from "@/lib/api";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -12,7 +12,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [noTlpn, setNoTlpn] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [konfirmasiPassword, setKonfirmasiPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -21,22 +21,25 @@ export default function RegisterPage() {
     setLoading(true);
     setError("");
 
-    if (!nama || !email || !noTlpn || !password || !confirmPassword) {
+    if (!nama || !email || !noTlpn || !password || !konfirmasiPassword) {
       setError("Semua field wajib diisi");
       setLoading(false);
       return;
     }
 
-    if (password !== confirmPassword) {
+    if (password !== konfirmasiPassword) {
       setError("Konfirmasi password tidak cocok");
       setLoading(false);
       return;
     }
 
     try {
-      await fetcher("/auth/register", {
-        method: "POST",
-        body: JSON.stringify({ nama, email, noTlpn, password }),
+      await registerUser({
+        nama,
+        email,
+        noTlpn,
+        password,
+        konfirmasiPassword
       });
 
       alert("Register berhasil, silakan login");
@@ -139,8 +142,8 @@ export default function RegisterPage() {
               <input
                 type="password"
                 placeholder="Ulangi password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                value={konfirmasiPassword}
+                onChange={(e) => setKonfirmasiPassword(e.target.value)}
                 className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
               />
             </div>

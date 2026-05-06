@@ -47,7 +47,7 @@ export default function NotificationBell() {
 
   const markAsRead = async (id: string) => {
     await fetch(`http://localhost:5000/notifikasi/${id}/read`, {
-      method: "PUT",
+      method: "PATCH",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
