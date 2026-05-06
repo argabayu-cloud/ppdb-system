@@ -4,11 +4,11 @@ import {
   handleMarkRead,
 } from "../controllers/notifikasi.controller";
 
-import { verifyToken } from "../middlewares/auth.middlewares";
+import { authMiddleware } from "../middlewares/auth.middlewares";
 
 const router = Router();
 
-router.use(verifyToken);
+router.use(authMiddleware);
 
 router.get("/", handleGetNotif);
 router.patch("/:id", handleMarkRead);
