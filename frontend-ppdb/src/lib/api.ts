@@ -1,5 +1,4 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL!;
-
 console.log("BASE_URL:", BASE_URL);
 
 export async function fetcher(
@@ -34,8 +33,9 @@ export async function registerUser(data: {
   email: string;
   noTlpn: string;
   password: string;
+  konfirmasiPassword: string;
 }) {
-  return fetcher("/auth/register", {
+  return fetcher("/api/auth/register", {
     method: "POST",
     body: JSON.stringify(data),
   });
@@ -45,7 +45,7 @@ export async function loginUser(data: {
   email: string;
   password: string;
 }) {
-  return fetcher("/auth/login", {
+  return fetcher("/api/auth/login", {
     method: "POST",
     body: JSON.stringify(data),
   });

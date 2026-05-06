@@ -3,7 +3,7 @@ import { registerUser, loginUser } from "../services/auth.service";
 
 export const register = async (req: Request, res: Response) => {
   try {
-    console.log("BODY:", req.body);
+    console.log("BODY MASUK:", req.body);
     const { nama, email, noTlpn, password, konfirmasiPassword } = req.body;
 
     if (!nama || !email || !noTlpn || !password || !konfirmasiPassword) {
