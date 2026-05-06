@@ -11,6 +11,6 @@ const router = Router();
 router.use(verifyToken);
 
 router.get("/", handleGetNotif);
-router.put("/:id/read", handleMarkRead);
+router.patch("/:id", handleMarkRead);
 
 export default router;
