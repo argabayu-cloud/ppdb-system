@@ -1,5 +1,6 @@
 import Sidebar from "@/components/sidebar";
 import Navbar from "@/components/navbar";
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function DashboardLayout({
   children,
@@ -13,9 +14,11 @@ export default function DashboardLayout({
       {/* Sidebar */}
       <Sidebar />
 
+
       {/* Content */}
       <main className="flex-1 ml-52 p-6 pt-20">
         {children}
+        
       </main>
     </div>
   );
