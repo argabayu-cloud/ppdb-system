@@ -10,7 +10,7 @@ export default function LandingPage() {
       <nav className="w-full px-8 py-4 flex items-center justify-between border-b border-slate-100 shadow-sm bg-white">
         <div className="flex items-center gap-2">
           {/* Logo */}
-          <Image src="/images/logo-ppdb.jpeg" alt="Logo" width={40} height={40} />
+          <Image src="/images/logo-ppdb.png" alt="Logo" width={40} height={40} />
           <span className="font-bold text-blue-700 text-base tracking-wide uppercase">
             PPDB SMP Terpadu
           </span>

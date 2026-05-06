@@ -10,7 +10,7 @@ export default function Navbar() {
       {/* LEFT */}
       <div className="flex items-center gap-3">
         <Image
-          src="/images/logo-ppdb.jpeg"
+          src="/images/logo-ppdb.png"
           alt="Logo PPDB"
           width={36}
           height={36}
