@@ -1,4 +1,5 @@
 import Sidebar from "@/components/sidebar";
+import Navbar from "@/components/navbar";
 
 export default function DashboardLayout({
   children,
@@ -7,6 +8,7 @@ export default function DashboardLayout({
 }) {
   return (
     <div className="flex">
+      <Navbar />
       
       {/* Sidebar */}
       <Sidebar />
