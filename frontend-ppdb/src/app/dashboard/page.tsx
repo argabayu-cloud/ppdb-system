@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useRouter } from "next/navigation";
 
 const steps = [
   { label: "Buat Akun", done: true },
@@ -25,7 +26,15 @@ const announcements = [
 ];
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/auth/login");
+    }
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
