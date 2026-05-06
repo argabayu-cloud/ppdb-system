@@ -95,6 +95,7 @@ export default function RegisterPage() {
               <input
                 type="text"
                 placeholder="Masukkan nama lengkap"
+                value={nama}
                 onChange={(e) => setNama(e.target.value)}
                 className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
               />
@@ -105,6 +106,7 @@ export default function RegisterPage() {
               <input
                 type="email"
                 placeholder="Masukkan email aktif"
+                value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
               />
@@ -115,6 +117,7 @@ export default function RegisterPage() {
               <input
                 type="text"
                 placeholder="Contoh: 08123456789"
+                value={noTlpn}
                 onChange={(e) => setNoTlpn(e.target.value)}
                 className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
               />
@@ -125,6 +128,7 @@ export default function RegisterPage() {
               <input
                 type="password"
                 placeholder="Buat password"
+                value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
               />
@@ -135,6 +139,7 @@ export default function RegisterPage() {
               <input
                 type="password"
                 placeholder="Ulangi password"
+                value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
               />
