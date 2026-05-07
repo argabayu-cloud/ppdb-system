@@ -371,6 +371,7 @@ async function main() {
         sekolahId: createdSekolah.id,
       },
     });
+  }
 
     // ========================
     // 👑 SUPER ADMIN
@@ -397,4 +398,3 @@ async function main() {
     .finally(async () => {
       await prisma.$disconnect();
     });
-}
