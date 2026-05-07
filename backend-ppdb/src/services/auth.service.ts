@@ -64,34 +64,37 @@ export const loginUser = async (data: LoginInput) => {
   email = email.toLowerCase().trim();
 
   const user = await prisma.user.findUnique({
-    where: { email },
+    where: { email: data.email },
   });
 
   if (!user) {
     throw new Error("User tidak ditemukan");
   }
 
-  const isValid = await bcrypt.compare(password, user.password);
+  const isValid = await bcrypt.compare(data.password, user.password);
 
   if (!isValid) {
     throw new Error("Password salah");
   }
 
-  const token = generateToken({
-    id: user.id,
-    role: user.role,
+  const adminSekolah = await prisma.adminSekolah.findFirst({
+    where: { userId: user.id },
+    include: {
+      sekolah: true,
+    },
   });
 
-  // jangan kirim password ke client
-  const safeUser = {
-    id: user.id,
-    nama: user.nama,
-    email: user.email,
-    role: user.role,
-  };
+  const token = generateToken(user);
 
   return {
     token,
-    user: safeUser,
+    user: {
+      id: user.id,
+      nama: user.nama,
+      email: user.email,
+      role: user.role,
+
+      namaSekolah: adminSekolah?.sekolah.nama || null,
+    },
   };
 };

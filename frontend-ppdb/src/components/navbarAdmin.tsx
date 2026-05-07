@@ -50,7 +50,9 @@ export default function Navbar() {
         {/* Nama */}
         <div className="flex items-center gap-3">
           <div className="hidden sm:flex flex-col items-end leading-tight">
-            <span className="font-semibold text-sm">Admin Sekolah</span>
+            <span className="font-semibold text-sm">
+                {admin?.namaSekolah || "Admin Sekolah"}
+                </span>
             
             <span className="text-xs text-blue-200 hidden sm:block">
               {admin?.sekolah?.nama || "Loading..."}
