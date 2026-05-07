@@ -4,11 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const menuItems = [
-  { label: "Dashboard", href: "/dashboard" },
-  { label: "Pendaftaran", href: "/dashboard/pendaftaran" },
-  { label: "Biodata", href: "/dashboard/biodata" },
-  { label: "Upload", href: "/dashboard/upload" },
-  { label: "Pengumuman", href: "/dashboard/pengumuman" },
+  { label: "Dashboard", href: "/adminsekolah/dashboard" },
+  { label: "Pendaftar", href: "/adminsekolah/dashboard/pendaftar" },
+  { label: "Verifikasi", href: "/adminsekolah/dashboard/verifikasi" },
+  { label: "Statistik", href: "/adminsekolah/dashboard/statistik" },
 ];
 
 export default function Sidebar() {
