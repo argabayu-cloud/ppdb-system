@@ -39,10 +39,11 @@ export default function LoginPage() {
         }
 
         // 🔥 ROLE LOGIN
-        if (email === "superadmin@gmail.com") {
+        if (email === "superadmin@smp.com") {
           router.push("/superadmin/dashboard");
         }
-        else if (email.startsWith("admin")
+        else if (email.startsWith("admin") && 
+        email.endsWith("@gmail.com")
         ) {
           router.push("/adminsekolah/dashboard");
         }
