@@ -1,3 +1,5 @@
+// diubah dikit, disesuaiin sama admin sekolah
+
 "use client";
 
 import NotificationBell from "./notifikasiBell";
