@@ -38,7 +38,17 @@ export default function LoginPage() {
           localStorage.setItem("user", JSON.stringify(res.data.user));
         }
 
-        router.push("/dashboard");
+        // 🔥 ROLE LOGIN
+        if (email === "superadmin@gmail.com") {
+          router.push("/superadmin/dashboard");
+        }
+        else if (email.startsWith("admin")) {
+          router.push("/adminsekolah/dashboard");
+        }
+        else {
+          router.push("/dashboard");
+        }
+        
       } else {
         setError(res.message || "Email atau password salah!");
       }
