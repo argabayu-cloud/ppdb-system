@@ -1,16 +1,15 @@
 "use client";
 
-import NotificationBell from "./notifikasiBell";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
 export default function Navbar() {
-  const [user, setUser] = useState<any>(null);
+  const [admin, setAdmin] = useState<any>(null);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    const storedAdmin = localStorage.getItem("admin");
+    if (storedAdmin) {
+      setAdmin(JSON.parse(storedAdmin));
     }
   }, []);
 
@@ -26,16 +25,21 @@ export default function Navbar() {
           className="rounded-lg object-cover"
         />
 
-        <span className="font-semibold text-slate-800 text-sm">
-          PPDB SMP Terpadu
-        </span>
+        <div className="flex flex-col">
+          <span className="font-semibold text-slate-800 text-sm">
+            PPDB SMP Terpadu
+          </span>
+          <span className="text-blue-400 text-xs hidden sm:block">
+            Panel Admin Sekolah
+          </span>
+        </div>
       </div>
 
       {/* RIGHT */}
       <div className="flex items-center gap-2">
         {/* Avatar */}
         <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold">
-          {user?.nama
+          {admin?.nama
             ?.split(" ")
             .map((n: string) => n[0])
             .join("")
@@ -44,9 +48,17 @@ export default function Navbar() {
         </div>
 
         {/* Nama */}
-        <span className="text-sm text-slate-700 hidden sm:block">
-          {user?.nama || "Loading..."}
-        </span>
+        <div className="flex items-center gap-3">
+          <div className="hidden sm:flex flex-col items-end keading-tight">
+            <span className="font-semibold text-sm">Admin Sekolah</span>
+            <span className="text-xs text-blue-200 hidden sm:block">
+              {admin?.nama || "Loading..."}
+            </span>
+            <span className="text-xs text-slate-500 hidden sm:block">
+              {admin?.role.toUpperCase()}
+            </span>
+          </div>
+        </div>
       </div>
     </nav>
   );
