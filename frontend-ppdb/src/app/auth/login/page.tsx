@@ -43,7 +43,7 @@ export default function LoginPage() {
           router.push("/superadmin/dashboard");
         }
         else if (email.startsWith("admin") && 
-        email.endsWith("@gmail.com")
+        email.endsWith("@ppdb-bdl.sch.id")
         ) {
           router.push("/adminsekolah/dashboard");
         }
