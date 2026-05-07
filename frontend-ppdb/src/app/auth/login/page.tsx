@@ -42,7 +42,7 @@ export default function LoginPage() {
         if (email === "superadmin@smp.com") {
           router.push("/superadmin/dashboard");
         }
-        else if (email.startsWith("admin") && 
+        else if (email.startsWith("admin") &&
         email.endsWith("@ppdb-bdl.sch.id")
         ) {
           router.push("/adminsekolah/dashboard");
