@@ -44,18 +44,20 @@ export default function Navbar() {
             .map((n: string) => n[0])
             .join("")
             .slice(0, 2)
-            .toUpperCase() || "?"}
+            .toUpperCase() || "A"}
         </div>
 
         {/* Nama */}
         <div className="flex items-center gap-3">
-          <div className="hidden sm:flex flex-col items-end keading-tight">
-            <span className="font-semibold text-sm">Admin Sekolah</span>
+          <div className="hidden sm:flex flex-col items-end leading-tight">
             <span className="text-xs text-blue-200 hidden sm:block">
-              {admin?.nama || "Loading..."}
+              {admin?.sekolah?.nama || "Loading..."}
             </span>
+
+            <span className="font-semibold text-sm">Admin Sekolah</span>
+
             <span className="text-xs text-slate-500 hidden sm:block">
-              {admin?.role.toUpperCase()}
+              {admin?.role?.toUpperCase()}
             </span>
           </div>
         </div>
