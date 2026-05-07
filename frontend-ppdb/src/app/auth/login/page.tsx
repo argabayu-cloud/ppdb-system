@@ -39,16 +39,18 @@ export default function LoginPage() {
         }
 
         // 🔥 ROLE LOGIN
-        if (email === "superadmin@gmail.com") {
+        if (email === "superadmin@smp.com") {
           router.push("/superadmin/dashboard");
         }
-        else if (email.startsWith("admin")) {
+        else if (email.startsWith("admin") && 
+        email.endsWith("@ppdb-bdl.sch.id")
+        ) {
           router.push("/adminsekolah/dashboard");
         }
         else {
           router.push("/dashboard");
         }
-        
+
       } else {
         setError(res.message || "Email atau password salah!");
       }
