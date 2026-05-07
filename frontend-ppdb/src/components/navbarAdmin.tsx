@@ -3,13 +3,20 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
+type Admin = {
+  nama: string;
+  role: string;
+  namaSekolah?: string;
+};
+
 export default function Navbar() {
-  const [admin, setAdmin] = useState<any>(null);
+  const [admin, setAdmin] = useState<Admin | null>(null);
 
   useEffect(() => {
-    const storedAdmin = localStorage.getItem("admin");
-    if (storedAdmin) {
-      setAdmin(JSON.parse(storedAdmin));
+    const storedUser = localStorage.getItem("user");
+
+    if (storedUser) {
+      setAdmin(JSON.parse(storedUser));
     }
   }, []);
 
@@ -36,9 +43,9 @@ export default function Navbar() {
       </div>
 
       {/* RIGHT */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         {/* Avatar */}
-        <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold">
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center text-sm font-bold shadow-md">
           {admin?.nama
             ?.split(" ")
             .map((n: string) => n[0])
@@ -48,21 +55,18 @@ export default function Navbar() {
         </div>
 
         {/* Nama */}
-        <div className="flex items-center gap-3">
-          <div className="hidden sm:flex flex-col items-end leading-tight">
-            <span className="font-semibold text-sm">
-                {admin?.namaSekolah || "Admin Sekolah"}
-                </span>
-            
-            <span className="text-xs text-blue-200 hidden sm:block">
-              {admin?.sekolah?.nama || "Loading..."}
-            </span>
+          <div className="hidden sm:flex flex-col leading-tight">
 
-            <span className="text-xs text-slate-500 hidden sm:block">
+            {/* nama admin */}
+            <span className="text-sm font-semibold text-slate-800">
+                {admin?.nama || "Loading"}
+                </span>
+
+            {/* role admin */}
+            <span className="text-[10px] font-medium text-blue-600 bg-blue-50 border border-blue-100 rounded-full px-2 py-0.5 w-fit mt-1">
               {admin?.role?.toUpperCase()}
             </span>
           </div>
-        </div>
       </div>
     </nav>
   );
