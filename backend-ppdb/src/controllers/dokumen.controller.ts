@@ -13,11 +13,7 @@ export const handleUpload = async (req: any, res: Response) => {
       return res.status(400).json({ message: "Tipe dokumen wajib diisi" });
     }
 
-    const result = await uploadDokumen(
-      req.user.id,
-      req.file,
-      tipeDokumen
-    );
+    const result = await uploadDokumen(req.user.id, req.file, tipeDokumen);
 
     res.json({
       message: "Upload berhasil",
