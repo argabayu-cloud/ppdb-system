@@ -1,43 +1,46 @@
 "use client";
 
-import { signOut, useSession } from "next-auth/react";
-import { Bell, LogOut, UserCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
 
-export default function Navbar() {
-  const { data: session } = useSession();
+export default function NavbarSuperAdmin() {
+  const router = useRouter();
+
+  const handleLogout = () => {
+    localStorage.removeItem("superAdminToken");
+    router.push("/superadmin/login");
+  };
 
   return (
-    <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm">
-      {/* Judul halaman / breadcrumb bisa ditaruh sini */}
-      <h2 className="text-gray-700 font-semibold text-sm">Super Admin</h2>
-
-      {/* Kanan: notif + profil */}
-      <div className="flex items-center gap-4">
-        {/* Notifikasi */}
-        <button className="relative text-gray-500 hover:text-blue-600 transition">
-          <Bell size={20} />
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
-            3
+    <nav className="w-full bg-indigo-700 text-white px-6 py-3 flex items-center justify-between shadow-md fixed top-0 left-0 right-0 z-50">
+      <div className="flex items-center gap-2">
+        <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center">
+          <span className="text-indigo-700 font-bold text-sm">P</span>
+        </div>
+        <div className="flex flex-col leading-tight">
+          <span className="font-bold text-sm tracking-wide uppercase hidden sm:block">
+            PPDB SMP Terpadu
           </span>
-        </button>
-
-        {/* Profil */}
-        <div className="flex items-center gap-2 text-sm text-gray-700">
-          <UserCircle size={22} className="text-blue-700" />
-          <span className="font-medium">
-            {session?.user?.name ?? "Super Admin"}
+          <span className="text-indigo-200 text-xs hidden sm:block">
+            Panel Super Admin · Dinas Pendidikan
           </span>
         </div>
+      </div>
 
-        {/* Logout */}
+      <div className="flex items-center gap-3">
+        <div className="hidden sm:flex flex-col items-end leading-tight">
+          <span className="font-semibold text-sm">Super Admin</span>
+          <span className="text-indigo-200 text-xs">Dinas Pendidikan Kota Bandar Lampung</span>
+        </div>
+        <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center font-bold text-sm">
+          S
+        </div>
         <button
-          onClick={() => signOut({ callbackUrl: "/login" })}
-          className="flex items-center gap-1 text-sm text-red-500 hover:text-red-700 transition"
+          onClick={handleLogout}
+          className="text-indigo-200 hover:text-white text-xs border border-indigo-500 hover:border-white px-3 py-1 rounded-lg transition-colors"
         >
-          <LogOut size={18} />
           Keluar
         </button>
       </div>
-    </header>
+    </nav>
   );
 }

@@ -2,60 +2,49 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  School,
-  Users,
-  BarChart3,
-  CalendarDays,
-  ClipboardList,
-} from "lucide-react";
 
 const menuItems = [
-  { label: "Dashboard", href: "/super-admin/dashboard", icon: LayoutDashboard },
-  { label: "Kelola Sekolah", href: "/super-admin/sekolah", icon: School },
-  { label: "Kelola Admin", href: "/super-admin/admin", icon: Users },
-  { label: "Periode PPDB", href: "/super-admin/periode", icon: CalendarDays },
-  { label: "Monitoring", href: "/super-admin/monitoring", icon: ClipboardList },
-  { label: "Laporan", href: "/super-admin/laporan", icon: BarChart3 },
+  { label: "Dashboard", href: "/superadmin/dashboard", icon: "🏠" },
+  { label: "Kelola Sekolah", href: "/superadmin/sekolah", icon: "🏫" },
+  { label: "Monitoring", href: "/superadmin/monitoring", icon: "📡" },
+  { label: "Laporan", href: "/superadmin/laporan", icon: "📊" },
 ];
 
-export default function Sidebar() {
+export default function SidebarSuperAdmin() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 min-h-screen bg-blue-900 text-white flex flex-col">
-      {/* Logo */}
-      <div className="px-6 py-5 border-b border-blue-700">
-        <h1 className="text-lg font-bold leading-tight">PPDB Terpadu</h1>
-        <span className="text-xs text-blue-300">Super Admin Panel</span>
-      </div>
-
-      {/* Menu */}
-      <nav className="flex-1 px-4 py-4 space-y-1">
+    <aside className="w-52 bg-white border-r border-slate-100 shadow-sm fixed top-[52px] left-0 bottom-0 flex flex-col justify-between z-40">
+      <nav className="flex flex-col gap-1 p-3 mt-2">
         {menuItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = pathname === item.href;
+          const isActive =
+            item.href === "/superadmin/dashboard"
+              ? pathname === "/superadmin/dashboard"
+              : pathname.startsWith(item.href);
+
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                isActive
-                  ? "bg-blue-600 text-white"
-                  : "text-blue-200 hover:bg-blue-800 hover:text-white"
-              }`}
+              className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors
+                ${isActive
+                  ? "bg-indigo-600 text-white shadow-sm"
+                  : "text-slate-600 hover:bg-indigo-50 hover:text-indigo-700"
+                }`}
             >
-              <Icon size={18} />
+              <span className="text-base">{item.icon}</span>
               {item.label}
             </Link>
           );
         })}
       </nav>
 
-      {/* Footer */}
-      <div className="px-6 py-4 border-t border-blue-700 text-xs text-blue-400">
-        © 2025 PPDB Terpadu
+      <div className="p-4 border-t border-slate-100">
+        <p className="text-xs text-slate-400 text-center leading-relaxed">
+          © 2025 Dinas Pendidikan
+          <br />
+          Kota Bandar Lampung
+        </p>
       </div>
     </aside>
   );
