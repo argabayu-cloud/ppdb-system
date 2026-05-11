@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const daftarBerkas = [
   {
@@ -62,6 +63,16 @@ export default function UploadBerkasPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  const [loadingSkeleton, setLoadingSkeleton] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoadingSkeleton(false);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   const handleFileChange = (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -110,6 +121,53 @@ export default function UploadBerkasPage() {
       setSuccess(true);
     }, 1200);
   };
+
+  if (loadingSkeleton) {
+    return (
+      <div className="flex flex-col gap-6 max-w-3xl">
+        {/* Header */}
+        <div className="space-y-2">
+          <Skeleton className="h-7 w-56" />
+          <Skeleton className="h-4 w-96" />
+        </div>
+
+        {/* Progress */}
+        <div className="bg-white rounded-2xl shadow p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-4 w-36" />
+            <Skeleton className="h-4 w-24" />
+          </div>
+
+          <Skeleton className="h-3 w-full rounded-full" />
+          <Skeleton className="h-4 w-52" />
+        </div>
+
+        {/* List Berkas */}
+        <div className="bg-white rounded-2xl shadow p-6 flex flex-col gap-4">
+          <Skeleton className="h-5 w-40" />
+
+          {[...Array(5)].map((_, i) => (
+            <div
+              key={i}
+              className="border rounded-xl p-4 flex items-center gap-4"
+            >
+              <Skeleton className="w-10 h-10 rounded-full" />
+
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-44" />
+                <Skeleton className="h-3 w-52" />
+              </div>
+
+              <Skeleton className="h-9 w-24 rounded-lg" />
+            </div>
+          ))}
+        </div>
+
+        {/* Button */}
+        <Skeleton className="h-12 w-full rounded-xl" />
+      </div>
+    );
+  }
 
   if (success) {
     return (
