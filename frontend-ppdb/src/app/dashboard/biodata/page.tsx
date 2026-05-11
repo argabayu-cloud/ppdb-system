@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect,useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+import Link from "next/link";
 
 const pilihanPekerjaan = [
   "-- Pilih --",
@@ -65,6 +67,15 @@ export default function BiodataPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  const [loadingSkeleton, setLoadingSkeleton] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoadingSkeleton(false);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
@@ -80,6 +91,49 @@ export default function BiodataPage() {
     }, 1000);
   };
 
+  if (loadingSkeleton) {
+    return (
+      <div className="flex flex-col gap-6 max-w-3xl">
+        {/* Header */}
+        <div className="space-y-2">
+          <Skeleton className="h-7 w-52" />
+          <Skeleton className="h-4 w-80" />
+        </div>
+
+        {/* Card 1 */}
+        <div className="bg-white rounded-2xl shadow p-6 flex flex-col gap-6">
+          <Skeleton className="h-5 w-44" />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {[...Array(12)].map((_, i) => (
+              <div key={i} className="space-y-2">
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-11 w-full rounded-xl" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Card 2 */}
+        <div className="bg-white rounded-2xl shadow p-6 flex flex-col gap-6">
+          <Skeleton className="h-5 w-52" />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {[...Array(10)].map((_, i) => (
+              <div key={i} className="space-y-2">
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-11 w-full rounded-xl" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Button */}
+        <Skeleton className="h-12 w-full rounded-xl" />
+      </div>
+    );
+  }
+
   if (success) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
@@ -88,10 +142,12 @@ export default function BiodataPage() {
         <p className="text-slate-500 text-sm text-center max-w-sm">
           Data biodata kamu sudah tersimpan. Lanjutkan ke form pendaftaran.
         </p>
-        <a href="/dashboard/pendaftaran"
-          className="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold text-sm hover:bg-blue-700 transition-colors">
+        <Link
+        href="/dashboard/pendaftaran"
+        className="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold text-sm hover:bg-blue-700 transition-colors"
+        >
           Isi Pendaftaran →
-        </a>
+        </Link>
       </div>
     );
   }
