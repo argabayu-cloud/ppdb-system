@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createPendaftaran } from "@/lib/api";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const daftarSekolah = Array.from(
   { length: 45 },
@@ -72,8 +73,19 @@ export default function PendaftaranPage() {
 
   const [pilihan1, setPilihan1] = useState("");
   const [pilihan2, setPilihan2] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  const [loadingSkeleton, setLoadingSkeleton] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoadingSkeleton(false);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -122,6 +134,68 @@ export default function PendaftaranPage() {
       setLoading(false);
     }
   };
+
+  // Skeleton UI
+  if (loadingSkeleton) {
+    return (
+      <div className="flex flex-col gap-6 max-w-3xl">
+        {/* Header */}
+        <div className="space-y-2">
+          <Skeleton className="h-7 w-56" />
+          <Skeleton className="h-4 w-80" />
+        </div>
+
+        {/* Jalur */}
+        <div className="bg-white rounded-2xl shadow p-6 flex flex-col gap-4">
+          <Skeleton className="h-5 w-48" />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {[...Array(4)].map((_, i) => (
+              <div
+                key={i}
+                className="border rounded-xl p-4 flex flex-col gap-3"
+              >
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-40" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Form Akademik */}
+        <div className="bg-white rounded-2xl shadow p-6 flex flex-col gap-4">
+          <Skeleton className="h-5 w-40" />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="space-y-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-11 w-full rounded-xl" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Pilihan Sekolah */}
+        <div className="bg-white rounded-2xl shadow p-6 flex flex-col gap-5">
+          <Skeleton className="h-5 w-56" />
+
+          {[...Array(2)].map((_, i) => (
+            <div key={i} className="space-y-2">
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-11 w-full rounded-xl" />
+            </div>
+          ))}
+
+          <Skeleton className="h-24 w-full rounded-xl" />
+        </div>
+
+        {/* Button */}
+        <Skeleton className="h-12 w-full rounded-xl" />
+      </div>
+    );
+  }
 
   if (success) {
     return (
