@@ -25,7 +25,7 @@ export default function LoginPage() {
     }
 
     try {
-      const res = await fetcher("/api/auth/login", {
+      const res = await fetcher("/auth/login", {
         method: "POST",
         body: JSON.stringify({ email, password }),
       });
@@ -41,16 +41,14 @@ export default function LoginPage() {
         // 🔥 ROLE LOGIN
         if (email === "superadmin@smp.com") {
           router.push("/superadmin/dashboard");
-        }
-        else if (email.startsWith("admin") &&
-        email.endsWith("@ppdb-bdl.sch.id")
+        } else if (
+          email.startsWith("admin") &&
+          email.endsWith("@ppdb-bdl.sch.id")
         ) {
           router.push("/adminsekolah/dashboard");
-        }
-        else {
+        } else {
           router.push("/dashboard");
         }
-
       } else {
         setError(res.message || "Email atau password salah!");
       }
