@@ -1,14 +1,9 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL!;
 console.log("BASE_URL:", BASE_URL);
 
-export async function fetcher(
-  url: string,
-  options: RequestInit = {}
-) {
+export async function fetcher(url: string, options: RequestInit = {}) {
   const token =
-    typeof window !== "undefined"
-      ? localStorage.getItem("token")
-      : null;
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
   const res = await fetch(`${BASE_URL}${url}`, {
     ...options,
@@ -35,17 +30,25 @@ export async function registerUser(data: {
   password: string;
   konfirmasiPassword: string;
 }) {
-  return fetcher("/api/auth/register", {
+  return fetcher("/auth/register", {
     method: "POST",
     body: JSON.stringify(data),
   });
 }
 
-export async function loginUser(data: {
-  email: string;
-  password: string;
+export async function loginUser(data: { email: string; password: string }) {
+  return fetcher("/auth/login", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function createPendaftaran(data: {
+  sekolah1Id: string;
+  sekolah2Id?: string;
+  jalur: string;
 }) {
-  return fetcher("/api/auth/login", {
+  return fetcher("/pendaftaran", {
     method: "POST",
     body: JSON.stringify(data),
   });
