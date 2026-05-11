@@ -414,7 +414,7 @@ async function main() {
       },
     });
 
-    if (existingAdminSekolah) {
+    if (!existingAdminSekolah) {
       await prisma.adminSekolah.create({
         data: {
           userId: adminSekolah.id,

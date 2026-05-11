@@ -2,6 +2,12 @@
 
 import { useEffect, useState } from "react";
 
+type Admin = {
+  nama: string;
+  role: string;
+  namaSekolah?: string;
+};
+
 const statsData = [
   { label: "Total Pendaftar", value: 100, icon: "👥", color: "bg-blue-500" },
   {
@@ -49,8 +55,15 @@ const statusWarna: Record<string, string> = {
 
 export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
+  const [admin, setAdmin] = useState<Admin | null>(null);
 
   useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+
+    if (storedUser) {
+      setAdmin(JSON.parse(storedUser));
+    }
+
     const timer = setTimeout(() => {
       setLoading(false);
     }, 1200);
@@ -99,12 +112,24 @@ export default function AdminDashboardPage() {
   return (
     <div className="flex flex-col gap-6">
       {/* Welcome */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl p-6 text-white shadow-lg">
-        <p className="text-blue-200 text-sm mb-1">Selamat Datang 👋</p>
-        <h1 className="text-2xl font-bold">Admin Sekolah</h1>
-        <p className="text-blue-100 text-sm mt-1">
-          SMP Negeri 3 Bandar Lampung · Tahun Ajaran 2025/2026
-        </p>
+      <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden">
+        <div className="absolute right-0 top-0 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
+
+        <div className="relative z-10">
+          <p className="text-blue-100 text-sm mb-2">Selamat Datang 👋</p>
+          {/* Nama Sekolah */}
+          <h1 className="text-3xl font-bold tracking-tight">Admin Sekolah</h1>
+
+          <p className="text-blue-100 text-sm mt-2">
+            {admin?.namaSekolah || "Loading..."}
+          </p>
+
+          {/* Tahun Ajaran */}
+          <div className="flex items-center gap-2 mt-2 text-sm text-blue-100">
+            <div className="w-1.5 h-1.5 rounded-full bg-blue-200" />
+            <p>Tahun Ajaran 2025/2026</p>
+          </div>
+        </div>
       </div>
 
       {/* Stats */}
