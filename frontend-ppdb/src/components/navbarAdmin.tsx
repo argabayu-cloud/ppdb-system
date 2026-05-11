@@ -29,7 +29,7 @@ export default function Navbar() {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
 
-    router.push("/login");
+    router.push("/auth/login");
   };
 
   return (
