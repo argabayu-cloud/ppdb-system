@@ -17,7 +17,7 @@ type Props = {
 
 export default function BellNotificationIcon({
   size = 24,
-  color = "#ffffff",
+  color = "#2563eb",
   strokeWidth = 2,
   background = "transparent",
   opacity = 1,
