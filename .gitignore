@@ -1,0 +1,6 @@
+node_modules
+backend-ppdb/node_modules
+frontend-ppdb/node_modules
+.next
+dist
+build
