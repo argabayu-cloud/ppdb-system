@@ -6,7 +6,7 @@ import NavbarSuperAdmin from "@/components/navbarSuperAdmin";
 import SidebarSuperAdmin from "@/components/sidebarSuperAdmin";
 import Footer from "@/components/footer";
 
-const dataMonitoring = Array.from({ length: 10 }, (_, i) => ({
+const dataMonitoring = Array.from({ length: 45 }, (_, i) => ({
   id: i + 1,
   nama: `SMP Negeri ${i + 1} Bandar Lampung`,
   kuota: 100 + (i % 3) * 20,
@@ -23,10 +23,22 @@ const dataMonitoring = Array.from({ length: 10 }, (_, i) => ({
 export default function MonitoringPage() {
   const [search, setSearch] = useState("");
   const [filterJalur, setFilterJalur] = useState("Semua");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const itemPerPage = 10;
 
   const filtered = dataMonitoring.filter((s) =>
-    s.nama.toLowerCase().includes(search.toLowerCase())
+    s.nama
+      .toLowerCase()
+      .includes(search.toLowerCase().trim())
   );
+
+  const totalPage = Math.ceil(filtered.length / itemPerPage);
+
+  const startIndex = (currentPage - 1) * itemPerPage;
+  const endIndex = currentPage * itemPerPage;
+
+  const paginated = filtered.slice(startIndex, endIndex);
 
   return (
     <div className="min-h-screen bg-slate-100">
@@ -55,10 +67,7 @@ export default function MonitoringPage() {
               {[
                 {
                   label: "Total Pendaftar",
-                  value: dataMonitoring.reduce(
-                    (a, s) => a + s.pendaftar,
-                    0
-                  ),
+                  value: dataMonitoring.reduce((a, s) => a + s.pendaftar, 0),
                   color: "bg-blue-500",
                   icon: "👥",
                 },
@@ -66,26 +75,20 @@ export default function MonitoringPage() {
                   label: "Terverifikasi",
                   value: dataMonitoring.reduce(
                     (a, s) => a + s.terverifikasi,
-                    0
+                    0,
                   ),
                   color: "bg-green-500",
                   icon: "✅",
                 },
                 {
                   label: "Menunggu",
-                  value: dataMonitoring.reduce(
-                    (a, s) => a + s.menunggu,
-                    0
-                  ),
+                  value: dataMonitoring.reduce((a, s) => a + s.menunggu, 0),
                   color: "bg-amber-500",
                   icon: "⏳",
                 },
                 {
                   label: "Ditolak",
-                  value: dataMonitoring.reduce(
-                    (a, s) => a + s.ditolak,
-                    0
-                  ),
+                  value: dataMonitoring.reduce((a, s) => a + s.ditolak, 0),
                   color: "bg-red-500",
                   icon: "❌",
                 },
@@ -100,9 +103,7 @@ export default function MonitoringPage() {
                     {s.icon}
                   </div>
 
-                  <p className="text-2xl font-bold text-slate-800">
-                    {s.value}
-                  </p>
+                  <p className="text-2xl font-bold text-slate-800">{s.value}</p>
 
                   <p className="text-xs text-slate-500">{s.label}</p>
                 </div>
@@ -169,9 +170,9 @@ export default function MonitoringPage() {
                   </thead>
 
                   <tbody>
-                    {filtered.map((s, i) => {
+                    {paginated.map((s, i) => {
                       const persen = Math.round(
-                        (s.terverifikasi / s.kuota) * 100
+                        (s.terverifikasi / s.kuota) * 100,
                       );
 
                       return (
@@ -211,8 +212,8 @@ export default function MonitoringPage() {
                                     persen >= 80
                                       ? "bg-red-500"
                                       : persen >= 50
-                                      ? "bg-amber-500"
-                                      : "bg-green-500"
+                                        ? "bg-amber-500"
+                                        : "bg-green-500"
                                   }`}
                                   style={{
                                     width: `${Math.min(persen, 100)}%`,
@@ -232,11 +233,36 @@ export default function MonitoringPage() {
                 </table>
               </div>
 
-              <div className="px-4 py-3 border-t border-slate-100">
+              {/* pagination */}
+              <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100">
                 <p className="text-xs text-slate-400">
-                  Menampilkan {filtered.length} dari{" "}
-                  {dataMonitoring.length} sekolah
+                  Menampilkan {startIndex + 1} dari {filtered.length} sekolah
                 </p>
+                <div className="flex item-center gap-2">
+                  <button
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(1, prev - 1))
+                    }
+                    disabled={currentPage === 1}
+                    className="px-3 py-1.5 text-sm rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50"
+                  >
+                    Prev
+                  </button>
+
+                  <span className="text-sm text-slate-600">
+                    {currentPage} / {totalPage}
+                  </span>
+
+                  <button
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPage))
+                    }
+                    disabled={currentPage === totalPage}
+                    className="px-3 py-1.5 text-sm rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </div>
               </div>
             </div>
           </div>
