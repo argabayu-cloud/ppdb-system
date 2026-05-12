@@ -149,6 +149,20 @@ body {
 
   html {
     @apply font-sans;
-    font-size: 22px;
   }
+}
+
+@import "tailwindcss";
+
+:root {
+  --font-sans: var(--font-poppins);
+}
+
+html {
+  font-size: 16px;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-poppins), sans-serif;
 }
