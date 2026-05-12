@@ -128,15 +128,7 @@ body {
   --sidebar-ring: oklch(0.556 0 0);
 }
 
-@import "tailwindcss";
 
-:root {
-  --font-sans: var(--font-poppins);
-}
-
-body {
-  font-family: var(--font-poppins), sans-serif;
-}
 
 @layer base {
   * {
@@ -149,6 +141,6 @@ body {
 
   html {
     @apply font-sans;
-    font-size: 22px;
+    font-size: 16px;
   }
 }
