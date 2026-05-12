@@ -66,43 +66,39 @@ export default function AdminDashboardPage() {
 
     const timer = setTimeout(() => {
       setLoading(false);
-    }, 1200);
+    }, 800);
 
     return () => clearTimeout(timer);
   }, []);
 
   if (loading) {
     return (
-      <div className="flex flex-col gap-6 animate-pulse">
-        {/* Welcome Skeleton */}
-        <div className="h-32 rounded-2xl bg-slate-200" />
+      <div className="flex flex-col gap-5 animate-pulse">
+        <div className="h-28 rounded-2xl bg-slate-200" />
 
-        {/* Stats Skeleton */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl shadow p-5">
-              <div className="w-10 h-10 rounded-xl bg-slate-200 mb-4" />
-              <div className="h-6 w-16 bg-slate-200 rounded mb-2" />
-              <div className="h-4 w-24 bg-slate-100 rounded" />
+            <div key={i} className="bg-white rounded-xl shadow-sm p-4">
+              <div className="w-9 h-9 rounded-lg bg-slate-200 mb-3" />
+              <div className="h-5 w-14 bg-slate-200 rounded mb-2" />
+              <div className="h-3 w-24 bg-slate-100 rounded" />
             </div>
           ))}
         </div>
 
-        {/* Table Skeleton */}
-        <div className="bg-white rounded-2xl shadow p-6">
-          <div className="h-6 w-40 bg-slate-200 rounded mb-6" />
+        <div className="bg-white rounded-xl shadow-sm p-5">
+          <div className="h-5 w-40 bg-slate-200 rounded mb-5" />
 
-          <div className="space-y-4">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-10 bg-slate-100 rounded" />
+          <div className="space-y-3">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-9 bg-slate-100 rounded" />
             ))}
           </div>
         </div>
 
-        {/* Action Skeleton */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl shadow p-5 h-24" />
+            <div key={i} className="bg-white rounded-xl shadow-sm p-4 h-20" />
           ))}
         </div>
       </div>
@@ -110,55 +106,51 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Welcome */}
-      <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden">
-        <div className="absolute right-0 top-0 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
+    <div className="flex flex-col gap-5">
+      <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 rounded-2xl p-5 text-white shadow-md overflow-hidden">
+        <p className="text-blue-100 text-sm mb-1">Selamat Datang 👋</p>
 
-        <div className="relative z-10">
-          <p className="text-blue-100 text-sm mb-2">Selamat Datang 👋</p>
-          {/* Nama Sekolah */}
-          <h1 className="text-3xl font-bold tracking-tight">Admin Sekolah</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Admin Sekolah</h1>
 
-          <p className="text-blue-100 text-sm mt-2">
-            {admin?.namaSekolah || "Loading..."}
-          </p>
+        <p className="text-blue-100 text-sm mt-1">
+          {admin?.namaSekolah || "SMP Negeri 1 Bandar Lampung"}
+        </p>
 
-          {/* Tahun Ajaran */}
-          <div className="flex items-center gap-2 mt-2 text-sm text-blue-100">
-            <div className="w-1.5 h-1.5 rounded-full bg-blue-200" />
-            <p>Tahun Ajaran 2025/2026</p>
-          </div>
+        <div className="flex items-center gap-2 mt-2 text-sm text-blue-100">
+          <div className="w-1.5 h-1.5 rounded-full bg-blue-200" />
+          <p>Tahun Ajaran 2025/2026</p>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {statsData.map((stat) => (
           <div
             key={stat.label}
-            className="bg-white rounded-2xl shadow p-5 flex flex-col gap-2"
+            className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 flex flex-col gap-2"
           >
             <div
-              className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center text-xl`}
+              className={`w-9 h-9 rounded-lg ${stat.color} flex items-center justify-center text-lg`}
             >
               {stat.icon}
             </div>
 
-            <p className="text-2xl font-bold text-slate-800">{stat.value}</p>
+            <p className="text-xl font-bold text-slate-800">{stat.value}</p>
 
-            <p className="text-xs text-slate-500">{stat.label}</p>
+            <p className="text-xs text-slate-500 leading-tight">
+              {stat.label}
+            </p>
           </div>
         ))}
       </div>
 
-      {/* Pendaftar */}
-      <div className="bg-white rounded-2xl shadow p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-slate-800">📋 Pendaftar Terbaru</h2>
+      <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-5">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-semibold text-slate-800 text-sm">
+            📋 Pendaftar Terbaru
+          </h2>
 
           <a
-            href="/admin/pendaftar"
+            href="/adminsekolah/pendaftar"
             className="text-xs text-blue-600 hover:underline font-medium"
           >
             Lihat Semua →
@@ -185,18 +177,18 @@ export default function AdminDashboardPage() {
             </thead>
 
             <tbody>
-              {pendaftarTerbaru.map((p, i) => (
+              {pendaftarTerbaru.map((p) => (
                 <tr
-                  key={i}
+                  key={`${p.nama}-${p.tanggal}`}
                   className="border-b border-slate-50 hover:bg-slate-50 transition-colors"
                 >
-                  <td className="py-3 px-3 font-medium text-slate-800">
+                  <td className="py-2.5 px-3 font-medium text-slate-800">
                     {p.nama}
                   </td>
 
-                  <td className="py-3 px-3 text-slate-600">{p.jalur}</td>
+                  <td className="py-2.5 px-3 text-slate-600">{p.jalur}</td>
 
-                  <td className="py-3 px-3">
+                  <td className="py-2.5 px-3">
                     <span
                       className={`text-xs px-2 py-1 rounded-full font-medium ${statusWarna[p.status]}`}
                     >
@@ -204,7 +196,7 @@ export default function AdminDashboardPage() {
                     </span>
                   </td>
 
-                  <td className="py-3 px-3 text-slate-400 text-xs">
+                  <td className="py-2.5 px-3 text-slate-400 text-xs">
                     {p.tanggal}
                   </td>
                 </tr>
@@ -214,27 +206,26 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {[
           {
             label: "Verifikasi Berkas",
             desc: "250 berkas menunggu",
-            href: "/admin/verifikasi",
+            href: "/adminsekolah/verifikasi",
             icon: "✅",
             color: "border-green-400",
           },
           {
             label: "Lihat Pendaftar",
             desc: "100 total pendaftar",
-            href: "/admin/pendaftar",
+            href: "/adminsekolah/pendaftar",
             icon: "📋",
             color: "border-blue-400",
           },
           {
             label: "Lihat Statistik",
             desc: "Grafik per jalur",
-            href: "/admin/statistik",
+            href: "/adminsekolah/statistik",
             icon: "📊",
             color: "border-purple-400",
           },
@@ -242,9 +233,9 @@ export default function AdminDashboardPage() {
           <a
             key={item.label}
             href={item.href}
-            className={`bg-white rounded-2xl shadow border-l-4 ${item.color} p-5 flex items-center gap-4 hover:shadow-md transition-shadow`}
+            className={`bg-white rounded-xl shadow-sm border border-slate-100 border-l-4 ${item.color} p-4 flex items-center gap-3 hover:shadow transition-shadow`}
           >
-            <span className="text-3xl">{item.icon}</span>
+            <span className="text-2xl">{item.icon}</span>
 
             <div>
               <p className="font-semibold text-slate-800 text-sm">
