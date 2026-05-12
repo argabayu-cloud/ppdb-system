@@ -7,7 +7,9 @@ export default function NavbarSuperAdmin() {
 
   const handleLogout = () => {
     localStorage.removeItem("superAdminToken");
-    router.push("/superadmin/login");
+    localStorage.removeItem("user");
+    
+    router.replace("/auth/login");
   };
 
   return (
