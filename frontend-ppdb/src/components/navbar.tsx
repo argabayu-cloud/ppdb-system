@@ -32,7 +32,12 @@ export default function Navbar() {
       </div>
 
       {/* RIGHT */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-4">
+        {/* Notifikasi*/}
+        <div className="bg-blue-600 p-2 rounded-full shadow-md">
+          <NotificationBell />
+        </div>
+      
         {/* Avatar */}
         <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold">
           {user?.nama
