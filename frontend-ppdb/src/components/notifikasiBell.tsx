@@ -84,9 +84,9 @@ export default function NotificationBell() {
     <div className="relative">
       <button
         onClick={() => setOpen((prev) => !prev)}
-        className="relative flex items-center justify-center text-blue-600 transition duration-200 hover:scale-110"
+        className="relative flex items-center justify-center text-white transition duration-200 hover:scale-110"
       >
-        <BellNotificationIcon size={20} color="#2563eb" shadow={2} />
+        <BellNotificationIcon size={20} color="#ffffff" shadow={2} />
 
         {unreadCount > 0 && (
           <span className="absolute -right-2 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
