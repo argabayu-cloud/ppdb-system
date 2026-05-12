@@ -1,23 +1,28 @@
-import Sidebar from "@/components/sidebar";
-import Navbar from "@/components/navbar";
+import type { Metadata } from "next";
+import { Poppins } from "next/font/google";
+import "./globals.css";
 
-export default function DashboardLayout({
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-poppins",
+});
+
+export const metadata: Metadata = {
+  title: "PPDB System",
+  description: "Sistem PPDB",
+};
+
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex">
-      <Navbar />
-      
-      {/* Sidebar */}
-      <Sidebar />
-
-
-      {/* Content */}
-      <main className="flex-1 ml-52 p-6 pt-20">
+    <html lang="id" className={poppins.variable}>
+      <body className="font-sans antialiased bg-slate-50 text-slate-900">
         {children}
-      </main>
-    </div>
+      </body>
+    </html>
   );
 }
