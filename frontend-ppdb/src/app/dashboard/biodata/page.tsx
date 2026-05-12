@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { updateBiodata } from "@/lib/api";
 
 const pilihanPekerjaan = [
   "-- Pilih --",
@@ -66,30 +67,76 @@ export default function BiodataPage() {
   const [success, setSuccess] = useState(false);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
   ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async () => {
-    setLoading(true);
-    // TODO: sambungkan ke API backend
-    setTimeout(() => {
+    try {
+      setLoading(true);
+
+      if (!navigator.geolocation) {
+        alert("Geolocation tidak didukung browser");
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          try {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+
+            await updateBiodata({
+              alamat: form.alamat,
+              kelurahan: form.kelurahan,
+              kecamatan: form.kecamatan,
+              noTlpn: form.noHp,
+              latitude,
+              longitude,
+            });
+
+            setSuccess(true);
+          } catch (error) {
+            console.log(error);
+            alert("Gagal menyimpan biodata");
+          } finally {
+            setLoading(false);
+          }
+        },
+        (error) => {
+          console.log(error);
+
+          alert("Gagal mengambil lokasi");
+
+          setLoading(false);
+        },
+      );
+    } catch (error) {
+      console.log(error);
+
+      alert("Terjadi kesalahan");
+
       setLoading(false);
-      setSuccess(true);
-    }, 1000);
+    }
   };
 
   if (success) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center text-3xl">✅</div>
+        <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center text-3xl">
+          ✅
+        </div>
         <h2 className="text-xl font-bold text-slate-800">Biodata Tersimpan!</h2>
         <p className="text-slate-500 text-sm text-center max-w-sm">
           Data biodata kamu sudah tersimpan. Lanjutkan ke form pendaftaran.
         </p>
-        <a href="/dashboard/pendaftaran"
-          className="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold text-sm hover:bg-blue-700 transition-colors">
+        <a
+          href="/dashboard/pendaftaran"
+          className="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold text-sm hover:bg-blue-700 transition-colors"
+        >
           Isi Pendaftaran →
         </a>
       </div>
@@ -112,30 +159,57 @@ export default function BiodataPage() {
           📋 Data Diri Siswa
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
           {[
-            { label: "Nama Lengkap", name: "namaLengkap", placeholder: "Sesuai akta kelahiran" },
+            {
+              label: "Nama Lengkap",
+              name: "namaLengkap",
+              placeholder: "Sesuai akta kelahiran",
+            },
             { label: "NIK", name: "nik", placeholder: "16 digit nomor KTP/KK" },
-            { label: "Tempat Lahir", name: "tempatLahir", placeholder: "Kota tempat lahir" },
+            {
+              label: "Tempat Lahir",
+              name: "tempatLahir",
+              placeholder: "Kota tempat lahir",
+            },
           ].map((item) => (
             <div key={item.name} className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-slate-700">{item.label}</label>
-              <input type="text" name={item.name} value={form[item.name]}
-                onChange={handleChange} placeholder={item.placeholder}
-                className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all" />
+              <label className="text-sm font-medium text-slate-700">
+                {item.label}
+              </label>
+              <input
+                type="text"
+                name={item.name}
+                value={form[item.name]}
+                onChange={handleChange}
+                placeholder={item.placeholder}
+                className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
+              />
             </div>
           ))}
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-slate-700">Tanggal Lahir</label>
-            <input type="date" name="tanggalLahir" value={form.tanggalLahir} onChange={handleChange}
-              className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all" />
+            <label className="text-sm font-medium text-slate-700">
+              Tanggal Lahir
+            </label>
+            <input
+              type="date"
+              name="tanggalLahir"
+              value={form.tanggalLahir}
+              onChange={handleChange}
+              className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
+            />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-slate-700">Jenis Kelamin</label>
-            <select name="jenisKelamin" value={form.jenisKelamin} onChange={handleChange}
-              className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all">
+            <label className="text-sm font-medium text-slate-700">
+              Jenis Kelamin
+            </label>
+            <select
+              name="jenisKelamin"
+              value={form.jenisKelamin}
+              onChange={handleChange}
+              className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
+            >
               <option value="">-- Pilih --</option>
               <option value="L">Laki-laki</option>
               <option value="P">Perempuan</option>
@@ -144,10 +218,21 @@ export default function BiodataPage() {
 
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-slate-700">Agama</label>
-            <select name="agama" value={form.agama} onChange={handleChange}
-              className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all">
+            <select
+              name="agama"
+              value={form.agama}
+              onChange={handleChange}
+              className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
+            >
               <option value="">-- Pilih --</option>
-              {["Islam","Kristen","Katolik","Hindu","Buddha","Konghucu"].map(a => (
+              {[
+                "Islam",
+                "Kristen",
+                "Katolik",
+                "Hindu",
+                "Buddha",
+                "Konghucu",
+              ].map((a) => (
                 <option key={a}>{a}</option>
               ))}
             </select>
@@ -155,25 +240,55 @@ export default function BiodataPage() {
 
           {[
             { label: "Anak Ke", name: "anakKe", placeholder: "Contoh: 1" },
-            { label: "Jumlah Saudara", name: "jumlahSaudara", placeholder: "Contoh: 2" },
-            { label: "Berat Badan (kg)", name: "beratBadan", placeholder: "Contoh: 40" },
-            { label: "Tinggi Badan (cm)", name: "tinggiBadan", placeholder: "Contoh: 150" },
-            { label: "No. HP Siswa", name: "noHp", placeholder: "08xxxxxxxxxx" },
+            {
+              label: "Jumlah Saudara",
+              name: "jumlahSaudara",
+              placeholder: "Contoh: 2",
+            },
+            {
+              label: "Berat Badan (kg)",
+              name: "beratBadan",
+              placeholder: "Contoh: 40",
+            },
+            {
+              label: "Tinggi Badan (cm)",
+              name: "tinggiBadan",
+              placeholder: "Contoh: 150",
+            },
+            {
+              label: "No. HP Siswa",
+              name: "noHp",
+              placeholder: "08xxxxxxxxxx",
+            },
             { label: "Email", name: "email", placeholder: "email@gmail.com" },
           ].map((item) => (
             <div key={item.name} className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-slate-700">{item.label}</label>
-              <input type="text" name={item.name} value={form[item.name]}
-                onChange={handleChange} placeholder={item.placeholder}
-                className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all" />
+              <label className="text-sm font-medium text-slate-700">
+                {item.label}
+              </label>
+              <input
+                type="text"
+                name={item.name}
+                value={form[item.name]}
+                onChange={handleChange}
+                placeholder={item.placeholder}
+                className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
+              />
             </div>
           ))}
 
           <div className="flex flex-col gap-1.5 sm:col-span-2">
-            <label className="text-sm font-medium text-slate-700">Alamat Lengkap</label>
-            <textarea name="alamat" value={form.alamat} onChange={handleChange}
-              placeholder="Jalan, nomor rumah, RT/RW" rows={2}
-              className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all resize-none" />
+            <label className="text-sm font-medium text-slate-700">
+              Alamat Lengkap
+            </label>
+            <textarea
+              name="alamat"
+              value={form.alamat}
+              onChange={handleChange}
+              placeholder="Jalan, nomor rumah, RT/RW"
+              rows={2}
+              className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all resize-none"
+            />
           </div>
 
           {[
@@ -183,10 +298,16 @@ export default function BiodataPage() {
             { label: "Provinsi", name: "provinsi" },
           ].map((item) => (
             <div key={item.name} className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-slate-700">{item.label}</label>
-              <input type="text" name={item.name} value={form[item.name]}
+              <label className="text-sm font-medium text-slate-700">
+                {item.label}
+              </label>
+              <input
+                type="text"
+                name={item.name}
+                value={form[item.name]}
                 onChange={handleChange}
-                className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all" />
+                className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
+              />
             </div>
           ))}
         </div>
@@ -198,7 +319,6 @@ export default function BiodataPage() {
           👨‍👩‍👧 Data Orang Tua / Wali
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
           {[
             { label: "Nama Ayah", name: "namaAyah" },
             { label: "NIK Ayah", name: "nikAyah" },
@@ -207,23 +327,51 @@ export default function BiodataPage() {
             { label: "No. HP Orang Tua", name: "noHpOrtu" },
           ].map((item) => (
             <div key={item.name} className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-slate-700">{item.label}</label>
-              <input type="text" name={item.name} value={form[item.name]}
+              <label className="text-sm font-medium text-slate-700">
+                {item.label}
+              </label>
+              <input
+                type="text"
+                name={item.name}
+                value={form[item.name]}
                 onChange={handleChange}
-                className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all" />
+                className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
+              />
             </div>
           ))}
 
           {[
-            { label: "Pendidikan Ayah", name: "pendidikanAyah", options: pilihanPendidikan },
-            { label: "Pekerjaan Ayah", name: "pekerjaanAyah", options: pilihanPekerjaan },
-            { label: "Pendidikan Ibu", name: "pendidikanIbu", options: pilihanPendidikan },
-            { label: "Pekerjaan Ibu", name: "pekerjaanIbu", options: pilihanPekerjaan },
+            {
+              label: "Pendidikan Ayah",
+              name: "pendidikanAyah",
+              options: pilihanPendidikan,
+            },
+            {
+              label: "Pekerjaan Ayah",
+              name: "pekerjaanAyah",
+              options: pilihanPekerjaan,
+            },
+            {
+              label: "Pendidikan Ibu",
+              name: "pendidikanIbu",
+              options: pilihanPendidikan,
+            },
+            {
+              label: "Pekerjaan Ibu",
+              name: "pekerjaanIbu",
+              options: pilihanPekerjaan,
+            },
           ].map((item) => (
             <div key={item.name} className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-slate-700">{item.label}</label>
-              <select name={item.name} value={form[item.name]} onChange={handleChange}
-                className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all">
+              <label className="text-sm font-medium text-slate-700">
+                {item.label}
+              </label>
+              <select
+                name={item.name}
+                value={form[item.name]}
+                onChange={handleChange}
+                className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
+              >
                 {item.options.map((opt) => (
                   <option key={opt} value={opt === "-- Pilih --" ? "" : opt}>
                     {opt}
@@ -234,10 +382,17 @@ export default function BiodataPage() {
           ))}
 
           <div className="flex flex-col gap-1.5 sm:col-span-2">
-            <label className="text-sm font-medium text-slate-700">Alamat Orang Tua</label>
-            <textarea name="alamatOrtu" value={form.alamatOrtu} onChange={handleChange}
-              placeholder="Isi jika berbeda dengan alamat siswa" rows={2}
-              className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all resize-none" />
+            <label className="text-sm font-medium text-slate-700">
+              Alamat Orang Tua
+            </label>
+            <textarea
+              name="alamatOrtu"
+              value={form.alamatOrtu}
+              onChange={handleChange}
+              placeholder="Isi jika berbeda dengan alamat siswa"
+              rows={2}
+              className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all resize-none"
+            />
           </div>
         </div>
       </div>

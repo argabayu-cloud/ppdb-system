@@ -53,3 +53,21 @@ export async function createPendaftaran(data: {
     body: JSON.stringify(data),
   });
 }
+
+export async function getSekolah() {
+  return fetcher("/sekolah");
+}
+
+export async function updateBiodata(data: {
+  alamat: string;
+  kelurahan: string;
+  kecamatan: string;
+  noTlpn: string;
+  latitude: number;
+  longitude: number;
+}) {
+  return fetcher("/user/biodata", {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}

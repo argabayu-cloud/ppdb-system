@@ -1,12 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { createPendaftaran } from "@/lib/api";
-
-const daftarSekolah = Array.from(
-  { length: 45 },
-  (_, i) => `SMP Negeri ${i + 1} Bandar Lampung`,
-);
+import { useEffect, useState } from "react";
+import { createPendaftaran, getSekolah } from "@/lib/api";
 
 const jalurPendaftaran = [
   {
@@ -74,6 +69,22 @@ export default function PendaftaranPage() {
   const [pilihan2, setPilihan2] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [sekolahList, setSekolahList] = useState<
+    { id: string; nama: string }[]
+  >([]);
+
+  useEffect(() => {
+    const fetchSekolah = async () => {
+      try {
+        const response = await getSekolah();
+        setSekolahList(response.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    fetchSekolah();
+  }, []);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -102,22 +113,23 @@ export default function PendaftaranPage() {
 
       // sementara pakai hardcode ID sekolah
       // ambil dari Prisma Studio tabel Sekolah
-      const sekolah1Id = "35ca2c3e-3c86-4c79-aff7-3d8d88e85413";
-      const sekolah2Id = "2e9ef8c7-fbe5-43ce-b7de-d42d8378d146";
-
       const response = await createPendaftaran({
-        sekolah1Id,
-        sekolah2Id,
+        sekolah1Id: pilihan1,
+        sekolah2Id: pilihan2 || undefined,
         jalur: jalur.toUpperCase(),
       });
 
       console.log(response);
 
       setSuccess(true);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.log(error);
 
-      alert(error.message || "Terjadi kesalahan");
+      if (error instanceof Error) {
+        alert(error.message);
+      } else {
+        alert("Terjadi kesalahan");
+      }
     } finally {
       setLoading(false);
     }
@@ -352,9 +364,9 @@ export default function PendaftaranPage() {
                 className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
               >
                 <option value="">-- Pilih Sekolah Tujuan Pertama --</option>
-                {daftarSekolah.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
+                {sekolahList.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.nama}
                   </option>
                 ))}
               </select>
@@ -387,11 +399,11 @@ export default function PendaftaranPage() {
                 className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
               >
                 <option value="">-- Pilih Sekolah Tujuan Kedua --</option>
-                {daftarSekolah
-                  .filter((s) => s !== pilihan1)
+                {sekolahList
+                  .filter((s) => s.id !== pilihan1)
                   .map((s) => (
-                    <option key={s} value={s}>
-                      {s}
+                    <option key={s.id} value={s.id}>
+                      {s.nama}
                     </option>
                   ))}
               </select>
