@@ -76,11 +76,11 @@ export default function NotificationBell() {
       {/* BUTTON ICON */}
       <button
         onClick={() => setOpen(!open)}
-        className="relative flex items-center justify-center hover:scale-110 transition duration-200"
+        className="relative flex items-center justify-center hover:scale-110 transition duration-200 text-blue-600"
       >
         <BellNotificationIcon
-          size={26}
-          color="#ffffff"
+          size={20}
+          color="#2563eb"
           shadow={2}
         />
 
