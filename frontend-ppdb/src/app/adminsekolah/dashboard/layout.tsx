@@ -1,28 +1,24 @@
-import type { Metadata } from "next";
-import { Poppins } from "next/font/google";
-import "@/app/globals.css";
+import NavbarAdmin from "@/components/navbarAdmin";
+import SidebarAdmin from "@/components/sidebarAdmin";
+import Footer from "@/components/footer";
 
-const poppins = Poppins({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-poppins",
-});
-
-export const metadata: Metadata = {
-  title: "PPDB System",
-  description: "Sistem PPDB",
-};
-
-export default function RootLayout({
+export default function AdminSekolahLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id" className={poppins.variable}>
-      <body className="font-sans antialiased bg-slate-50 text-slate-900">
-        {children}
-      </body>
-    </html>
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      <NavbarAdmin />
+
+      <div className="flex pt-[52px] min-h-screen">
+        <SidebarAdmin />
+
+        <main className="ml-52 flex-1 p-6 min-h-screen flex flex-col">
+          <div className="flex-1">{children}</div>
+          <Footer />
+        </main>
+      </div>
+    </div>
   );
 }
