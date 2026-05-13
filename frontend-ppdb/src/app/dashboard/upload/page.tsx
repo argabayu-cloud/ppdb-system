@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { uploadDokumen } from "@/lib/api";
 
 const daftarBerkas = [
   {
@@ -56,13 +57,19 @@ type FileStatus = {
 export default function UploadBerkasPage() {
   const [files, setFiles] = useState<Record<string, FileStatus>>(
     Object.fromEntries(
-      daftarBerkas.map((b) => [b.id, { file: null, preview: null, status: "idle" }])
-    )
+      daftarBerkas.map((b) => [
+        b.id,
+        { file: null, preview: null, status: "idle" },
+      ]),
+    ),
   );
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const handleFileChange = (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (
+    id: string,
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -92,35 +99,75 @@ export default function UploadBerkasPage() {
     }));
   };
 
-  const uploadedCount = Object.values(files).filter((f) => f.status === "uploaded").length;
+  const uploadedCount = Object.values(files).filter(
+    (f) => f.status === "uploaded",
+  ).length;
   const requiredCount = daftarBerkas.filter((b) => b.required).length;
   const requiredUploaded = daftarBerkas
     .filter((b) => b.required)
     .filter((b) => files[b.id]?.status === "uploaded").length;
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (requiredUploaded < requiredCount) {
-      alert(`Masih ada ${requiredCount - requiredUploaded} berkas wajib yang belum diupload!`);
+      alert(
+        `Masih ada ${
+          requiredCount - requiredUploaded
+        } berkas wajib yang belum diupload!`,
+      );
       return;
     }
-    setLoading(true);
-    // TODO: sambungkan ke API backend
-    setTimeout(() => {
-      setLoading(false);
+
+    try {
+      setLoading(true);
+
+      const tipeMap: Record<string, string> = {
+        akta: "AKTA",
+        kk: "KK",
+        ijazah: "IJAZAH",
+        rapor: "RAPOR",
+        foto: "FOTO",
+        skhu: "SKHU",
+        prestasi: "PRESTASI",
+      };
+
+      for (const berkas of daftarBerkas) {
+        const fileData = files[berkas.id];
+
+        if (!fileData?.file) continue;
+
+        await uploadDokumen(fileData.file, tipeMap[berkas.id]);
+      }
+
       setSuccess(true);
-    }, 1200);
+    } catch (error) {
+      console.log(error);
+
+      if (error instanceof Error) {
+        alert(error.message);
+      } else {
+        alert("Gagal upload dokumen");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (success) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center text-3xl">✅</div>
-        <h2 className="text-xl font-bold text-slate-800">Berkas Berhasil Dikirim!</h2>
+        <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center text-3xl">
+          ✅
+        </div>
+        <h2 className="text-xl font-bold text-slate-800">
+          Berkas Berhasil Dikirim!
+        </h2>
         <p className="text-slate-500 text-sm text-center max-w-sm">
           Semua berkas sudah terkirim. Tunggu verifikasi dari panitia PPDB.
         </p>
-        <a href="/dashboard"
-          className="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold text-sm hover:bg-blue-700 transition-colors">
+        <a
+          href="/dashboard"
+          className="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold text-sm hover:bg-blue-700 transition-colors"
+        >
           Kembali ke Dashboard →
         </a>
       </div>
@@ -141,7 +188,9 @@ export default function UploadBerkasPage() {
       {/* Progress Upload */}
       <div className="bg-white rounded-2xl shadow p-5">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-semibold text-slate-700">Progress Upload</span>
+          <span className="text-sm font-semibold text-slate-700">
+            Progress Upload
+          </span>
           <span className="text-sm font-bold text-blue-600">
             {uploadedCount} / {daftarBerkas.length} berkas
           </span>
@@ -153,7 +202,9 @@ export default function UploadBerkasPage() {
           />
         </div>
         <p className="text-xs text-slate-400 mt-2">
-          Wajib: {requiredUploaded}/{requiredCount} · Opsional: {uploadedCount - requiredUploaded}/{daftarBerkas.length - requiredCount}
+          Wajib: {requiredUploaded}/{requiredCount} · Opsional:{" "}
+          {uploadedCount - requiredUploaded}/
+          {daftarBerkas.length - requiredCount}
         </p>
       </div>
 
@@ -176,16 +227,22 @@ export default function UploadBerkasPage() {
                   ${isUploaded ? "border-green-300 bg-green-50" : isError ? "border-red-300 bg-red-50" : "border-slate-200 bg-slate-50"}`}
               >
                 {/* Icon Status */}
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg flex-shrink-0
-                  ${isUploaded ? "bg-green-100" : isError ? "bg-red-100" : "bg-white border border-slate-200"}`}>
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center text-lg flex-shrink-0
+                  ${isUploaded ? "bg-green-100" : isError ? "bg-red-100" : "bg-white border border-slate-200"}`}
+                >
                   {isUploaded ? "✅" : isError ? "❌" : "📄"}
                 </div>
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1">
-                    <p className="text-sm font-semibold text-slate-800">{berkas.label}</p>
-                    {berkas.required && <span className="text-red-500 text-xs">*</span>}
+                    <p className="text-sm font-semibold text-slate-800">
+                      {berkas.label}
+                    </p>
+                    {berkas.required && (
+                      <span className="text-red-500 text-xs">*</span>
+                    )}
                     {!berkas.required && (
                       <span className="text-xs bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded-full ml-1">
                         Opsional
@@ -197,9 +254,13 @@ export default function UploadBerkasPage() {
                       ✓ {fileData.file?.name}
                     </p>
                   ) : isError ? (
-                    <p className="text-xs text-red-500 mt-0.5">File terlalu besar! Maks 5MB</p>
+                    <p className="text-xs text-red-500 mt-0.5">
+                      File terlalu besar! Maks 5MB
+                    </p>
                   ) : (
-                    <p className="text-xs text-slate-400 mt-0.5">{berkas.desc}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      {berkas.desc}
+                    </p>
                   )}
                 </div>
 

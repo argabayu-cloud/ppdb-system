@@ -71,3 +71,31 @@ export async function updateBiodata(data: {
     body: JSON.stringify(data),
   });
 }
+
+export async function uploadDokumen(file: File, tipeDokumen: string) {
+  const token = localStorage.getItem("token");
+
+  const formData = new FormData();
+
+  formData.append("file", file);
+  formData.append("tipeDokumen", tipeDokumen);
+
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/dokumen/upload`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    },
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message);
+  }
+
+  return data;
+}
