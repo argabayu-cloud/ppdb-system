@@ -9,6 +9,7 @@ import hasilRoutes from "./hasil.routes";
 import dokumenRoutes from "./dokumen.routes";
 import sekolahRoutes from "./sekolah.routes";
 import notifikasiRoutes from "./notifikasi.routes";
+import biodataRoutes from "./biodata.routes";
 
 const router = Router();
 
@@ -22,6 +23,7 @@ router.use("/hasil", hasilRoutes);
 router.use("/dokumen", dokumenRoutes);
 router.use("/sekolah", sekolahRoutes);
 router.use("/notifikasi", notifikasiRoutes);
+router.use("/biodata", biodataRoutes);
 
 router.get("/health", (req, res) => {
   res.json({ message: "API OK" });

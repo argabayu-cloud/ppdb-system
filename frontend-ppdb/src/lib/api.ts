@@ -54,6 +54,7 @@ export async function createPendaftaran(data: {
   });
 }
 
+<<<<<<< HEAD
 export async function uploadDokumen(file: File, tipeDokumen: string) {
   const token = localStorage.getItem("token");
 
@@ -112,3 +113,15 @@ export async function updateBiodata(data: {
 
   return result;
 }
+=======
+export async function getBiodata() {
+  return fetcher("/biodata");
+}
+
+export async function saveBiodata(data: Record<string, string>) {
+  return fetcher("/biodata", {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+>>>>>>> a5d0795a797c7e84d8af7714064c696b298e0dd2

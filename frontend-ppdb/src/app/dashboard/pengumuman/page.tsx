@@ -33,29 +33,35 @@ export default function PengumumanPage() {
   }, []);
 
   const handleDownloadPDF = async () => {
-    if (!hasil) return;
+    if (!hasil || downloading) return;
 
     setDownloading(true);
 
     try {
       const { default: jsPDF } = await import("jspdf");
-      const doc = new jsPDF();
+
+      const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
 
       const pageWidth = doc.internal.pageSize.getWidth();
       const center = pageWidth / 2;
+      const isAccepted = hasil.status === "diterima";
 
       doc.setFillColor(30, 64, 175);
       doc.rect(0, 0, pageWidth, 40, "F");
 
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(16);
       doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
       doc.text("DINAS PENDIDIKAN KOTA BANDAR LAMPUNG", center, 15, {
         align: "center",
       });
 
-      doc.setFontSize(12);
       doc.setFont("helvetica", "normal");
+      doc.setFontSize(12);
       doc.text("PPDB SMP TERPADU TAHUN AJARAN 2025/2026", center, 25, {
         align: "center",
       });
@@ -65,15 +71,15 @@ export default function PengumumanPage() {
         align: "center",
       });
 
-      doc.setTextColor(0, 0, 0);
-      doc.setFontSize(16);
+      doc.setTextColor(15, 23, 42);
       doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
       doc.text("SURAT KETERANGAN HASIL SELEKSI", center, 58, {
         align: "center",
       });
 
-      doc.setFontSize(11);
       doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
       doc.text(`No. Registrasi: ${hasil.noRegistrasi}`, center, 66, {
         align: "center",
       });
@@ -82,113 +88,124 @@ export default function PengumumanPage() {
       doc.setLineWidth(0.8);
       doc.line(20, 70, pageWidth - 20, 70);
 
-      if (hasil.status === "diterima") {
+      if (isAccepted) {
         doc.setFillColor(220, 252, 231);
-        doc.roundedRect(20, 76, pageWidth - 40, 20, 3, 3, "F");
         doc.setTextColor(21, 128, 61);
-        doc.setFontSize(14);
-        doc.setFont("helvetica", "bold");
-        doc.text("DINYATAKAN DITERIMA", center, 90, { align: "center" });
       } else {
         doc.setFillColor(254, 226, 226);
-        doc.roundedRect(20, 76, pageWidth - 40, 20, 3, 3, "F");
-        doc.setTextColor(185, 28, 28);
-        doc.setFontSize(14);
-        doc.setFont("helvetica", "bold");
-        doc.text("TIDAK DITERIMA", center, 90, { align: "center" });
+        doc.setTextColor(190, 18, 60);
       }
 
-      doc.setTextColor(0, 0, 0);
+      doc.roundedRect(20, 76, pageWidth - 40, 20, 3, 3, "F");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      doc.text(
+        isAccepted ? "DINYATAKAN DITERIMA" : "DINYATAKAN TIDAK DITERIMA",
+        center,
+        90,
+        { align: "center" },
+      );
+
+      doc.setTextColor(15, 23, 42);
+      doc.setFont("helvetica", "bold");
       doc.setFontSize(12);
       doc.text("DATA PESERTA", 20, 108);
-      doc.setDrawColor(200, 200, 200);
-      doc.line(20, 111, pageWidth - 20, 111);
 
-      const dataRows = [
+      doc.setDrawColor(226, 232, 240);
+      doc.line(20, 112, pageWidth - 20, 112);
+
+      const rows = [
         ["Nama Lengkap", hasil.nama],
         ["NISN", hasil.nisn],
+        ["No. Registrasi", hasil.noRegistrasi],
         ["Jalur Pendaftaran", hasil.jalur],
         ["Tanggal Pengumuman", hasil.tanggalPengumuman],
+        ["Status", isAccepted ? "Diterima" : "Tidak Diterima"],
       ];
 
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(11);
+      let y = 122;
 
-      let y = 120;
-
-      dataRows.forEach(([label, value]) => {
-        doc.setTextColor(100, 100, 100);
+      rows.forEach(([label, value]) => {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(11);
+        doc.setTextColor(100, 116, 139);
         doc.text(label, 25, y);
-        doc.setTextColor(0, 0, 0);
-        doc.text(`: ${value}`, 90, y);
-        y += 10;
+
+        doc.setTextColor(15, 23, 42);
+        doc.text(`: ${value}`, 85, y);
+
+        y += 9;
       });
 
-      y += 5;
-      doc.setFontSize(12);
+      y += 8;
+
       doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.setTextColor(15, 23, 42);
       doc.text("RINCIAN PILIHAN SEKOLAH", 20, y);
-      y += 4;
+
+      y += 5;
+      doc.setDrawColor(226, 232, 240);
       doc.line(20, y, pageWidth - 20, y);
+
       y += 10;
 
       hasil.pilihan.forEach((p) => {
-        if (p.status === "diterima") {
+        const accepted = p.status === "diterima";
+
+        if (accepted) {
           doc.setFillColor(220, 252, 231);
           doc.setTextColor(21, 128, 61);
         } else {
-          doc.setFillColor(254, 226, 226);
-          doc.setTextColor(185, 28, 28);
+          doc.setFillColor(255, 241, 242);
+          doc.setTextColor(190, 18, 60);
         }
 
         doc.roundedRect(20, y - 6, pageWidth - 40, 14, 2, 2, "F");
         doc.setFont("helvetica", "bold");
         doc.setFontSize(10);
         doc.text(`Pilihan ${p.urutan}: ${p.sekolah}`, 27, y + 2);
-        doc.text(
-          p.status === "diterima" ? "DITERIMA" : "GUGUR",
-          pageWidth - 25,
-          y + 2,
-          { align: "right" },
-        );
+        doc.text(accepted ? "DITERIMA" : "GUGUR", pageWidth - 25, y + 2, {
+          align: "right",
+        });
 
         y += 18;
       });
 
-      if (hasil.status === "diterima") {
-        y += 5;
+      if (isAccepted) {
+        y += 4;
+
         doc.setFillColor(30, 64, 175);
         doc.roundedRect(20, y - 6, pageWidth - 40, 22, 3, 3, "F");
+
         doc.setTextColor(255, 255, 255);
+        doc.setFont("helvetica", "normal");
         doc.setFontSize(11);
         doc.text("Diterima di:", center, y + 3, { align: "center" });
+
+        doc.setFont("helvetica", "bold");
         doc.setFontSize(13);
         doc.text(hasil.sekolahDiterima, center, y + 13, {
           align: "center",
         });
+
         y += 32;
 
         doc.setFillColor(255, 251, 235);
         doc.roundedRect(20, y, pageWidth - 40, 22, 3, 3, "F");
+
         doc.setTextColor(146, 64, 14);
         doc.setFont("helvetica", "bold");
         doc.setFontSize(10);
         doc.text("WAJIB DAFTAR ULANG", 27, y + 8);
-        doc.setFont("helvetica", "normal");
-        doc.text(
-          `Lakukan daftar ulang di ${hasil.sekolahDiterima}`,
-          27,
-          y + 15,
-        );
-        doc.setFont("helvetica", "bold");
-        doc.text(`Tanggal: ${hasil.batasUlang}`, pageWidth - 25, y + 15, {
-          align: "right",
-        });
 
-        y += 40;
+        doc.setFont("helvetica", "normal");
+        doc.text(`Tanggal: ${hasil.batasUlang}`, 27, y + 15);
+
+        y += 34;
       }
 
-      doc.setTextColor(0, 0, 0);
+      doc.setTextColor(15, 23, 42);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
       doc.text(
@@ -209,15 +226,11 @@ export default function PengumumanPage() {
         align: "right",
       });
 
-      y += 7;
-      doc.setFont("helvetica", "normal");
-      doc.text("NIP: ...............................", pageWidth - 25, y, {
-        align: "right",
-      });
-
       doc.setFillColor(241, 245, 249);
       doc.rect(0, 270, pageWidth, 27, "F");
-      doc.setTextColor(100, 100, 100);
+
+      doc.setTextColor(100, 116, 139);
+      doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
       doc.text(
         "Dokumen ini diterbitkan secara digital oleh sistem PPDB.",
@@ -233,8 +246,9 @@ export default function PengumumanPage() {
       );
 
       doc.save(`Hasil-PPDB-${hasil.nisn}.pdf`);
-    } catch {
-      alert("Gagal membuat PDF");
+    } catch (error) {
+      console.error(error);
+      alert("Gagal membuat PDF. Pastikan package jspdf sudah terinstall.");
     } finally {
       setDownloading(false);
     }
@@ -452,27 +466,24 @@ export default function PengumumanPage() {
         </section>
       )}
 
-      {isAccepted && (
-        <button
-          onClick={handleDownloadPDF}
-          disabled={downloading}
-          className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
-        >
-          {downloading ? (
-            <>
-              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-              Membuat PDF...
-            </>
-          ) : (
-            "Download Bukti Kelulusan PDF"
-          )}
-        </button>
-      )}
+      <button
+        onClick={handleDownloadPDF}
+        disabled={downloading}
+        className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
+      >
+        {downloading ? (
+          <>
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+            Membuat PDF...
+          </>
+        ) : (
+          "Download Bukti Hasil Seleksi PDF"
+        )}
+      </button>
 
       <section className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
         <p className="text-center text-xs leading-6 text-slate-500">
-          Simpan bukti kelulusan ini untuk proses daftar ulang di sekolah
-          tujuan.
+          Simpan bukti hasil seleksi ini untuk arsip dan proses lanjutan PPDB.
         </p>
       </section>
     </div>
