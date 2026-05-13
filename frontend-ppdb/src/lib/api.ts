@@ -58,6 +58,17 @@ export async function getSekolah() {
   return fetcher("/sekolah");
 }
 
+export async function getBiodata() {
+  return fetcher("/user/biodata");
+}
+
+export async function saveBiodata(data: Record<string, unknown>) {
+  return fetcher("/user/biodata", {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
 export async function updateBiodata(data: {
   alamat: string;
   kelurahan: string;
