@@ -1,9 +1,10 @@
 import prisma from "../config/prisma";
+import { TipeDokumen } from "@prisma/client";
 
 export const uploadDokumen = async (
   userId: string,
   file: Express.Multer.File,
-  tipeDokumen: "KK" | "AKTA" | "RAPOR" | "PRESTASI"
+  tipeDokumen: TipeDokumen,
 ) => {
   const pendaftaran = await prisma.pendaftaran.findFirst({
     where: { userId },
