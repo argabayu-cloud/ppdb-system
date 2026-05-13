@@ -53,3 +53,14 @@ export async function createPendaftaran(data: {
     body: JSON.stringify(data),
   });
 }
+
+export async function getBiodata() {
+  return fetcher("/biodata");
+}
+
+export async function saveBiodata(data: Record<string, string>) {
+  return fetcher("/biodata", {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}

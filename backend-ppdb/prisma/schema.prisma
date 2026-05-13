@@ -70,6 +70,7 @@ model User {
 
   adminSekolah AdminSekolah?
   pendaftaran  Pendaftaran?
+  biodata Biodata?
   pengumuman   Pengumuman[]
   verifikasi   VerifikasiLog[]
   notifikasi Notifikasi[]
@@ -98,6 +99,44 @@ model AdminSekolah {
 
   user    User    @relation(fields: [userId], references: [id])
   sekolah Sekolah @relation(fields: [sekolahId], references: [id])
+}
+
+model Biodata {
+  id String @id @default(uuid())
+  userId String @unique
+
+  namaLengkap String?
+  nik String?
+  tempatLahir String?
+  tanggalLahir String?
+  jenisKelamin String?
+  agama String?
+  anakKe String?
+  jumlahSaudara String?
+  beratBadan String?
+  tinggiBadan String?
+  alamat String?
+  kelurahan String?
+  kecamatan String?
+  kotaKabupaten String?
+  provinsi String?
+  noHp String?
+  email String?
+  namaAyah String?
+  nikAyah String?
+  pendidikanAyah String?
+  pekerjaanAyah String?
+  namaIbu String?
+  nikIbu String?
+  pendidikanIbu String?
+  pekerjaanIbu String?
+  noHpOrtu String?
+  alamatOrtu String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Pendaftaran {

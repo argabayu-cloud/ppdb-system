@@ -17,14 +17,14 @@ const menuItems = [
     icon: Home,
   },
   {
-    label: "Pendaftaran",
-    href: "/dashboard/pendaftaran",
-    icon: FileText,
-  },
-  {
     label: "Biodata",
     href: "/dashboard/biodata",
     icon: UserRound,
+  },
+  {
+    label: "Pendaftaran",
+    href: "/dashboard/pendaftaran",
+    icon: FileText,
   },
   {
     label: "Upload",
