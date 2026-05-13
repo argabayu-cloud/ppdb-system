@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useEffect, useState, type ChangeEvent } from "react";
+
 import { Skeleton } from "@/components/ui/skeleton";
 
 const daftarBerkas = [
@@ -57,27 +59,32 @@ type FileStatus = {
 export default function UploadBerkasPage() {
   const [files, setFiles] = useState<Record<string, FileStatus>>(
     Object.fromEntries(
-      daftarBerkas.map((b) => [b.id, { file: null, preview: null, status: "idle" }])
-    )
+      daftarBerkas.map((b) => [
+        b.id,
+        { file: null, preview: null, status: "idle" },
+      ]),
+    ),
   );
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-
   const [loadingSkeleton, setLoadingSkeleton] = useState(true);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoadingSkeleton(false);
-    }, 2000);
+    }, 900);
 
     return () => clearTimeout(timer);
   }, []);
 
-  const handleFileChange = (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (
+    id: string,
+    e: ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = e.target.files?.[0];
+
     if (!file) return;
 
-    // Cek ukuran file max 5MB
     if (file.size > 5 * 1024 * 1024) {
       setFiles((prev) => ({
         ...prev,
@@ -97,25 +104,40 @@ export default function UploadBerkasPage() {
   };
 
   const handleRemove = (id: string) => {
+    const currentPreview = files[id]?.preview;
+
+    if (currentPreview) {
+      URL.revokeObjectURL(currentPreview);
+    }
+
     setFiles((prev) => ({
       ...prev,
       [id]: { file: null, preview: null, status: "idle" },
     }));
   };
 
-  const uploadedCount = Object.values(files).filter((f) => f.status === "uploaded").length;
+  const uploadedCount = Object.values(files).filter(
+    (f) => f.status === "uploaded",
+  ).length;
   const requiredCount = daftarBerkas.filter((b) => b.required).length;
   const requiredUploaded = daftarBerkas
     .filter((b) => b.required)
     .filter((b) => files[b.id]?.status === "uploaded").length;
 
+  const progressPercent = Math.round(
+    (uploadedCount / daftarBerkas.length) * 100,
+  );
+
   const handleSubmit = () => {
     if (requiredUploaded < requiredCount) {
-      alert(`Masih ada ${requiredCount - requiredUploaded} berkas wajib yang belum diupload!`);
+      alert(
+        `Masih ada ${requiredCount - requiredUploaded} berkas wajib yang belum diupload!`,
+      );
       return;
     }
+
     setLoading(true);
-    // TODO: sambungkan ke API backend
+
     setTimeout(() => {
       setLoading(false);
       setSuccess(true);
@@ -123,105 +145,107 @@ export default function UploadBerkasPage() {
   };
 
   if (loadingSkeleton) {
-    return (
-      <div className="flex flex-col gap-6 max-w-3xl">
-        {/* Header */}
-        <div className="space-y-2">
-          <Skeleton className="h-7 w-56" />
-          <Skeleton className="h-4 w-96" />
-        </div>
-
-        {/* Progress */}
-        <div className="bg-white rounded-2xl shadow p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <Skeleton className="h-4 w-36" />
-            <Skeleton className="h-4 w-24" />
-          </div>
-
-          <Skeleton className="h-3 w-full rounded-full" />
-          <Skeleton className="h-4 w-52" />
-        </div>
-
-        {/* List Berkas */}
-        <div className="bg-white rounded-2xl shadow p-6 flex flex-col gap-4">
-          <Skeleton className="h-5 w-40" />
-
-          {[...Array(5)].map((_, i) => (
-            <div
-              key={i}
-              className="border rounded-xl p-4 flex items-center gap-4"
-            >
-              <Skeleton className="w-10 h-10 rounded-full" />
-
-              <div className="flex-1 space-y-2">
-                <Skeleton className="h-4 w-44" />
-                <Skeleton className="h-3 w-52" />
-              </div>
-
-              <Skeleton className="h-9 w-24 rounded-lg" />
-            </div>
-          ))}
-        </div>
-
-        {/* Button */}
-        <Skeleton className="h-12 w-full rounded-xl" />
-      </div>
-    );
+    return <UploadSkeleton />;
   }
 
   if (success) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center text-3xl">✅</div>
-        <h2 className="text-xl font-bold text-slate-800">Berkas Berhasil Dikirim!</h2>
-        <p className="text-slate-500 text-sm text-center max-w-sm">
-          Semua berkas sudah terkirim. Tunggu verifikasi dari panitia PPDB.
-        </p>
-        <a href="/dashboard"
-          className="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold text-sm hover:bg-blue-700 transition-colors">
-          Kembali ke Dashboard →
-        </a>
+      <div className="flex min-h-[65vh] items-center justify-center">
+        <div className="w-full max-w-lg rounded-[2rem] border border-slate-100 bg-white p-8 text-center shadow-sm">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-green-50 text-3xl">
+            ✅
+          </div>
+
+          <h2 className="mt-5 text-xl font-bold text-slate-900">
+            Berkas Berhasil Dikirim!
+          </h2>
+
+          <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-500">
+            Semua berkas sudah terkirim. Tunggu proses verifikasi dari panitia
+            PPDB sekolah tujuan.
+          </p>
+
+          <Link
+            href="/dashboard"
+            className="mt-6 inline-flex rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700"
+          >
+            Kembali ke Dashboard →
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-6 max-w-3xl">
-      {/* Header */}
-      <div>
-        <h1 className="text-xl font-bold text-slate-800">📁 Upload Berkas</h1>
-        <p className="text-slate-500 text-sm mt-1">
-          Upload semua dokumen persyaratan PPDB. Berkas bertanda{" "}
-          <span className="text-red-500 font-semibold">*</span> wajib diupload.
-        </p>
-      </div>
+    <div className="flex flex-col gap-6">
+      <section className="relative overflow-hidden rounded-[2rem] bg-slate-950 text-white shadow-xl">
+        <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(15,23,42,0.96),rgba(30,64,175,0.9),rgba(37,99,235,0.72))]" />
 
-      {/* Progress Upload */}
-      <div className="bg-white rounded-2xl shadow p-5">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-semibold text-slate-700">Progress Upload</span>
-          <span className="text-sm font-bold text-blue-600">
-            {uploadedCount} / {daftarBerkas.length} berkas
+        <div className="relative z-10 flex flex-col justify-between gap-6 p-6 sm:flex-row sm:items-center lg:p-7">
+          <div>
+            <span className="w-fit rounded-full border border-blue-300/40 bg-blue-400/10 px-3 py-1 text-xs font-semibold text-blue-100">
+              Dokumen Persyaratan PPDB
+            </span>
+
+            <h1 className="mt-5 text-3xl font-bold tracking-tight md:text-4xl">
+              Upload Berkas
+            </h1>
+
+            <p className="mt-3 max-w-xl text-sm leading-6 text-blue-50/90">
+              Unggah dokumen persyaratan sesuai format yang diminta. Berkas
+              bertanda wajib harus lengkap sebelum dikirim.
+            </p>
+          </div>
+
+          <div className="min-w-[165px] rounded-2xl border border-white/10 bg-white/15 px-5 py-4 text-center backdrop-blur">
+            <p className="text-xs text-blue-100">Progress Upload</p>
+            <p className="mt-1 text-xl font-bold text-white">
+              {uploadedCount}/{daftarBerkas.length}
+            </p>
+            <p className="mt-1 text-xs text-blue-200">
+              {progressPercent}% selesai
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-base font-bold text-slate-800">
+              Progress Upload
+            </h2>
+            <p className="mt-1 text-xs text-slate-500">
+              Wajib: {requiredUploaded}/{requiredCount} · Opsional:{" "}
+              {uploadedCount - requiredUploaded}/
+              {daftarBerkas.length - requiredCount}
+            </p>
+          </div>
+
+          <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-bold text-blue-700">
+            {progressPercent}%
           </span>
         </div>
-        <div className="bg-slate-100 rounded-full h-2.5">
+
+        <div className="h-3 rounded-full bg-slate-100">
           <div
-            className="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
-            style={{ width: `${(uploadedCount / daftarBerkas.length) * 100}%` }}
+            className="h-3 rounded-full bg-blue-600 transition-all duration-500"
+            style={{ width: `${progressPercent}%` }}
           />
         </div>
-        <p className="text-xs text-slate-400 mt-2">
-          Wajib: {requiredUploaded}/{requiredCount} · Opsional: {uploadedCount - requiredUploaded}/{daftarBerkas.length - requiredCount}
-        </p>
-      </div>
+      </section>
 
-      {/* Daftar Berkas */}
-      <div className="bg-white rounded-2xl shadow p-6 flex flex-col gap-4">
-        <h2 className="font-semibold text-blue-700 text-sm uppercase tracking-wide border-b border-slate-100 pb-2">
-          📄 Daftar Berkas
-        </h2>
+      <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+        <div className="mb-4">
+          <h2 className="text-base font-bold text-slate-800">
+            Daftar Berkas
+          </h2>
+          <p className="mt-1 text-xs text-slate-500">
+            Pilih file dokumen dalam format PDF, JPG, JPEG, atau PNG.
+          </p>
+        </div>
 
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3">
           {daftarBerkas.map((berkas) => {
             const fileData = files[berkas.id];
             const isUploaded = fileData.status === "uploaded";
@@ -230,81 +254,145 @@ export default function UploadBerkasPage() {
             return (
               <div
                 key={berkas.id}
-                className={`border rounded-xl p-4 flex items-center gap-4 transition-all
-                  ${isUploaded ? "border-green-300 bg-green-50" : isError ? "border-red-300 bg-red-50" : "border-slate-200 bg-slate-50"}`}
+                className={`rounded-2xl border p-4 transition ${
+                  isUploaded
+                    ? "border-green-100 bg-green-50"
+                    : isError
+                      ? "border-red-100 bg-red-50"
+                      : "border-slate-100 bg-slate-50"
+                }`}
               >
-                {/* Icon Status */}
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg flex-shrink-0
-                  ${isUploaded ? "bg-green-100" : isError ? "bg-red-100" : "bg-white border border-slate-200"}`}>
-                  {isUploaded ? "✅" : isError ? "❌" : "📄"}
-                </div>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                  <div
+                    className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl text-xl ${
+                      isUploaded
+                        ? "bg-green-100"
+                        : isError
+                          ? "bg-red-100"
+                          : "bg-white"
+                    }`}
+                  >
+                    {isUploaded ? "✅" : isError ? "❌" : "📄"}
+                  </div>
 
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1">
-                    <p className="text-sm font-semibold text-slate-800">{berkas.label}</p>
-                    {berkas.required && <span className="text-red-500 text-xs">*</span>}
-                    {!berkas.required && (
-                      <span className="text-xs bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded-full ml-1">
-                        Opsional
-                      </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-bold text-slate-800">
+                        {berkas.label}
+                      </p>
+
+                      {berkas.required ? (
+                        <span className="rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-bold text-red-500">
+                          Wajib
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-bold text-slate-500">
+                          Opsional
+                        </span>
+                      )}
+                    </div>
+
+                    {isUploaded ? (
+                      <p className="mt-1 truncate text-xs font-semibold text-green-600">
+                        ✓ {fileData.file?.name}
+                      </p>
+                    ) : isError ? (
+                      <p className="mt-1 text-xs font-semibold text-red-500">
+                        File terlalu besar. Maksimal 5MB.
+                      </p>
+                    ) : (
+                      <p className="mt-1 text-xs text-slate-500">
+                        {berkas.desc}
+                      </p>
                     )}
                   </div>
-                  {isUploaded ? (
-                    <p className="text-xs text-green-600 mt-0.5 truncate">
-                      ✓ {fileData.file?.name}
-                    </p>
-                  ) : isError ? (
-                    <p className="text-xs text-red-500 mt-0.5">File terlalu besar! Maks 5MB</p>
-                  ) : (
-                    <p className="text-xs text-slate-400 mt-0.5">{berkas.desc}</p>
-                  )}
-                </div>
 
-                {/* Preview gambar */}
-                {isUploaded && fileData.preview && (
-                  <img
-                    src={fileData.preview}
-                    alt="preview"
-                    className="w-12 h-12 object-cover rounded-lg border border-green-200 flex-shrink-0"
-                  />
-                )}
-
-                {/* Tombol aksi */}
-                <div className="flex-shrink-0">
-                  {isUploaded ? (
-                    <button
-                      onClick={() => handleRemove(berkas.id)}
-                      className="text-xs text-red-500 hover:text-red-700 border border-red-200 hover:border-red-400 px-3 py-1.5 rounded-lg transition-colors"
-                    >
-                      Hapus
-                    </button>
-                  ) : (
-                    <label className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg cursor-pointer transition-colors">
-                      Pilih File
-                      <input
-                        type="file"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={(e) => handleFileChange(berkas.id, e)}
-                        className="hidden"
-                      />
-                    </label>
+                  {isUploaded && fileData.preview && (
+                    <img
+                      src={fileData.preview}
+                      alt="Preview berkas"
+                      className="h-14 w-14 flex-shrink-0 rounded-xl border border-green-200 object-cover"
+                    />
                   )}
+
+                  <div className="flex-shrink-0">
+                    {isUploaded ? (
+                      <button
+                        onClick={() => handleRemove(berkas.id)}
+                        className="rounded-xl border border-red-200 px-4 py-2 text-xs font-bold text-red-500 transition hover:border-red-300 hover:bg-red-50"
+                      >
+                        Hapus
+                      </button>
+                    ) : (
+                      <label className="inline-flex cursor-pointer rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-blue-700">
+                        Pilih File
+                        <input
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          onChange={(e) => handleFileChange(berkas.id, e)}
+                          className="hidden"
+                        />
+                      </label>
+                    )}
+                  </div>
                 </div>
               </div>
             );
           })}
         </div>
-      </div>
+      </section>
 
-      {/* Tombol Submit */}
       <button
         onClick={handleSubmit}
         disabled={loading}
-        className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-semibold py-3 rounded-xl transition-colors shadow-md text-sm"
+        className="rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
       >
         {loading ? "Mengirim Berkas..." : "Kirim Semua Berkas"}
       </button>
+    </div>
+  );
+}
+
+function UploadSkeleton() {
+  return (
+    <div className="flex flex-col gap-6">
+      <section className="rounded-[2rem] bg-slate-950 p-6 shadow-xl lg:p-7">
+        <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-center">
+          <div className="flex-1">
+            <Skeleton className="h-6 w-52 bg-white/20" />
+            <Skeleton className="mt-5 h-10 w-72 bg-white/20" />
+            <Skeleton className="mt-4 h-4 w-full max-w-lg bg-white/20" />
+            <Skeleton className="mt-2 h-4 w-80 bg-white/20" />
+          </div>
+
+          <Skeleton className="h-24 w-full rounded-2xl bg-white/20 sm:w-[165px]" />
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div>
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="mt-2 h-3 w-64" />
+          </div>
+          <Skeleton className="h-7 w-14 rounded-full" />
+        </div>
+
+        <Skeleton className="mt-4 h-3 w-full rounded-full" />
+      </section>
+
+      <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+        <Skeleton className="h-5 w-36" />
+        <Skeleton className="mt-2 h-3 w-72" />
+
+        <div className="mt-4 flex flex-col gap-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-24 rounded-2xl" />
+          ))}
+        </div>
+      </section>
+
+      <Skeleton className="h-12 rounded-xl" />
     </div>
   );
 }
