@@ -5,18 +5,35 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { getDashboardPendaftaran } from "@/lib/api";
 
-type User = {
-  nama?: string;
+type Step = {
+  label: string;
+  done: boolean;
 };
 
-const steps = [
-  { label: "Buat Akun", done: true },
-  { label: "Isi Biodata", done: false },
-  { label: "Pendaftaran", done: false },
-  { label: "Upload Berkas", done: false },
-  { label: "Verifikasi", done: false },
-];
+type DashboardData = {
+  user: {
+    nama?: string;
+    email?: string;
+  };
+  pendaftaran: {
+    id: string;
+    noPendaftaran?: string | null;
+    status?: string;
+    submittedAt?: string | null;
+    pilihan?: {
+      pilihanKe: number;
+      sekolah?: {
+        nama: string;
+      };
+    }[];
+  } | null;
+  progressPercent: number;
+  noPendaftaran: string;
+  statusLabel: string;
+  steps: Step[];
+};
 
 const announcements = [
   {
@@ -33,35 +50,108 @@ const announcements = [
 
 export default function DashboardPage() {
   const router = useRouter();
+
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
+  const [dashboard, setDashboard] = useState<DashboardData | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const storedUser = localStorage.getItem("user");
+    const loadDashboard = async () => {
+      const token = localStorage.getItem("token");
 
-    if (!token) {
-      router.push("/auth/login");
-      return;
-    }
+      if (!token) {
+        router.push("/auth/login");
+        return;
+      }
 
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+      try {
+        const res = await getDashboardPendaftaran();
+        setDashboard(res.data);
+      } catch (error) {
+        console.error(error);
 
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 900);
+        const storedUser = localStorage.getItem("user");
+        const user = storedUser ? JSON.parse(storedUser) : null;
 
-    return () => clearTimeout(timer);
+        setDashboard({
+          user: {
+            nama: user?.nama || "Peserta PPDB",
+            email: user?.email,
+          },
+          pendaftaran: null,
+          progressPercent: 25,
+          noPendaftaran: "-",
+          statusLabel: "BELUM TERDAFTAR",
+          steps: [
+            { label: "Buat Akun", done: true },
+            { label: "Isi Biodata", done: false },
+            { label: "Pendaftaran", done: false },
+            { label: "Upload Berkas", done: false },
+            { label: "Selesai", done: false },
+          ],
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDashboard();
   }, [router]);
-
-  const doneCount = steps.filter((s) => s.done).length;
-  const progressPercent = Math.round((doneCount / steps.length) * 100);
 
   if (loading) {
     return <DashboardSkeleton />;
   }
+
+  const steps = dashboard?.steps || [];
+  const progressPercent = dashboard?.progressPercent || 0;
+  const noPendaftaran = dashboard?.noPendaftaran || "-";
+  const statusLabel = dashboard?.statusLabel || "BELUM TERDAFTAR";
+  const isRegistered = statusLabel === "TERDAFTAR";
+
+  const pilihanPertama = dashboard?.pendaftaran?.pilihan?.find(
+    (p) => p.pilihanKe === 1,
+  );
+
+  const stepDone = (label: string) =>
+    steps.find((step) => step.label === label)?.done || false;
+
+  const statusCards = [
+    {
+      label: "Biodata",
+      status: stepDone("Isi Biodata") ? "Lengkap" : "Belum Lengkap",
+      href: "/dashboard/biodata",
+      color: stepDone("Isi Biodata")
+        ? "bg-blue-50 text-blue-600"
+        : "bg-amber-50 text-amber-600",
+      icon: "👤",
+    },
+    {
+      label: "Pendaftaran",
+      status: stepDone("Pendaftaran") ? "Sudah Diisi" : "Belum Diisi",
+      href: "/dashboard/pendaftaran",
+      color: stepDone("Pendaftaran")
+        ? "bg-blue-50 text-blue-600"
+        : "bg-red-50 text-red-500",
+      icon: "📋",
+    },
+    {
+      label: "Upload Berkas",
+      status: stepDone("Upload Berkas") ? "Berkas Lengkap" : "Belum Upload",
+      href: "/dashboard/upload",
+      color: stepDone("Upload Berkas")
+        ? "bg-blue-50 text-blue-600"
+        : "bg-red-50 text-red-500",
+      icon: "📁",
+    },
+    {
+      label: "Status",
+      status: isRegistered ? "Menunggu Verifikasi" : "Belum Dikirim",
+      href: "/dashboard/pengumuman",
+      color: isRegistered
+        ? "bg-emerald-50 text-emerald-600"
+        : "bg-slate-100 text-slate-500",
+      icon: "📢",
+    },
+  ];
 
   return (
     <div className="flex flex-col gap-6">
@@ -77,21 +167,34 @@ export default function DashboardPage() {
             <p className="mt-5 text-sm text-blue-100">Selamat Datang 👋</p>
 
             <h1 className="mt-1 text-3xl font-bold tracking-tight md:text-4xl">
-              {user?.nama || "Peserta PPDB"}
+              {dashboard?.user?.nama || "Peserta PPDB"}
             </h1>
 
             <p className="mt-3 max-w-xl text-sm leading-6 text-blue-50/90">
-              Lengkapi biodata, pilih sekolah tujuan, upload berkas, dan pantau
-              status pendaftaran kamu melalui dashboard peserta.
+              {isRegistered
+                ? `Terima kasih sudah mendaftar. Berkas kamu sedang menunggu verifikasi dari ${
+                    pilihanPertama?.sekolah?.nama || "sekolah pilihan pertama"
+                  }.`
+                : "Lengkapi biodata, pilih sekolah tujuan, upload berkas, dan pantau status pendaftaran kamu melalui dashboard peserta."}
             </p>
           </div>
 
-          <div className="min-w-[155px] rounded-2xl border border-white/10 bg-white/15 px-5 py-4 text-center backdrop-blur">
+          <div className="min-w-[170px] rounded-2xl border border-white/10 bg-white/15 px-5 py-4 text-center backdrop-blur">
             <p className="text-xs text-blue-100">No. Pendaftaran</p>
-            <p className="mt-1 text-xl font-bold tracking-widest text-white">
-              -
+
+            <p className="mt-1 text-2xl font-bold tracking-widest text-white">
+              {noPendaftaran}
             </p>
-            <p className="mt-1 text-xs text-blue-200">Belum terdaftar</p>
+
+            <p
+              className={`mx-auto mt-2 w-fit rounded-full px-3 py-1 text-[11px] font-bold ${
+                isRegistered
+                  ? "bg-emerald-400/20 text-emerald-50"
+                  : "bg-white/10 text-blue-100"
+              }`}
+            >
+              {statusLabel}
+            </p>
           </div>
         </div>
       </section>
@@ -102,8 +205,11 @@ export default function DashboardPage() {
             <h2 className="text-base font-bold text-slate-800">
               Progress Pendaftaran
             </h2>
+
             <p className="mt-1 text-xs text-slate-500">
-              Selesaikan semua tahapan untuk masuk proses verifikasi.
+              {isRegistered
+                ? "Pendaftaran sudah terkirim dan masuk proses verifikasi sekolah."
+                : "Selesaikan semua tahapan untuk masuk proses verifikasi."}
             </p>
           </div>
 
@@ -151,37 +257,32 @@ export default function DashboardPage() {
         </div>
       </section>
 
+      {isRegistered && (
+        <section className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 shadow-sm">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-bold text-emerald-700">
+                Pendaftaran berhasil dikirim
+              </p>
+
+              <p className="mt-1 text-sm leading-6 text-emerald-700/80">
+                Terima kasih sudah mendaftar di PPDB SMP Terpadu. Silakan pantau
+                notifikasi dan halaman pengumuman untuk melihat hasil verifikasi.
+              </p>
+            </div>
+
+            <Link
+              href="/dashboard/pengumuman"
+              className="w-fit rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-emerald-700"
+            >
+              Pantau Pengumuman
+            </Link>
+          </div>
+        </section>
+      )}
+
       <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {[
-          {
-            label: "Biodata",
-            status: "Belum Lengkap",
-            href: "/dashboard/biodata",
-            color: "bg-amber-50 text-amber-600",
-            icon: "👤",
-          },
-          {
-            label: "Pendaftaran",
-            status: "Belum Diisi",
-            href: "/dashboard/pendaftaran",
-            color: "bg-red-50 text-red-500",
-            icon: "📋",
-          },
-          {
-            label: "Upload Berkas",
-            status: "Belum Upload",
-            href: "/dashboard/upload-berkas",
-            color: "bg-red-50 text-red-500",
-            icon: "📁",
-          },
-          {
-            label: "Pengumuman",
-            status: "Ada Info Baru",
-            href: "/dashboard/pengumuman",
-            color: "bg-blue-50 text-blue-600",
-            icon: "📢",
-          },
-        ].map((item) => (
+        {statusCards.map((item) => (
           <Link
             key={item.label}
             href={item.href}
@@ -194,6 +295,7 @@ export default function DashboardPage() {
             </div>
 
             <p className="text-sm font-bold text-slate-800">{item.label}</p>
+
             <p className="mt-1 text-xs font-semibold text-slate-500">
               {item.status}
             </p>
@@ -207,6 +309,7 @@ export default function DashboardPage() {
             <h2 className="text-base font-bold text-slate-800">
               Pengumuman Terbaru
             </h2>
+
             <p className="mt-1 text-xs text-slate-500">
               Informasi resmi seputar jadwal dan persyaratan PPDB.
             </p>
@@ -227,9 +330,11 @@ export default function DashboardPage() {
               className="rounded-2xl border border-slate-100 bg-slate-50 p-5"
             >
               <p className="text-xs font-semibold text-blue-600">{a.date}</p>
+
               <h3 className="mt-2 text-sm font-bold text-slate-800">
                 {a.title}
               </h3>
+
               <p className="mt-1 text-sm leading-6 text-slate-500">{a.desc}</p>
             </div>
           ))}
@@ -252,7 +357,7 @@ function DashboardSkeleton() {
             <Skeleton className="mt-2 h-4 w-80 bg-white/20" />
           </div>
 
-          <Skeleton className="h-24 w-full rounded-2xl bg-white/20 sm:w-[155px]" />
+          <Skeleton className="h-24 w-full rounded-2xl bg-white/20 sm:w-[170px]" />
         </div>
       </section>
 
@@ -262,6 +367,7 @@ function DashboardSkeleton() {
             <Skeleton className="h-5 w-44" />
             <Skeleton className="mt-2 h-3 w-72" />
           </div>
+
           <Skeleton className="h-7 w-14 rounded-full" />
         </div>
 
