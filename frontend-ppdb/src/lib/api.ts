@@ -78,17 +78,14 @@ export async function updateBiodata(data: {
 }) {
   const token = localStorage.getItem("token");
 
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/user/biodata`,
-    {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(data),
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/biodata`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
-  );
+    body: JSON.stringify(data),
+  });
 
   const result = await response.json();
 
