@@ -36,25 +36,43 @@ export default function LoginPage() {
       });
 
       if (res.data?.token) {
+        const user = res.data.user;
+        const role = user?.role;
+
         localStorage.setItem("token", res.data.token);
 
-        if (res.data.user) {
-          localStorage.setItem("user", JSON.stringify(res.data.user));
+        if (user) {
+          localStorage.setItem("user", JSON.stringify(user));
         }
 
-        const role = res.data.user?.role;
-
         if (role === "SUPER_ADMIN" || trimmedEmail === "superadmin@smp.com") {
+          localStorage.removeItem("admin");
           router.push("/superadmin/dashboard");
-        } else if (
+          return;
+        }
+
+        if (
           role === "ADMIN" ||
           (trimmedEmail.startsWith("admin") &&
             trimmedEmail.endsWith("@ppdb-bdl.sch.id"))
         ) {
+          const adminData = {
+            ...user,
+            sekolah:
+              user?.namaSekolah ||
+              user?.sekolah ||
+              user?.schoolName ||
+              user?.nama ||
+              "Sekolah",
+          };
+
+          localStorage.setItem("admin", JSON.stringify(adminData));
           router.push("/adminsekolah/dashboard");
-        } else {
-          router.push("/dashboard");
+          return;
         }
+
+        localStorage.removeItem("admin");
+        router.push("/dashboard");
       } else {
         setError(res.message || "Email atau password salah!");
       }
@@ -121,7 +139,7 @@ export default function LoginPage() {
 
               <p className="mt-4 max-w-md text-base leading-7 text-blue-50/90">
                 Kelola pendaftaran, pantau status berkas, dan akses dashboard
-                sesuai peran akun kamu.
+                sesuai peran akun.
               </p>
 
               <div className="mt-8 overflow-hidden rounded-[2rem] border border-white/15 bg-white/10 p-4 shadow-2xl shadow-blue-950/30 backdrop-blur">
@@ -170,7 +188,7 @@ export default function LoginPage() {
                     <input
                       type="email"
                       value={email}
-                      placeholder="Masukkan email kamu"
+                      placeholder="Masukkan email"
                       onChange={(e) => setEmail(e.target.value)}
                       className="rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition-all placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                     />
