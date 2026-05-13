@@ -1,4 +1,5 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL!;
+
 console.log("BASE_URL:", BASE_URL);
 
 export async function fetcher(url: string, options: RequestInit = {}) {
@@ -9,7 +10,9 @@ export async function fetcher(url: string, options: RequestInit = {}) {
     ...options,
     headers: {
       "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
+      ...(token && {
+        Authorization: `Bearer ${token}`,
+      }),
       ...(options.headers || {}),
     },
   });
@@ -54,32 +57,15 @@ export async function createPendaftaran(data: {
   });
 }
 
-export async function uploadDokumen(file: File, tipeDokumen: string) {
-  const token = localStorage.getItem("token");
+export async function getBiodata() {
+  return fetcher("/biodata");
+}
 
-  const formData = new FormData();
-
-  formData.append("file", file);
-  formData.append("tipeDokumen", tipeDokumen);
-
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/dokumen/upload`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: formData,
-    },
-  );
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.message || "Gagal upload dokumen");
-  }
-
-  return data;
+export async function saveBiodata(data: Record<string, unknown>) {
+  return fetcher("/biodata", {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
 }
 
 export async function updateBiodata(data: {
@@ -113,13 +99,30 @@ export async function updateBiodata(data: {
   return result;
 }
 
-export async function getBiodata() {
-  return fetcher("/biodata");
-}
+export async function uploadDokumen(file: File, tipeDokumen: string) {
+  const token = localStorage.getItem("token");
 
-export async function saveBiodata(data: Record<string, string>) {
-  return fetcher("/biodata", {
-    method: "PUT",
-    body: JSON.stringify(data),
-  });
+  const formData = new FormData();
+
+  formData.append("file", file);
+  formData.append("tipeDokumen", tipeDokumen);
+
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/dokumen/upload`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    },
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Gagal upload dokumen");
+  }
+
+  return data;
 }
