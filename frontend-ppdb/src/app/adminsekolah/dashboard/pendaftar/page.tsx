@@ -1,8 +1,28 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import {
+  Users,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  Search,
+  Filter,
+} from "lucide-react";
 
-const dataPendaftar = [
+type Pendaftar = {
+  id: number;
+  nama: string;
+  nisn: string;
+  jalur: string;
+  sekolahAsal: string;
+  pilihan1: string;
+  pilihan2: string;
+  status: string;
+  tanggal: string;
+};
+
+const dataAwal: Pendaftar[] = [
   {
     id: 1,
     nama: "Arga Bayu R",
@@ -83,242 +103,245 @@ const dataPendaftar = [
 ];
 
 const statusWarna: Record<string, string> = {
-  "Menunggu Verifikasi": "bg-amber-100 text-amber-700",
-  Terverifikasi: "bg-green-100 text-green-700",
-  Ditolak: "bg-red-100 text-red-600",
-  Ditunda: "bg-slate-100 text-slate-600",
+  "Menunggu Verifikasi": "bg-amber-100 text-amber-700 border-amber-200",
+  Terverifikasi: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  Ditolak: "bg-red-100 text-red-700 border-red-200",
 };
 
 const jalurWarna: Record<string, string> = {
-  Zonasi: "bg-blue-100 text-blue-700",
-  Prestasi: "bg-purple-100 text-purple-700",
-  Afirmasi: "bg-green-100 text-green-700",
-  Mutasi: "bg-orange-100 text-orange-700",
+  Zonasi: "bg-blue-100 text-blue-700 border-blue-200",
+  Prestasi: "bg-purple-100 text-purple-700 border-purple-200",
+  Afirmasi: "bg-green-100 text-green-700 border-green-200",
+  Mutasi: "bg-orange-100 text-orange-700 border-orange-200",
 };
 
-function SkeletonBox({
-  className = "",
-}: {
-  className?: string;
-}) {
-  return (
-    <div
-      className={`animate-pulse rounded-xl bg-slate-200 ${className}`}
-    />
-  );
+function SkeletonBox({ className = "" }: { className?: string }) {
+  return <div className={`animate-pulse rounded-2xl bg-slate-200 ${className}`} />;
 }
 
 export default function PendaftarPage() {
+  const [pendaftar, setPendaftar] = useState<Pendaftar[]>(dataAwal);
   const [search, setSearch] = useState("");
   const [filterJalur, setFilterJalur] = useState("Semua");
   const [filterStatus, setFilterStatus] = useState("Semua");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1200);
-
+    const timer = setTimeout(() => setLoading(false), 800);
     return () => clearTimeout(timer);
   }, []);
 
-  const filtered = dataPendaftar.filter((p) => {
+  const handleVerifikasi = (id: number) => {
+    setPendaftar((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, status: "Terverifikasi" } : item
+      )
+    );
+  };
+
+  const handleTolak = (id: number) => {
+    setPendaftar((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, status: "Ditolak" } : item
+      )
+    );
+  };
+
+  const filtered = pendaftar.filter((p) => {
     const matchSearch =
       p.nama.toLowerCase().includes(search.toLowerCase()) ||
       p.nisn.includes(search);
 
-    const matchJalur =
-      filterJalur === "Semua" || p.jalur === filterJalur;
-
-    const matchStatus =
-      filterStatus === "Semua" || p.status === filterStatus;
+    const matchJalur = filterJalur === "Semua" || p.jalur === filterJalur;
+    const matchStatus = filterStatus === "Semua" || p.status === filterStatus;
 
     return matchSearch && matchJalur && matchStatus;
   });
 
+  const total = pendaftar.length;
+  const menunggu = pendaftar.filter(
+    (p) => p.status === "Menunggu Verifikasi"
+  ).length;
+  const terverifikasi = pendaftar.filter(
+    (p) => p.status === "Terverifikasi"
+  ).length;
+  const ditolak = pendaftar.filter((p) => p.status === "Ditolak").length;
+
   if (loading) {
     return (
       <div className="flex flex-col gap-6">
-        {/* Header Skeleton */}
-        <div className="space-y-2">
-          <SkeletonBox className="h-7 w-56" />
-          <SkeletonBox className="h-4 w-80" />
-        </div>
-
-        {/* Stats Skeleton */}
+        <SkeletonBox className="h-36 w-full" />
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <div
-              key={i}
-              className="bg-white rounded-2xl shadow p-4 flex items-center gap-3"
-            >
-              <SkeletonBox className="w-10 h-10 rounded-xl" />
-
-              <div className="flex flex-col gap-2 flex-1">
-                <SkeletonBox className="h-4 w-20" />
-                <SkeletonBox className="h-3 w-24" />
-              </div>
-            </div>
+            <SkeletonBox key={i} className="h-32 w-full" />
           ))}
         </div>
-
-        {/* Filter Skeleton */}
-        <div className="bg-white rounded-2xl shadow p-4 flex flex-col sm:flex-row gap-3">
-          <SkeletonBox className="h-11 flex-1" />
-          <SkeletonBox className="h-11 w-full sm:w-44" />
-          <SkeletonBox className="h-11 w-full sm:w-44" />
-        </div>
-
-        {/* Table Skeleton */}
-        <div className="bg-white rounded-2xl shadow overflow-hidden">
-          <div className="p-4 space-y-4">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div
-                key={i}
-                className="grid grid-cols-6 gap-4"
-              >
-                <SkeletonBox className="h-4 w-full" />
-                <SkeletonBox className="h-4 w-full" />
-                <SkeletonBox className="h-4 w-full" />
-                <SkeletonBox className="h-4 w-full" />
-                <SkeletonBox className="h-4 w-full" />
-                <SkeletonBox className="h-4 w-full" />
-              </div>
-            ))}
-          </div>
-        </div>
+        <SkeletonBox className="h-20 w-full" />
+        <SkeletonBox className="h-96 w-full" />
       </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-xl font-bold text-slate-800">
-          📋 Daftar Pendaftar
-        </h1>
+      {/* HEADER */}
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-blue-700 to-blue-900 p-6 text-white shadow-xl">
+        <div className="absolute -right-10 -top-10 h-44 w-44 rounded-full bg-white/10" />
+        <div className="absolute right-24 bottom-0 h-28 w-28 rounded-full bg-white/10" />
 
-        <p className="text-slate-500 text-sm mt-1">
-          Daftar seluruh siswa yang mendaftar ke sekolah kamu.
-        </p>
-      </div>
+        <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="mb-1 text-sm font-medium text-blue-100">
+              Data Pendaftar
+            </p>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <h1 className="text-3xl font-bold tracking-tight">
+              Pendaftar PPDB
+            </h1>
+
+            <p className="mt-2 max-w-xl text-sm leading-6 text-blue-100">
+              Pantau data siswa yang masuk dan lakukan verifikasi untuk jalur
+              Zonasi serta Prestasi.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-white/20 bg-white/15 px-5 py-4 backdrop-blur-sm">
+            <p className="text-xs text-blue-100">Total Pendaftar</p>
+            <p className="mt-1 text-3xl font-bold">{total}</p>
+            <p className="mt-1 text-xs text-blue-100">Data masuk tahun ini</p>
+          </div>
+        </div>
+      </section>
+
+      {/* STATS */}
+      <section className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {[
           {
-            label: "Total Pendaftar",
-            value: dataPendaftar.length,
-            color: "bg-blue-500",
+            label: "Total",
+            value: total,
+            icon: Users,
+            style: "from-blue-500 to-blue-700 text-blue-700 bg-blue-50",
           },
           {
             label: "Menunggu",
-            value: dataPendaftar.filter(
-              (p) => p.status === "Menunggu Verifikasi"
-            ).length,
-            color: "bg-amber-500",
+            value: menunggu,
+            icon: Clock,
+            style: "from-amber-500 to-orange-600 text-amber-700 bg-amber-50",
           },
           {
             label: "Terverifikasi",
-            value: dataPendaftar.filter(
-              (p) => p.status === "Terverifikasi"
-            ).length,
-            color: "bg-green-500",
+            value: terverifikasi,
+            icon: CheckCircle2,
+            style: "from-emerald-500 to-emerald-700 text-emerald-700 bg-emerald-50",
           },
           {
             label: "Ditolak",
-            value: dataPendaftar.filter(
-              (p) => p.status === "Ditolak"
-            ).length,
-            color: "bg-red-500",
+            value: ditolak,
+            icon: XCircle,
+            style: "from-red-500 to-red-700 text-red-700 bg-red-50",
           },
-        ].map((s) => (
-          <div
-            key={s.label}
-            className="bg-white rounded-2xl shadow p-4 flex items-center gap-3"
-          >
-            <div
-              className={`w-10 h-10 rounded-xl ${s.color} flex items-center justify-center text-white font-bold`}
-            >
-              {s.value}
-            </div>
+        ].map((item) => {
+          const Icon = item.icon;
 
-            <p className="text-xs text-slate-600 font-medium">
-              {s.label}
+          return (
+            <div
+              key={item.label}
+              className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+            >
+              <div
+                className={`mb-4 flex h-12 w-12 items-center justify-center rounded-2xl ${item.style
+                  .split(" ")
+                  .slice(2)
+                  .join(" ")}`}
+              >
+                <Icon className="h-6 w-6" />
+              </div>
+
+              <p className="text-sm font-medium text-slate-500">{item.label}</p>
+              <h2 className="mt-1 text-3xl font-bold text-slate-800">
+                {item.value}
+              </h2>
+              <p className="mt-1 text-xs text-slate-400">Data PPDB sekolah</p>
+            </div>
+          );
+        })}
+      </section>
+
+      {/* FILTER */}
+      <section className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm">
+        <div className="flex flex-col gap-3 lg:flex-row">
+          <div className="flex flex-1 items-center gap-3 rounded-2xl border border-slate-200 px-4 py-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100">
+            <Search className="h-5 w-5 text-slate-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Cari nama atau NISN..."
+              className="w-full bg-transparent text-sm outline-none"
+            />
+          </div>
+
+          <div className="flex items-center gap-3 rounded-2xl border border-slate-200 px-4 py-3">
+            <Filter className="h-5 w-5 text-slate-400" />
+            <select
+              value={filterJalur}
+              onChange={(e) => setFilterJalur(e.target.value)}
+              className="bg-white text-sm outline-none"
+            >
+              <option value="Semua">Semua Jalur</option>
+              <option>Zonasi</option>
+              <option>Prestasi</option>
+              <option>Afirmasi</option>
+              <option>Mutasi</option>
+            </select>
+          </div>
+
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500"
+          >
+            <option value="Semua">Semua Status</option>
+            <option>Menunggu Verifikasi</option>
+            <option>Terverifikasi</option>
+            <option>Ditolak</option>
+          </select>
+        </div>
+      </section>
+
+      {/* TABLE */}
+      <section className="overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-b from-white to-slate-50 shadow-xl">
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+          <div>
+            <h2 className="font-semibold text-slate-800">Tabel Pendaftar</h2>
+            <p className="mt-1 text-xs text-slate-400">
+              Menampilkan {filtered.length} dari {total} data
             </p>
           </div>
-        ))}
-      </div>
+        </div>
 
-      {/* Filter */}
-      <div className="bg-white rounded-2xl shadow p-4 flex flex-col sm:flex-row gap-3">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="🔍 Cari nama atau NISN..."
-          className="flex-1 border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
-        />
-
-        <select
-          value={filterJalur}
-          onChange={(e) => setFilterJalur(e.target.value)}
-          className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 transition-all"
-        >
-          <option value="Semua">Semua Jalur</option>
-          <option>Zonasi</option>
-          <option>Prestasi</option>
-          <option>Afirmasi</option>
-          <option>Mutasi</option>
-        </select>
-
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 transition-all"
-        >
-          <option value="Semua">Semua Status</option>
-          <option>Menunggu Verifikasi</option>
-          <option>Terverifikasi</option>
-          <option>Ditolak</option>
-          <option>Ditunda</option>
-        </select>
-      </div>
-
-      {/* Table */}
-      <div className="bg-white rounded-2xl shadow overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-slate-100">
+            <thead className="border-b border-slate-100 bg-blue-50/70">
               <tr>
-                <th className="text-left py-3 px-4 text-xs text-slate-500 font-semibold">
-                  No
-                </th>
-                <th className="text-left py-3 px-4 text-xs text-slate-500 font-semibold">
-                  Nama
-                </th>
-                <th className="text-left py-3 px-4 text-xs text-slate-500 font-semibold">
-                  NISN
-                </th>
-                <th className="text-left py-3 px-4 text-xs text-slate-500 font-semibold">
-                  Jalur
-                </th>
-                <th className="text-left py-3 px-4 text-xs text-slate-500 font-semibold">
-                  Sekolah Asal
-                </th>
-                <th className="text-left py-3 px-4 text-xs text-slate-500 font-semibold">
-                  Pilihan 1
-                </th>
-                <th className="text-left py-3 px-4 text-xs text-slate-500 font-semibold">
-                  Status
-                </th>
-                <th className="text-left py-3 px-4 text-xs text-slate-500 font-semibold">
-                  Tanggal
-                </th>
-                <th className="text-left py-3 px-4 text-xs text-slate-500 font-semibold">
-                  Aksi
-                </th>
+                {[
+                  "No",
+                  "Nama",
+                  "NISN",
+                  "Jalur",
+                  "Sekolah Asal",
+                  "Pilihan 1",
+                  "Status",
+                  "Tanggal",
+                  "Aksi",
+                ].map((head) => (
+                  <th
+                    key={head}
+                    className="px-4 py-3 text-left text-xs font-semibold text-slate-600"
+                  >
+                    {head}
+                  </th>
+                ))}
               </tr>
             </thead>
 
@@ -327,79 +350,108 @@ export default function PendaftarPage() {
                 <tr>
                   <td
                     colSpan={9}
-                    className="text-center py-10 text-slate-400 text-sm"
+                    className="py-12 text-center text-sm text-slate-400"
                   >
                     Tidak ada data yang ditemukan
                   </td>
                 </tr>
               ) : (
-                filtered.map((p, i) => (
-                  <tr
-                    key={p.id}
-                    className="border-b border-slate-50 hover:bg-slate-50 transition-colors"
-                  >
-                    <td className="py-3 px-4 text-slate-400">
-                      {i + 1}
-                    </td>
+                filtered.map((p, i) => {
+                  const bisaVerifikasi =
+                    p.jalur === "Zonasi" || p.jalur === "Prestasi";
 
-                    <td className="py-3 px-4 font-semibold text-slate-800">
-                      {p.nama}
-                    </td>
+                  return (
+                    <tr
+                      key={p.id}
+                      className="border-b border-slate-100 transition-colors hover:bg-blue-50/40"
+                    >
+                      <td className="px-4 py-4 text-slate-400">{i + 1}</td>
 
-                    <td className="py-3 px-4 text-slate-600 font-mono text-xs">
-                      {p.nisn}
-                    </td>
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white shadow-sm">
+                            {p.nama
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .slice(0, 2)
+                              .toUpperCase()}
+                          </div>
 
-                    <td className="py-3 px-4">
-                      <span
-                        className={`text-xs px-2 py-1 rounded-full font-medium ${jalurWarna[p.jalur]}`}
-                      >
-                        {p.jalur}
-                      </span>
-                    </td>
+                          <div>
+                            <p className="font-semibold text-slate-800">
+                              {p.nama}
+                            </p>
+                            <p className="text-xs text-slate-400">
+                              Pilihan 2: {p.pilihan2}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
 
-                    <td className="py-3 px-4 text-slate-600 text-xs">
-                      {p.sekolahAsal}
-                    </td>
+                      <td className="px-4 py-4 font-mono text-xs text-slate-600">
+                        {p.nisn}
+                      </td>
 
-                    <td className="py-3 px-4 text-slate-600 text-xs">
-                      {p.pilihan1}
-                    </td>
+                      <td className="px-4 py-4">
+                        <span
+                          className={`rounded-full border px-3 py-1 text-xs font-medium ${jalurWarna[p.jalur]}`}
+                        >
+                          {p.jalur}
+                        </span>
+                      </td>
 
-                    <td className="py-3 px-4">
-                      <span
-                        className={`text-xs px-2 py-1 rounded-full font-medium ${statusWarna[p.status]}`}
-                      >
-                        {p.status}
-                      </span>
-                    </td>
+                      <td className="px-4 py-4 text-xs text-slate-600">
+                        {p.sekolahAsal}
+                      </td>
 
-                    <td className="py-3 px-4 text-slate-400 text-xs">
-                      {p.tanggal}
-                    </td>
+                      <td className="px-4 py-4 text-xs text-slate-600">
+                        {p.pilihan1}
+                      </td>
 
-                    <td className="py-3 px-4">
-                      <a
-                        href={`/adminsekolah/verifikasi`}
-                        className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg transition-colors"
-                      >
-                        Detail
-                      </a>
-                    </td>
-                  </tr>
-                ))
+                      <td className="px-4 py-4">
+                        <span
+                          className={`rounded-full border px-3 py-1 text-xs font-medium ${statusWarna[p.status]}`}
+                        >
+                          {p.status}
+                        </span>
+                      </td>
+
+                      <td className="px-4 py-4 text-xs text-slate-400">
+                        {p.tanggal}
+                      </td>
+
+                      <td className="px-4 py-4">
+                        {bisaVerifikasi ? (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleVerifikasi(p.id)}
+                              className="rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-700 px-3 py-2 text-xs font-semibold text-white shadow-md transition hover:opacity-90"
+                            >
+                              Verifikasi
+                            </button>
+
+                            <button
+                              onClick={() => handleTolak(p.id)}
+                              className="rounded-xl bg-gradient-to-r from-red-500 to-red-700 px-3 py-2 text-xs font-semibold text-white shadow-md transition hover:opacity-90"
+                            >
+                              Tolak
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="rounded-xl bg-slate-100 px-3 py-2 text-xs text-slate-500">
+                            Tidak tersedia
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
-
-        <div className="px-4 py-3 border-t border-slate-100 flex items-center justify-between">
-          <p className="text-xs text-slate-400">
-            Menampilkan {filtered.length} dari{" "}
-            {dataPendaftar.length} pendaftar
-          </p>
-        </div>
-      </div>
+      </section>
     </div>
   );
 }
