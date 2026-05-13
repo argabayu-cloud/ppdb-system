@@ -53,3 +53,73 @@ export async function createPendaftaran(data: {
     body: JSON.stringify(data),
   });
 }
+
+export async function uploadDokumen(file: File, tipeDokumen: string) {
+  const token = localStorage.getItem("token");
+
+  const formData = new FormData();
+
+  formData.append("file", file);
+  formData.append("tipeDokumen", tipeDokumen);
+
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/dokumen/upload`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    },
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Gagal upload dokumen");
+  }
+
+  return data;
+}
+
+export async function updateBiodata(data: {
+  alamat: string;
+  kelurahan: string;
+  kecamatan: string;
+  noTlpn: string;
+  latitude: number;
+  longitude: number;
+}) {
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/user/biodata`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    },
+  );
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.message || "Gagal update biodata");
+  }
+
+  return result;
+}
+
+export async function getBiodata() {
+  return fetcher("/biodata");
+}
+
+export async function saveBiodata(data: Record<string, string>) {
+  return fetcher("/biodata", {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}

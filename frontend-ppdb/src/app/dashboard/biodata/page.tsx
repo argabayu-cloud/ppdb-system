@@ -1,8 +1,9 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, type ChangeEvent } from "react";
 
+import { getBiodata, saveBiodata } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const pilihanPekerjaan = [
@@ -95,17 +96,31 @@ const initialForm: FormState = {
 };
 
 export default function BiodataPage() {
+  const router = useRouter();
+
   const [form, setForm] = useState<FormState>(initialForm);
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [loadingSkeleton, setLoadingSkeleton] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoadingSkeleton(false);
-    }, 900);
+    const loadBiodata = async () => {
+      try {
+        const res = await getBiodata();
 
-    return () => clearTimeout(timer);
+        if (res.data) {
+          setForm((prev) => ({
+            ...prev,
+            ...res.data,
+          }));
+        }
+      } catch {
+        // Biodata belum ada, form tetap kosong.
+      } finally {
+        setLoadingSkeleton(false);
+      }
+    };
+
+    loadBiodata();
   }, []);
 
   const handleChange = (
@@ -117,42 +132,18 @@ export default function BiodataPage() {
   const handleSubmit = async () => {
     setLoading(true);
 
-    setTimeout(() => {
+    try {
+      await saveBiodata({ ...form });
+      router.push("/dashboard/pendaftaran");
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Gagal menyimpan biodata");
+    } finally {
       setLoading(false);
-      setSuccess(true);
-    }, 1000);
+    }
   };
 
   if (loadingSkeleton) {
     return <BiodataSkeleton />;
-  }
-
-  if (success) {
-    return (
-      <div className="flex min-h-[65vh] items-center justify-center">
-        <div className="w-full max-w-lg rounded-[2rem] border border-slate-100 bg-white p-8 text-center shadow-sm">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-green-50 text-3xl">
-            ✅
-          </div>
-
-          <h2 className="mt-5 text-xl font-bold text-slate-900">
-            Biodata Tersimpan!
-          </h2>
-
-          <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-500">
-            Data biodata kamu sudah tersimpan. Lanjutkan ke form pendaftaran
-            untuk memilih jalur dan sekolah tujuan.
-          </p>
-
-          <Link
-            href="/dashboard/pendaftaran"
-            className="mt-6 inline-flex rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700"
-          >
-            Isi Pendaftaran →
-          </Link>
-        </div>
-      </div>
-    );
   }
 
   const filledRequired = [
@@ -206,56 +197,14 @@ export default function BiodataPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <InputField
-            label="Nama Lengkap"
-            name="namaLengkap"
-            value={form.namaLengkap}
-            onChange={handleChange}
-            placeholder="Sesuai akta kelahiran"
-          />
-          <InputField
-            label="NIK"
-            name="nik"
-            value={form.nik}
-            onChange={handleChange}
-            placeholder="16 digit nomor KTP/KK"
-          />
-          <InputField
-            label="Tempat Lahir"
-            name="tempatLahir"
-            value={form.tempatLahir}
-            onChange={handleChange}
-            placeholder="Kota tempat lahir"
-          />
-          <InputField
-            label="Tanggal Lahir"
-            name="tanggalLahir"
-            type="date"
-            value={form.tanggalLahir}
-            onChange={handleChange}
-          />
-          <SelectField
-            label="Jenis Kelamin"
-            name="jenisKelamin"
-            value={form.jenisKelamin}
-            onChange={handleChange}
-            options={["-- Pilih --", "Laki-laki", "Perempuan"]}
-          />
-          <SelectField
-            label="Agama"
-            name="agama"
-            value={form.agama}
-            onChange={handleChange}
-            options={[
-              "-- Pilih --",
-              "Islam",
-              "Kristen",
-              "Katolik",
-              "Hindu",
-              "Buddha",
-              "Konghucu",
-            ]}
-          />
+          <InputField label="Nama Lengkap" name="namaLengkap" value={form.namaLengkap} onChange={handleChange} placeholder="Sesuai akta kelahiran" />
+          <InputField label="NIK" name="nik" value={form.nik} onChange={handleChange} placeholder="16 digit nomor KTP/KK" />
+          <InputField label="Tempat Lahir" name="tempatLahir" value={form.tempatLahir} onChange={handleChange} placeholder="Kota tempat lahir" />
+          <InputField label="Tanggal Lahir" name="tanggalLahir" type="date" value={form.tanggalLahir} onChange={handleChange} />
+
+          <SelectField label="Jenis Kelamin" name="jenisKelamin" value={form.jenisKelamin} onChange={handleChange} options={["-- Pilih --", "Laki-laki", "Perempuan"]} />
+          <SelectField label="Agama" name="agama" value={form.agama} onChange={handleChange} options={["-- Pilih --", "Islam", "Kristen", "Katolik", "Hindu", "Buddha", "Konghucu"]} />
+
           <InputField label="Anak Ke" name="anakKe" value={form.anakKe} onChange={handleChange} placeholder="Contoh: 1" />
           <InputField label="Jumlah Saudara" name="jumlahSaudara" value={form.jumlahSaudara} onChange={handleChange} placeholder="Contoh: 2" />
           <InputField label="Berat Badan (kg)" name="beratBadan" value={form.beratBadan} onChange={handleChange} placeholder="Contoh: 40" />
@@ -263,13 +212,7 @@ export default function BiodataPage() {
           <InputField label="No. HP Siswa" name="noHp" value={form.noHp} onChange={handleChange} placeholder="08xxxxxxxxxx" />
           <InputField label="Email" name="email" value={form.email} onChange={handleChange} placeholder="email@gmail.com" />
 
-          <TextareaField
-            label="Alamat Lengkap"
-            name="alamat"
-            value={form.alamat}
-            onChange={handleChange}
-            placeholder="Jalan, nomor rumah, RT/RW"
-          />
+          <TextareaField label="Alamat Lengkap" name="alamat" value={form.alamat} onChange={handleChange} placeholder="Jalan, nomor rumah, RT/RW" />
 
           <InputField label="Kelurahan" name="kelurahan" value={form.kelurahan} onChange={handleChange} />
           <InputField label="Kecamatan" name="kecamatan" value={form.kecamatan} onChange={handleChange} />
@@ -293,19 +236,14 @@ export default function BiodataPage() {
           <InputField label="NIK Ayah" name="nikAyah" value={form.nikAyah} onChange={handleChange} />
           <SelectField label="Pendidikan Ayah" name="pendidikanAyah" value={form.pendidikanAyah} onChange={handleChange} options={pilihanPendidikan} />
           <SelectField label="Pekerjaan Ayah" name="pekerjaanAyah" value={form.pekerjaanAyah} onChange={handleChange} options={pilihanPekerjaan} />
+
           <InputField label="Nama Ibu" name="namaIbu" value={form.namaIbu} onChange={handleChange} />
           <InputField label="NIK Ibu" name="nikIbu" value={form.nikIbu} onChange={handleChange} />
           <SelectField label="Pendidikan Ibu" name="pendidikanIbu" value={form.pendidikanIbu} onChange={handleChange} options={pilihanPendidikan} />
           <SelectField label="Pekerjaan Ibu" name="pekerjaanIbu" value={form.pekerjaanIbu} onChange={handleChange} options={pilihanPekerjaan} />
-          <InputField label="No. HP Orang Tua" name="noHpOrtu" value={form.noHpOrtu} onChange={handleChange} />
 
-          <TextareaField
-            label="Alamat Orang Tua"
-            name="alamatOrtu"
-            value={form.alamatOrtu}
-            onChange={handleChange}
-            placeholder="Isi jika berbeda dengan alamat siswa"
-          />
+          <InputField label="No. HP Orang Tua" name="noHpOrtu" value={form.noHpOrtu} onChange={handleChange} />
+          <TextareaField label="Alamat Orang Tua" name="alamatOrtu" value={form.alamatOrtu} onChange={handleChange} placeholder="Isi jika berbeda dengan alamat siswa" />
         </div>
       </section>
 
