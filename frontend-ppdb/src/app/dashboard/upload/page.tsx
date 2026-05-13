@@ -27,7 +27,7 @@ const daftarBerkas = [
   },
   {
     id: "rapor",
-    label: "Rapor Kelas 4, 5, 6",
+    label: "Rapor Kelas 1, 2, 3, 4, 5, 6",
     desc: "Format PDF/JPG, maks 5MB",
     required: true,
   },
