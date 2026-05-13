@@ -17,9 +17,7 @@ enum Role {
 
 enum Jalur {
   ZONASI
-  DOMISILI
   PRESTASI
-  AFIRMASI
 }
 
 enum StatusPendaftaran {
@@ -110,6 +108,13 @@ model Pendaftaran {
 
   jalur     Jalur
   status    StatusPendaftaran @default(MENUNGGU)
+
+  nisn              String?
+  namaSekolahAsal   String?
+  npsn              String?
+  tahunLulus        String?
+  jenisPrestasi     String?
+  tingkatPrestasi   String?
 
   nilaiRapor    Float?
   nilaiPrestasi Float?
