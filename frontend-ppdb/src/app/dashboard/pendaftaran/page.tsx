@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
-import { createPendaftaran } from "@/lib/api";
+import { createPendaftaran, uploadDokumen } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const daftarSekolah = Array.from(
@@ -19,18 +19,6 @@ const jalurPendaftaran = [
     desc: "Berdasarkan jarak tempat tinggal ke sekolah",
   },
   {
-    id: "afirmasi",
-    label: "Afirmasi",
-    icon: "🤝",
-    desc: "Untuk keluarga tidak mampu / pemegang KIP",
-  },
-  {
-    id: "mutasi",
-    label: "Mutasi / Domisili",
-    icon: "🏠",
-    desc: "Perpindahan domisili orang tua / wali",
-  },
-  {
     id: "prestasi",
     label: "Prestasi",
     icon: "🏆",
@@ -44,13 +32,13 @@ type FormState = {
   npsn: string;
   tahunLulus: string;
   nilaiRataRata: string;
-  noKip: string;
   jenisPrestasi: string;
   tingkatPrestasi: string;
-  alasanMutasi: string;
 };
 
 export default function PendaftaranPage() {
+  const router = useRouter();
+
   const [jalur, setJalur] = useState("");
   const [form, setForm] = useState<FormState>({
     nisn: "",
@@ -58,16 +46,14 @@ export default function PendaftaranPage() {
     npsn: "",
     tahunLulus: "",
     nilaiRataRata: "",
-    noKip: "",
     jenisPrestasi: "",
     tingkatPrestasi: "",
-    alasanMutasi: "",
   });
 
   const [pilihan1, setPilihan1] = useState("");
   const [pilihan2, setPilihan2] = useState("");
+  const [fileRaporPrestasi, setFileRaporPrestasi] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [loadingSkeleton, setLoadingSkeleton] = useState(true);
 
   useEffect(() => {
@@ -79,11 +65,59 @@ export default function PendaftaranPage() {
   }, []);
 
   const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >,
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleJalurChange = (selectedJalur: string) => {
+    setJalur(selectedJalur);
+
+    setForm((prev) => ({
+      ...prev,
+      jenisPrestasi: "",
+      tingkatPrestasi: "",
+    }));
+
+    setFileRaporPrestasi(null);
+  };
+
+  const handleJenisPrestasiChange = (
+    e: React.ChangeEvent<HTMLSelectElement>,
+  ) => {
+    const value = e.target.value;
+
+    setForm((prev) => ({
+      ...prev,
+      jenisPrestasi: value,
+      tingkatPrestasi: "",
+    }));
+
+    if (value !== "Nilai Rapor") {
+      setFileRaporPrestasi(null);
+    }
+  };
+
+  const handleFileRaporPrestasi = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    if (file.type !== "application/pdf") {
+      alert("File rapor wajib dalam format PDF");
+      e.target.value = "";
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Ukuran file maksimal 5MB");
+      e.target.value = "";
+      return;
+    }
+
+    setFileRaporPrestasi(file);
   };
 
   const handleSubmit = async () => {
@@ -102,19 +136,53 @@ export default function PendaftaranPage() {
       return;
     }
 
+    if (jalur === "prestasi") {
+      if (!form.jenisPrestasi) {
+        alert("Jenis prestasi wajib dipilih!");
+        return;
+      }
+
+      if (form.jenisPrestasi === "Nilai Rapor" && !fileRaporPrestasi) {
+        alert("Upload file PDF rapor wajib diisi!");
+        return;
+      }
+
+      if (form.jenisPrestasi !== "Nilai Rapor" && !form.tingkatPrestasi) {
+        alert("Tingkat prestasi wajib dipilih!");
+        return;
+      }
+    }
+
     try {
       setLoading(true);
 
       const sekolah1Id = "35ca2c3e-3c86-4c79-aff7-3d8d88e85413";
-      const sekolah2Id = "2e9ef8c7-fbe5-43ce-b7de-d42d8378d146";
+      const sekolah2Id = pilihan2
+        ? "2e9ef8c7-fbe5-43ce-b7de-d42d8378d146"
+        : undefined;
 
       await createPendaftaran({
         sekolah1Id,
         sekolah2Id,
         jalur: jalur.toUpperCase(),
+        nisn: form.nisn,
+        namaSekolahAsal: form.namaSekolahAsal,
+        npsn: form.npsn,
+        tahunLulus: form.tahunLulus,
+        nilaiRataRata: form.nilaiRataRata,
+        jenisPrestasi: form.jenisPrestasi,
+        tingkatPrestasi: form.tingkatPrestasi,
       });
 
-      setSuccess(true);
+      if (
+        jalur === "prestasi" &&
+        form.jenisPrestasi === "Nilai Rapor" &&
+        fileRaporPrestasi
+      ) {
+        await uploadDokumen(fileRaporPrestasi, "RAPOR");
+      }
+
+      router.push("/dashboard/upload");
     } catch (error: unknown) {
       if (error instanceof Error) {
         alert(error.message);
@@ -128,37 +196,6 @@ export default function PendaftaranPage() {
 
   if (loadingSkeleton) {
     return <PendaftaranSkeleton />;
-  }
-
-  if (success) {
-    return (
-      <div className="flex min-h-[65vh] items-center justify-center">
-        <div className="w-full max-w-lg rounded-[2rem] border border-slate-100 bg-white p-8 text-center shadow-sm">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-green-50 text-3xl">
-            ✅
-          </div>
-
-          <h2 className="mt-5 text-xl font-bold text-slate-900">
-            Pendaftaran Tersimpan!
-          </h2>
-
-          <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-500">
-            Jalur{" "}
-            <strong>
-              {jalurPendaftaran.find((item) => item.id === jalur)?.label}
-            </strong>{" "}
-            berhasil didaftarkan. Selanjutnya upload berkas persyaratan.
-          </p>
-
-          <Link
-            href="/dashboard/upload"
-            className="mt-6 inline-flex rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700"
-          >
-            Upload Berkas →
-          </Link>
-        </div>
-      </div>
-    );
   }
 
   const selectedJalur = jalurPendaftaran.find((item) => item.id === jalur);
@@ -213,7 +250,7 @@ export default function PendaftaranPage() {
             return (
               <button
                 key={item.id}
-                onClick={() => setJalur(item.id)}
+                onClick={() => handleJalurChange(item.id)}
                 className={`rounded-2xl border p-4 text-left transition ${
                   active
                     ? "border-blue-700 bg-[#244aad] text-white shadow-md shadow-blue-100"
@@ -306,28 +343,6 @@ export default function PendaftaranPage() {
             </div>
           </section>
 
-          {jalur === "afirmasi" && (
-            <section className="rounded-2xl border border-green-100 bg-green-50 p-6">
-              <h2 className="text-base font-bold text-green-700">
-                Data Afirmasi
-              </h2>
-
-              <div className="mt-4 flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-slate-700">
-                  Nomor KIP / PKH
-                </label>
-                <input
-                  type="text"
-                  name="noKip"
-                  value={form.noKip}
-                  onChange={handleChange}
-                  placeholder="Nomor Kartu Indonesia Pintar"
-                  className="rounded-xl border border-green-200 bg-white px-4 py-2.5 text-sm outline-none transition-all focus:border-green-500 focus:ring-2 focus:ring-green-100"
-                />
-              </div>
-            </section>
-          )}
-
           {jalur === "prestasi" && (
             <section className="rounded-2xl border border-purple-100 bg-purple-50 p-6">
               <h2 className="text-base font-bold text-purple-700">
@@ -339,10 +354,11 @@ export default function PendaftaranPage() {
                   <label className="text-sm font-semibold text-slate-700">
                     Jenis Prestasi
                   </label>
+
                   <select
                     name="jenisPrestasi"
                     value={form.jenisPrestasi}
-                    onChange={handleChange}
+                    onChange={handleJenisPrestasiChange}
                     className="rounded-xl border border-purple-200 bg-white px-4 py-2.5 text-sm outline-none transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
                   >
                     <option value="">-- Pilih --</option>
@@ -354,46 +370,58 @@ export default function PendaftaranPage() {
                   </select>
                 </div>
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-slate-700">
-                    Tingkat Prestasi
-                  </label>
-                  <select
-                    name="tingkatPrestasi"
-                    value={form.tingkatPrestasi}
-                    onChange={handleChange}
-                    className="rounded-xl border border-purple-200 bg-white px-4 py-2.5 text-sm outline-none transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
-                  >
-                    <option value="">-- Pilih --</option>
-                    <option>Tingkat Kecamatan</option>
-                    <option>Tingkat Kota / Kabupaten</option>
-                    <option>Tingkat Provinsi</option>
-                    <option>Tingkat Nasional</option>
-                    <option>Tingkat Internasional</option>
-                  </select>
-                </div>
-              </div>
-            </section>
-          )}
+                {form.jenisPrestasi === "Nilai Rapor" ? (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-slate-700">
+                      File Rapor SD
+                    </label>
 
-          {jalur === "mutasi" && (
-            <section className="rounded-2xl border border-orange-100 bg-orange-50 p-6">
-              <h2 className="text-base font-bold text-orange-700">
-                Data Domisili
-              </h2>
+                    <label className="flex min-h-[42px] cursor-pointer items-center justify-between gap-3 rounded-xl border border-purple-200 bg-white px-4 py-2.5 text-sm transition-all hover:border-purple-400">
+                      <span className="truncate text-slate-500">
+                        {fileRaporPrestasi
+                          ? fileRaporPrestasi.name
+                          : "Upload 1 file PDF rapor kelas 1-6 semester 1"}
+                      </span>
 
-              <div className="mt-4 flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-slate-700">
-                  Alasan Mutasi
-                </label>
-                <textarea
-                  name="alasanMutasi"
-                  value={form.alasanMutasi}
-                  onChange={handleChange}
-                  placeholder="Jelaskan alasan perpindahan domisili"
-                  rows={3}
-                  className="resize-none rounded-xl border border-orange-200 bg-white px-4 py-2.5 text-sm outline-none transition-all focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
-                />
+                      <span className="shrink-0 rounded-lg bg-purple-600 px-3 py-1 text-xs font-bold text-white">
+                        Pilih PDF
+                      </span>
+
+                      <input
+                        type="file"
+                        accept="application/pdf,.pdf"
+                        onChange={handleFileRaporPrestasi}
+                        className="hidden"
+                      />
+                    </label>
+
+                    <p className="text-xs leading-5 text-purple-700">
+                      Gabungkan rapor SD kelas 1 sampai kelas 6 semester
+                      ganjil/semester 1 menjadi satu file PDF. Maksimal 5MB.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-slate-700">
+                      Tingkat Prestasi
+                    </label>
+
+                    <select
+                      name="tingkatPrestasi"
+                      value={form.tingkatPrestasi}
+                      onChange={handleChange}
+                      disabled={!form.jenisPrestasi}
+                      className="rounded-xl border border-purple-200 bg-white px-4 py-2.5 text-sm outline-none transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-100 disabled:bg-slate-100 disabled:text-slate-400"
+                    >
+                      <option value="">-- Pilih --</option>
+                      <option>Tingkat Kecamatan</option>
+                      <option>Tingkat Kota / Kabupaten</option>
+                      <option>Tingkat Provinsi</option>
+                      <option>Tingkat Nasional</option>
+                      <option>Tingkat Internasional</option>
+                    </select>
+                  </div>
+                )}
               </div>
             </section>
           )}
@@ -541,7 +569,7 @@ function PendaftaranSkeleton() {
         <Skeleton className="mt-2 h-3 w-72" />
 
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {Array.from({ length: 4 }).map((_, i) => (
+          {Array.from({ length: 2 }).map((_, i) => (
             <Skeleton key={i} className="h-24 rounded-2xl" />
           ))}
         </div>
