@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState, type ChangeEvent } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { updateBiodata } from "@/lib/api";
 
 const pilihanPekerjaan = [
   "-- Pilih --",
@@ -100,12 +101,27 @@ export default function BiodataPage() {
   const [success, setSuccess] = useState(false);
   const [loadingSkeleton, setLoadingSkeleton] = useState(true);
 
+  const [latitude, setLatitude] = useState<number>(0);
+  const [longitude, setLongitude] = useState<number>(0);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoadingSkeleton(false);
     }, 900);
 
     return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLatitude(position.coords.latitude);
+        setLongitude(position.coords.longitude);
+      },
+      (error) => {
+        console.error("Gagal mengambil lokasi:", error);
+      },
+    );
   }, []);
 
   const handleChange = (
@@ -115,12 +131,30 @@ export default function BiodataPage() {
   };
 
   const handleSubmit = async () => {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    setTimeout(() => {
-      setLoading(false);
+      await updateBiodata({
+        alamat: form.alamat,
+        kelurahan: form.kelurahan,
+        kecamatan: form.kecamatan,
+        noTlpn: form.noHp,
+        latitude,
+        longitude,
+      });
+
       setSuccess(true);
-    }, 1000);
+    } catch (error) {
+      console.error(error);
+
+      if (error instanceof Error) {
+        alert(error.message);
+      } else {
+        alert("Gagal menyimpan biodata");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (loadingSkeleton) {
@@ -180,8 +214,8 @@ export default function BiodataPage() {
             </h1>
 
             <p className="mt-3 max-w-xl text-sm leading-6 text-blue-50/90">
-              Isi data siswa dan data orang tua sesuai dokumen resmi seperti
-              KK, Akta Lahir, dan dokumen pendukung lainnya.
+              Isi data siswa dan data orang tua sesuai dokumen resmi seperti KK,
+              Akta Lahir, dan dokumen pendukung lainnya.
             </p>
           </div>
 
@@ -256,12 +290,48 @@ export default function BiodataPage() {
               "Konghucu",
             ]}
           />
-          <InputField label="Anak Ke" name="anakKe" value={form.anakKe} onChange={handleChange} placeholder="Contoh: 1" />
-          <InputField label="Jumlah Saudara" name="jumlahSaudara" value={form.jumlahSaudara} onChange={handleChange} placeholder="Contoh: 2" />
-          <InputField label="Berat Badan (kg)" name="beratBadan" value={form.beratBadan} onChange={handleChange} placeholder="Contoh: 40" />
-          <InputField label="Tinggi Badan (cm)" name="tinggiBadan" value={form.tinggiBadan} onChange={handleChange} placeholder="Contoh: 150" />
-          <InputField label="No. HP Siswa" name="noHp" value={form.noHp} onChange={handleChange} placeholder="08xxxxxxxxxx" />
-          <InputField label="Email" name="email" value={form.email} onChange={handleChange} placeholder="email@gmail.com" />
+          <InputField
+            label="Anak Ke"
+            name="anakKe"
+            value={form.anakKe}
+            onChange={handleChange}
+            placeholder="Contoh: 1"
+          />
+          <InputField
+            label="Jumlah Saudara"
+            name="jumlahSaudara"
+            value={form.jumlahSaudara}
+            onChange={handleChange}
+            placeholder="Contoh: 2"
+          />
+          <InputField
+            label="Berat Badan (kg)"
+            name="beratBadan"
+            value={form.beratBadan}
+            onChange={handleChange}
+            placeholder="Contoh: 40"
+          />
+          <InputField
+            label="Tinggi Badan (cm)"
+            name="tinggiBadan"
+            value={form.tinggiBadan}
+            onChange={handleChange}
+            placeholder="Contoh: 150"
+          />
+          <InputField
+            label="No. HP Siswa"
+            name="noHp"
+            value={form.noHp}
+            onChange={handleChange}
+            placeholder="08xxxxxxxxxx"
+          />
+          <InputField
+            label="Email"
+            name="email"
+            value={form.email}
+            onChange={handleChange}
+            placeholder="email@gmail.com"
+          />
 
           <TextareaField
             label="Alamat Lengkap"
@@ -271,10 +341,30 @@ export default function BiodataPage() {
             placeholder="Jalan, nomor rumah, RT/RW"
           />
 
-          <InputField label="Kelurahan" name="kelurahan" value={form.kelurahan} onChange={handleChange} />
-          <InputField label="Kecamatan" name="kecamatan" value={form.kecamatan} onChange={handleChange} />
-          <InputField label="Kota / Kabupaten" name="kotaKabupaten" value={form.kotaKabupaten} onChange={handleChange} />
-          <InputField label="Provinsi" name="provinsi" value={form.provinsi} onChange={handleChange} />
+          <InputField
+            label="Kelurahan"
+            name="kelurahan"
+            value={form.kelurahan}
+            onChange={handleChange}
+          />
+          <InputField
+            label="Kecamatan"
+            name="kecamatan"
+            value={form.kecamatan}
+            onChange={handleChange}
+          />
+          <InputField
+            label="Kota / Kabupaten"
+            name="kotaKabupaten"
+            value={form.kotaKabupaten}
+            onChange={handleChange}
+          />
+          <InputField
+            label="Provinsi"
+            name="provinsi"
+            value={form.provinsi}
+            onChange={handleChange}
+          />
         </div>
       </section>
 
@@ -289,15 +379,64 @@ export default function BiodataPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <InputField label="Nama Ayah" name="namaAyah" value={form.namaAyah} onChange={handleChange} />
-          <InputField label="NIK Ayah" name="nikAyah" value={form.nikAyah} onChange={handleChange} />
-          <SelectField label="Pendidikan Ayah" name="pendidikanAyah" value={form.pendidikanAyah} onChange={handleChange} options={pilihanPendidikan} />
-          <SelectField label="Pekerjaan Ayah" name="pekerjaanAyah" value={form.pekerjaanAyah} onChange={handleChange} options={pilihanPekerjaan} />
-          <InputField label="Nama Ibu" name="namaIbu" value={form.namaIbu} onChange={handleChange} />
-          <InputField label="NIK Ibu" name="nikIbu" value={form.nikIbu} onChange={handleChange} />
-          <SelectField label="Pendidikan Ibu" name="pendidikanIbu" value={form.pendidikanIbu} onChange={handleChange} options={pilihanPendidikan} />
-          <SelectField label="Pekerjaan Ibu" name="pekerjaanIbu" value={form.pekerjaanIbu} onChange={handleChange} options={pilihanPekerjaan} />
-          <InputField label="No. HP Orang Tua" name="noHpOrtu" value={form.noHpOrtu} onChange={handleChange} />
+          <InputField
+            label="Nama Ayah"
+            name="namaAyah"
+            value={form.namaAyah}
+            onChange={handleChange}
+          />
+          <InputField
+            label="NIK Ayah"
+            name="nikAyah"
+            value={form.nikAyah}
+            onChange={handleChange}
+          />
+          <SelectField
+            label="Pendidikan Ayah"
+            name="pendidikanAyah"
+            value={form.pendidikanAyah}
+            onChange={handleChange}
+            options={pilihanPendidikan}
+          />
+          <SelectField
+            label="Pekerjaan Ayah"
+            name="pekerjaanAyah"
+            value={form.pekerjaanAyah}
+            onChange={handleChange}
+            options={pilihanPekerjaan}
+          />
+          <InputField
+            label="Nama Ibu"
+            name="namaIbu"
+            value={form.namaIbu}
+            onChange={handleChange}
+          />
+          <InputField
+            label="NIK Ibu"
+            name="nikIbu"
+            value={form.nikIbu}
+            onChange={handleChange}
+          />
+          <SelectField
+            label="Pendidikan Ibu"
+            name="pendidikanIbu"
+            value={form.pendidikanIbu}
+            onChange={handleChange}
+            options={pilihanPendidikan}
+          />
+          <SelectField
+            label="Pekerjaan Ibu"
+            name="pekerjaanIbu"
+            value={form.pekerjaanIbu}
+            onChange={handleChange}
+            options={pilihanPekerjaan}
+          />
+          <InputField
+            label="No. HP Orang Tua"
+            name="noHpOrtu"
+            value={form.noHpOrtu}
+            onChange={handleChange}
+          />
 
           <TextareaField
             label="Alamat Orang Tua"

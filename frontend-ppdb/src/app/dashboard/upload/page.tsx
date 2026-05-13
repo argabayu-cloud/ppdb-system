@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState, type ChangeEvent } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { uploadDokumen } from "@/lib/api";
 
 const daftarBerkas = [
   {
@@ -77,10 +78,7 @@ export default function UploadBerkasPage() {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleFileChange = (
-    id: string,
-    e: ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleFileChange = (id: string, e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
 
     if (!file) return;
@@ -128,20 +126,49 @@ export default function UploadBerkasPage() {
     (uploadedCount / daftarBerkas.length) * 100,
   );
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (requiredUploaded < requiredCount) {
       alert(
-        `Masih ada ${requiredCount - requiredUploaded} berkas wajib yang belum diupload!`,
+        `Masih ada ${
+          requiredCount - requiredUploaded
+        } berkas wajib yang belum diupload!`,
       );
       return;
     }
 
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    setTimeout(() => {
-      setLoading(false);
+      const tipeMap: Record<string, string> = {
+        akta: "AKTA",
+        kk: "KK",
+        ijazah: "IJAZAH",
+        rapor: "RAPOR",
+        foto: "FOTO",
+        skhu: "SKHU",
+        prestasi: "PRESTASI",
+      };
+
+      for (const berkas of daftarBerkas) {
+        const fileData = files[berkas.id];
+
+        if (!fileData?.file) continue;
+
+        await uploadDokumen(fileData.file, tipeMap[berkas.id]);
+      }
+
       setSuccess(true);
-    }, 1200);
+    } catch (error) {
+      console.error(error);
+
+      if (error instanceof Error) {
+        alert(error.message);
+      } else {
+        alert("Gagal upload dokumen");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (loadingSkeleton) {
@@ -237,9 +264,7 @@ export default function UploadBerkasPage() {
 
       <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
         <div className="mb-4">
-          <h2 className="text-base font-bold text-slate-800">
-            Daftar Berkas
-          </h2>
+          <h2 className="text-base font-bold text-slate-800">Daftar Berkas</h2>
           <p className="mt-1 text-xs text-slate-500">
             Pilih file dokumen dalam format PDF, JPG, JPEG, atau PNG.
           </p>
