@@ -1,4 +1,5 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL!;
+
 console.log("BASE_URL:", BASE_URL);
 
 export async function fetcher(url: string, options: RequestInit = {}) {
@@ -9,7 +10,9 @@ export async function fetcher(url: string, options: RequestInit = {}) {
     ...options,
     headers: {
       "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
+      ...(token && {
+        Authorization: `Bearer ${token}`,
+      }),
       ...(options.headers || {}),
     },
   });
@@ -54,47 +57,15 @@ export async function createPendaftaran(data: {
   });
 }
 
-<<<<<<< HEAD
-export async function uploadDokumen(file: File, tipeDokumen: string) {
-=======
 export async function getBiodata() {
->>>>>>> 85180f0 (fix: resolve frontend merge conflicts and restore ppdb flow)
-  const token = localStorage.getItem("token");
-
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/biodata`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.message || "Gagal mengambil biodata");
-  }
-
-  return data;
+  return fetcher("/biodata");
 }
 
 export async function saveBiodata(data: Record<string, unknown>) {
-  const token = localStorage.getItem("token");
-
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/biodata`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+  return fetcher("/biodata", {
+    method: "PUT",
     body: JSON.stringify(data),
   });
-
-  const result = await response.json();
-
-  if (!response.ok) {
-    throw new Error(result.message || "Gagal menyimpan biodata");
-  }
-
-  return result;
 }
 
 export async function updateBiodata(data: {
@@ -127,19 +98,6 @@ export async function updateBiodata(data: {
 
   return result;
 }
-<<<<<<< HEAD
-
-export async function getBiodata() {
-  return fetcher("/biodata");
-}
-
-export async function saveBiodata(data: Record<string, string>) {
-  return fetcher("/biodata", {
-    method: "PUT",
-    body: JSON.stringify(data),
-  });
-}
-=======
 
 export async function uploadDokumen(file: File, tipeDokumen: string) {
   const token = localStorage.getItem("token");
@@ -168,4 +126,3 @@ export async function uploadDokumen(file: File, tipeDokumen: string) {
 
   return data;
 }
->>>>>>> 85180f0 (fix: resolve frontend merge conflicts and restore ppdb flow)
