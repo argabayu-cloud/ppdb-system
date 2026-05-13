@@ -1,6 +1,18 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL!;
+const BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
-console.log("BASE_URL:", BASE_URL);
+async function parseResponse(res: Response) {
+  const contentType = res.headers.get("content-type") || "";
+  const text = await res.text();
+
+  if (!contentType.includes("application/json")) {
+    throw new Error(
+      `API tidak mengembalikan JSON. Status: ${res.status}. Cek NEXT_PUBLIC_API_URL atau route backend.`,
+    );
+  }
+
+  return text ? JSON.parse(text) : null;
+}
 
 export async function fetcher(url: string, options: RequestInit = {}) {
   const token =
@@ -10,17 +22,15 @@ export async function fetcher(url: string, options: RequestInit = {}) {
     ...options,
     headers: {
       "Content-Type": "application/json",
-      ...(token && {
-        Authorization: `Bearer ${token}`,
-      }),
+      ...(token && { Authorization: `Bearer ${token}` }),
       ...(options.headers || {}),
     },
   });
 
-  const data = await res.json();
+  const data = await parseResponse(res);
 
   if (!res.ok) {
-    throw new Error(data.message || "Terjadi kesalahan");
+    throw new Error(data?.message || "Terjadi kesalahan");
   }
 
   return data;
@@ -68,57 +78,25 @@ export async function saveBiodata(data: Record<string, unknown>) {
   });
 }
 
-export async function updateBiodata(data: {
-  alamat: string;
-  kelurahan: string;
-  kecamatan: string;
-  noTlpn: string;
-  latitude: number;
-  longitude: number;
-}) {
-  const token = localStorage.getItem("token");
-
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/biodata`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(data),
-  });
-
-  const result = await response.json();
-
-  if (!response.ok) {
-    throw new Error(result.message || "Gagal update biodata");
-  }
-
-  return result;
-}
-
 export async function uploadDokumen(file: File, tipeDokumen: string) {
   const token = localStorage.getItem("token");
 
   const formData = new FormData();
-
   formData.append("file", file);
   formData.append("tipeDokumen", tipeDokumen);
 
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/dokumen/upload`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: formData,
+  const res = await fetch(`${BASE_URL}/dokumen/upload`, {
+    method: "POST",
+    headers: {
+      ...(token && { Authorization: `Bearer ${token}` }),
     },
-  );
+    body: formData,
+  });
 
-  const data = await response.json();
+  const data = await parseResponse(res);
 
-  if (!response.ok) {
-    throw new Error(data.message || "Gagal upload dokumen");
+  if (!res.ok) {
+    throw new Error(data?.message || "Gagal upload dokumen");
   }
 
   return data;

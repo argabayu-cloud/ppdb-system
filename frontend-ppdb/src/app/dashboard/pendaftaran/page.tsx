@@ -19,18 +19,6 @@ const jalurPendaftaran = [
     desc: "Berdasarkan jarak tempat tinggal ke sekolah",
   },
   {
-    id: "afirmasi",
-    label: "Afirmasi",
-    icon: "🤝",
-    desc: "Untuk keluarga tidak mampu / pemegang KIP",
-  },
-  {
-    id: "mutasi",
-    label: "Mutasi / Domisili",
-    icon: "🏠",
-    desc: "Perpindahan domisili orang tua / wali",
-  },
-  {
     id: "prestasi",
     label: "Prestasi",
     icon: "🏆",
