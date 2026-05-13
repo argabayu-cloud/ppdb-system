@@ -1,20 +1,20 @@
 "use client";
 
-import NotificationBell from "./notifikasiBell";
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  User,
-  FileText,
-  Settings,
-  LogOut,
-  ChevronDown,
-} from "lucide-react";
-import Link from "next/link";
+import { ChevronDown, FileText, LogOut, Settings, User } from "lucide-react";
+
+import NotificationBell from "./notifikasiBell";
+
+type UserData = {
+  nama?: string;
+  email?: string;
+};
 
 export default function Navbar() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<UserData | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -51,121 +51,152 @@ export default function Navbar() {
     router.push("/auth/login");
   };
 
+  const initials =
+    user?.nama
+      ?.split(" ")
+      .map((name) => name[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "?";
+
   return (
-    <nav className="w-full bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-3 flex items-center justify-between fixed top-0 left-0 right-0 z-50">
-      {/* LEFT */}
-      <div className="flex items-center gap-3">
-        <Image
-          src="/images/logo-ppdb.png"
-          alt="Logo PPDB"
-          width={36}
-          height={36}
-          className="w-9 h-9 rounded-lg object-cover"
-        />
-
-        <span className="font-semibold text-slate-800 text-sm">
-          PPDB SMP Terpadu
-        </span>
-      </div>
-
-      {/* RIGHT */}
-      <div className="flex items-center gap-4">
-        <NotificationBell />
-
-        {/* USER DROPDOWN */}
-        <div className="relative" ref={dropdownRef}>
-          <button
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="flex items-center gap-2 hover:bg-slate-100 px-2 py-1.5 rounded-lg transition-colors"
-          >
-            <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold shadow-sm">
-              {user?.nama
-                ?.split(" ")
-                .map((n: string) => n[0])
-                .join("")
-                .slice(0, 2)
-                .toUpperCase() || "?"}
-            </div>
-
-            <span className="hidden sm:block text-sm font-medium text-slate-700">
-              {user?.nama || "User"}
-            </span>
-
-            <ChevronDown
-              className={`w-4 h-4 text-slate-500 transition-transform ${isDropdownOpen ? "rotate-180" : ""
-                }`}
+    <nav className="fixed left-0 right-0 top-0 z-50 border-b border-white/10 bg-slate-950/90 px-5 py-3 text-white shadow-lg shadow-slate-950/10 backdrop-blur-md">
+      <div className="flex items-center justify-between">
+        <Link href="/dashboard" className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm">
+            <Image
+              src="/images/logo-ppdb.png"
+              alt="Logo PPDB"
+              width={32}
+              height={32}
+              priority
+              className="object-contain"
             />
-          </button>
+          </div>
 
-          {isDropdownOpen && (
-            <div className="absolute right-0 mt-3 w-72 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden z-[100]">
-              {/* HEADER USER */}
-              <div className="px-5 py-4 bg-slate-50 border-b border-slate-100">
-                <p className="font-semibold text-slate-800">
+          <div>
+            <p className="text-sm font-bold tracking-wide">
+              PPDB SMP Terpadu
+            </p>
+            <p className="text-xs text-blue-200">Portal Peserta</p>
+          </div>
+        </Link>
+
+        <div className="flex items-center gap-3">
+          <div className="rounded-xl border border-white/10 bg-white/10 p-2 backdrop-blur">
+            <NotificationBell />
+          </div>
+
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setIsDropdownOpen((prev) => !prev)}
+              className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/10 px-2 py-1.5 transition hover:bg-white/15"
+            >
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white shadow-sm">
+                {initials}
+              </div>
+
+              <div className="hidden text-left sm:block">
+                <p className="max-w-36 truncate text-sm font-semibold text-white">
                   {user?.nama || "User"}
                 </p>
-                <p className="text-sm text-slate-500 mt-1">
-                  {user?.email || "Siswa Baru"}
-                </p>
+                <p className="text-xs text-blue-200">Peserta</p>
               </div>
 
-              {/* MENU */}
-              <div className="py-2">
-                <Link
-                  href="/dashboard/biodata"
-                  onClick={() => setIsDropdownOpen(false)}
-                  className="flex items-center gap-3 px-5 py-3 text-slate-700 hover:bg-slate-50 transition-colors"
-                >
-                  <User className="w-5 h-5 text-blue-600" />
-                  <div>
-                    <p className="text-sm font-medium">Biodata Lengkap</p>
-                    <p className="text-xs text-slate-500">
-                      Lihat dan lengkapi data diri
-                    </p>
-                  </div>
-                </Link>
+              <ChevronDown
+                className={`h-4 w-4 text-blue-100 transition-transform ${
+                  isDropdownOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
 
-                <Link
-                  href="/dashboard/upload"
-                  onClick={() => setIsDropdownOpen(false)}
-                  className="flex items-center gap-3 px-5 py-3 text-slate-700 hover:bg-slate-50 transition-colors"
-                >
-                  <FileText className="w-5 h-5 text-indigo-600" />
-                  <div>
-                    <p className="text-sm font-medium">Edit Berkas</p>
-                    <p className="text-xs text-slate-500">
-                      Unggah dokumen persyaratan
-                    </p>
-                  </div>
-                </Link>
+            {isDropdownOpen && (
+              <div className="absolute right-0 z-[100] mt-3 w-72 overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-2xl">
+                <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-5 py-4 text-white">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/20 text-sm font-bold">
+                      {initials}
+                    </div>
 
-                <Link
-                  href="/dashboard/biodata"
-                  onClick={() => setIsDropdownOpen(false)}
-                  className="flex items-center gap-3 px-5 py-3 text-slate-700 hover:bg-slate-50 transition-colors"
-                >
-                  <Settings className="w-5 h-5 text-emerald-600" />
-                  <div>
-                    <p className="text-sm font-medium">Ganti Nama</p>
-                    <p className="text-xs text-slate-500">
-                      Ubah nama profil pengguna
-                    </p>
+                    <div className="min-w-0">
+                      <p className="truncate font-bold">
+                        {user?.nama || "User"}
+                      </p>
+                      <p className="mt-0.5 truncate text-xs text-blue-100">
+                        {user?.email || "Siswa Baru"}
+                      </p>
+                    </div>
                   </div>
-                </Link>
+                </div>
+
+                <div className="py-2">
+                  <Link
+                    href="/dashboard/biodata"
+                    onClick={() => setIsDropdownOpen(false)}
+                    className="flex items-center gap-3 px-5 py-3 text-slate-700 transition hover:bg-blue-50"
+                  >
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50">
+                      <User className="h-5 w-5 text-blue-600" />
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-semibold">Biodata Lengkap</p>
+                      <p className="text-xs text-slate-500">
+                        Lihat dan lengkapi data diri
+                      </p>
+                    </div>
+                  </Link>
+
+                  <Link
+                    href="/dashboard/upload"
+                    onClick={() => setIsDropdownOpen(false)}
+                    className="flex items-center gap-3 px-5 py-3 text-slate-700 transition hover:bg-blue-50"
+                  >
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50">
+                      <FileText className="h-5 w-5 text-indigo-600" />
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-semibold">Edit Berkas</p>
+                      <p className="text-xs text-slate-500">
+                        Unggah dokumen persyaratan
+                      </p>
+                    </div>
+                  </Link>
+
+                  <Link
+                    href="/dashboard/biodata"
+                    onClick={() => setIsDropdownOpen(false)}
+                    className="flex items-center gap-3 px-5 py-3 text-slate-700 transition hover:bg-blue-50"
+                  >
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50">
+                      <Settings className="h-5 w-5 text-emerald-600" />
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-semibold">Ganti Nama</p>
+                      <p className="text-xs text-slate-500">
+                        Ubah nama profil pengguna
+                      </p>
+                    </div>
+                  </Link>
+                </div>
+
+                <div className="border-t border-slate-100 p-2">
+                  <button
+                    onClick={handleLogout}
+                    className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm text-red-600 transition hover:bg-red-50"
+                  >
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-50">
+                      <LogOut className="h-5 w-5" />
+                    </div>
+
+                    <span className="font-semibold">Log out</span>
+                  </button>
+                </div>
               </div>
-
-              {/* LOGOUT */}
-              <div className="border-t border-slate-100 p-2">
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-5 py-3 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                >
-                  <LogOut className="w-5 h-5" />
-                  <span className="font-medium">Log out</span>
-                </button>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </nav>
