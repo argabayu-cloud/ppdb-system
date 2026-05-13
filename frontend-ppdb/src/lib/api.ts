@@ -60,6 +60,13 @@ export async function createPendaftaran(data: {
   sekolah1Id: string;
   sekolah2Id?: string;
   jalur: string;
+  nisn?: string;
+  namaSekolahAsal?: string;
+  npsn?: string;
+  tahunLulus?: string;
+  nilaiRataRata?: string;
+  jenisPrestasi?: string;
+  tingkatPrestasi?: string;
 }) {
   return fetcher("/pendaftaran", {
     method: "POST",

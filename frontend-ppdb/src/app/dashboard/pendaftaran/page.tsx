@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { createPendaftaran, uploadDokumen } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -37,6 +37,8 @@ type FormState = {
 };
 
 export default function PendaftaranPage() {
+  const router = useRouter();
+
   const [jalur, setJalur] = useState("");
   const [form, setForm] = useState<FormState>({
     nisn: "",
@@ -52,7 +54,6 @@ export default function PendaftaranPage() {
   const [pilihan2, setPilihan2] = useState("");
   const [fileRaporPrestasi, setFileRaporPrestasi] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [loadingSkeleton, setLoadingSkeleton] = useState(true);
 
   useEffect(() => {
@@ -67,6 +68,18 @@ export default function PendaftaranPage() {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleJalurChange = (selectedJalur: string) => {
+    setJalur(selectedJalur);
+
+    setForm((prev) => ({
+      ...prev,
+      jenisPrestasi: "",
+      tingkatPrestasi: "",
+    }));
+
+    setFileRaporPrestasi(null);
   };
 
   const handleJenisPrestasiChange = (
@@ -144,12 +157,21 @@ export default function PendaftaranPage() {
       setLoading(true);
 
       const sekolah1Id = "35ca2c3e-3c86-4c79-aff7-3d8d88e85413";
-      const sekolah2Id = "2e9ef8c7-fbe5-43ce-b7de-d42d8378d146";
+      const sekolah2Id = pilihan2
+        ? "2e9ef8c7-fbe5-43ce-b7de-d42d8378d146"
+        : undefined;
 
       await createPendaftaran({
         sekolah1Id,
         sekolah2Id,
         jalur: jalur.toUpperCase(),
+        nisn: form.nisn,
+        namaSekolahAsal: form.namaSekolahAsal,
+        npsn: form.npsn,
+        tahunLulus: form.tahunLulus,
+        nilaiRataRata: form.nilaiRataRata,
+        jenisPrestasi: form.jenisPrestasi,
+        tingkatPrestasi: form.tingkatPrestasi,
       });
 
       if (
@@ -160,7 +182,7 @@ export default function PendaftaranPage() {
         await uploadDokumen(fileRaporPrestasi, "RAPOR");
       }
 
-      setSuccess(true);
+      router.push("/dashboard/upload");
     } catch (error: unknown) {
       if (error instanceof Error) {
         alert(error.message);
@@ -174,37 +196,6 @@ export default function PendaftaranPage() {
 
   if (loadingSkeleton) {
     return <PendaftaranSkeleton />;
-  }
-
-  if (success) {
-    return (
-      <div className="flex min-h-[65vh] items-center justify-center">
-        <div className="w-full max-w-lg rounded-[2rem] border border-slate-100 bg-white p-8 text-center shadow-sm">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-green-50 text-3xl">
-            ✅
-          </div>
-
-          <h2 className="mt-5 text-xl font-bold text-slate-900">
-            Pendaftaran Tersimpan!
-          </h2>
-
-          <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-500">
-            Jalur{" "}
-            <strong>
-              {jalurPendaftaran.find((item) => item.id === jalur)?.label}
-            </strong>{" "}
-            berhasil didaftarkan. Selanjutnya upload berkas persyaratan.
-          </p>
-
-          <Link
-            href="/dashboard/upload"
-            className="mt-6 inline-flex rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700"
-          >
-            Upload Berkas →
-          </Link>
-        </div>
-      </div>
-    );
   }
 
   const selectedJalur = jalurPendaftaran.find((item) => item.id === jalur);
@@ -259,7 +250,7 @@ export default function PendaftaranPage() {
             return (
               <button
                 key={item.id}
-                onClick={() => setJalur(item.id)}
+                onClick={() => handleJalurChange(item.id)}
                 className={`rounded-2xl border p-4 text-left transition ${
                   active
                     ? "border-blue-700 bg-[#244aad] text-white shadow-md shadow-blue-100"
@@ -363,6 +354,7 @@ export default function PendaftaranPage() {
                   <label className="text-sm font-semibold text-slate-700">
                     Jenis Prestasi
                   </label>
+
                   <select
                     name="jenisPrestasi"
                     value={form.jenisPrestasi}
@@ -413,6 +405,7 @@ export default function PendaftaranPage() {
                     <label className="text-sm font-semibold text-slate-700">
                       Tingkat Prestasi
                     </label>
+
                     <select
                       name="tingkatPrestasi"
                       value={form.tingkatPrestasi}
