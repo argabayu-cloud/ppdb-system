@@ -42,14 +42,12 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="fixed bottom-0 left-0 top-16 w-56 border-r border-slate-200 bg-white px-3 py-4 shadow-sm">
-      <div className="mb-4 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3">
+    <aside className="fixed bottom-0 left-0 top-16 w-56 border-r border-slate-200 bg-white px-3 pt-8 pb-4 shadow-sm">
+      <div className="mb-5 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-blue-600">
           Menu Peserta
         </p>
-        <p className="mt-1 text-sm font-bold text-slate-800">
-          Dashboard PPDB
-        </p>
+        <p className="mt-1 text-sm font-bold text-slate-800">Dashboard PPDB</p>
       </div>
 
       <nav className="flex flex-col gap-1.5">
