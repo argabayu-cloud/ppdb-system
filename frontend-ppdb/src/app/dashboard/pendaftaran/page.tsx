@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import {
   createPendaftaran,
-  getSekolahPublic,
+  getSekolah,
   uploadDokumen,
   type Sekolah,
 } from "@/lib/api";
@@ -60,7 +60,7 @@ export default function PendaftaranPage() {
   useEffect(() => {
     const loadSekolah = async () => {
       try {
-        const res = await getSekolahPublic();
+        const res = await getSekolah();
         setSekolahList(res.data || []);
       } catch (error) {
         console.error(error);
