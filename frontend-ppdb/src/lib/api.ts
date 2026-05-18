@@ -65,8 +65,8 @@ export type Sekolah = {
   kuota: number;
 };
 
-export async function getSekolahPublic() {
-  return fetcher("/sekolah/public");
+export async function getSekolah() {
+  return fetcher("/sekolah");
 }
 
 export async function createPendaftaran(data: {
