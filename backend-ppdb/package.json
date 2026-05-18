@@ -20,8 +20,11 @@
   "dependencies": {
     "@prisma/client": "^6.19.3",
     "@vercel/node": "^5.7.17",
+<<<<<<< HEAD
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.105.1",
+=======
+>>>>>>> a168a1eb84081e8183f8beb7c64a2f66cd6730ee
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
