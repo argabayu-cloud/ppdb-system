@@ -1,26 +1,57 @@
 import { Response } from "express";
-import { createPendaftaran } from "../services/pendaftaran.service";
+import {
+  createPendaftaran,
+  getDashboardPendaftaran,
+  submitPendaftaran,
+} from "../services/pendaftaran.service";
 
 export const create = async (req: any, res: Response) => {
   try {
-    // ❗ validasi user dari middleware
     if (!req.user || !req.user.id) {
       return res.status(401).json({
         message: "User tidak terautentikasi",
       });
     }
 
-    const userId = req.user.id;
+    const result = await createPendaftaran(req.user.id, req.body);
 
-    const result = await createPendaftaran(userId, req.body);
-
-    res.status(201).json({
-      message: "Pendaftaran berhasil",
+    return res.status(201).json({
+      message: "Pendaftaran berhasil disimpan",
       data: result,
     });
   } catch (error: any) {
-    res.status(400).json({
+    return res.status(400).json({
       message: error?.message || "Terjadi kesalahan",
+    });
+  }
+};
+
+export const me = async (req: any, res: Response) => {
+  try {
+    const result = await getDashboardPendaftaran(req.user.id);
+
+    return res.json({
+      message: "Data dashboard berhasil diambil",
+      data: result,
+    });
+  } catch (error: any) {
+    return res.status(400).json({
+      message: error?.message || "Gagal mengambil data dashboard",
+    });
+  }
+};
+
+export const submit = async (req: any, res: Response) => {
+  try {
+    const result = await submitPendaftaran(req.user.id);
+
+    return res.json({
+      message: "Pendaftaran berhasil dikirim",
+      data: result,
+    });
+  } catch (error: any) {
+    return res.status(400).json({
+      message: error?.message || "Gagal mengirim pendaftaran",
     });
   }
 };

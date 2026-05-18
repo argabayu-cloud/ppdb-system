@@ -59,7 +59,9 @@ export const seleksiSiswa = async (
   }
 
   // Jika ada dokumen belum diterima
-  const adaYangBelumValid = dokumen.some((d) => d.status !== "DITERIMA");
+  const adaYangBelumValid = dokumen.some(
+    (d: { status: string }) => d.status !== "DITERIMA",
+  );
 
   if (adaYangBelumValid) {
     throw new Error("Semua dokumen harus divalidasi terlebih dahulu");
@@ -194,7 +196,9 @@ export const validasiDokumen = async (
 
   // 🔐 VALIDASI AKSES SEKOLAH
   const punyaAkses = dokumen.pendaftaran.pilihan.some(
-    (p) => p.sekolahId === admin.sekolahId,
+    (p: { sekolahId: string }) => {
+      return p.sekolahId === admin.sekolahId;
+    },
   );
 
   if (!punyaAkses) {

@@ -74,6 +74,32 @@ export async function createPendaftaran(data: {
   });
 }
 
+ backend
+export async function getSekolah() {
+  return fetcher("/sekolah");
+}
+
+export async function getBiodata() {
+  return fetcher("/user/biodata");
+}
+
+export async function saveBiodata(data: Record<string, unknown>) {
+  return fetcher("/user/biodata", {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateBiodata(data: {
+  alamat: string;
+  kelurahan: string;
+  kecamatan: string;
+  noTlpn: string;
+  latitude: number;
+  longitude: number;
+}) {
+  return fetcher("/user/biodata", {
+
 export async function getDashboardPendaftaran() {
   return fetcher("/pendaftaran/me");
 }
@@ -90,12 +116,41 @@ export async function getBiodata() {
 
 export async function saveBiodata(data: Record<string, unknown>) {
   return fetcher("/biodata", {
+ frontend
     method: "PUT",
     body: JSON.stringify(data),
   });
 }
 
 export async function uploadDokumen(file: File, tipeDokumen: string) {
+ backend
+  const token = localStorage.getItem("token");
+
+  const formData = new FormData();
+
+  formData.append("file", file);
+  formData.append("tipeDokumen", tipeDokumen);
+
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/dokumen/upload`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    },
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message);
+  }
+
+  return data;
+}
+
   const token =
     typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
@@ -119,3 +174,4 @@ export async function uploadDokumen(file: File, tipeDokumen: string) {
 
   return data;
 }
+ frontend
