@@ -7,28 +7,32 @@ import {
   handleDeleteSekolah,
 } from "../controllers/sekolah.controller";
 
-import { verifyToken } from "../middlewares/auth.middlewares";
+import { authMiddleware } from "../middlewares/auth.middlewares";
 import { requireRole } from "../middlewares/role.middleware";
 
 const router = Router();
 
-// 🔥 PUBLIC
 router.get("/", handleGetSekolah);
+router.get("/public", handleGetSekolah);
 router.get("/:id", handleGetSekolahById);
 
-// 🔥 SUPER ADMIN ONLY
-router.post("/", verifyToken, requireRole("SUPER_ADMIN"), handleCreateSekolah);
+router.post(
+  "/",
+  authMiddleware,
+  requireRole("SUPER_ADMIN"),
+  handleCreateSekolah,
+);
 
 router.put(
   "/:id",
-  verifyToken,
+  authMiddleware,
   requireRole("SUPER_ADMIN"),
   handleUpdateSekolah,
 );
 
 router.delete(
   "/:id",
-  verifyToken,
+  authMiddleware,
   requireRole("SUPER_ADMIN"),
   handleDeleteSekolah,
 );
