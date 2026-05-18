@@ -32,10 +32,12 @@ export const handleGetSekolah = async (_: Request, res: Response) => {
       success: true,
       data,
     });
-  } catch {
+  } catch (error: any) {
+    console.error("GET SEKOLAH ERROR:", error);
+
     return res.status(500).json({
       success: false,
-      message: "Gagal mengambil data sekolah",
+      message: error?.message || "Gagal mengambil data sekolah",
     });
   }
 };
