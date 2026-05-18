@@ -74,6 +74,16 @@ export async function createPendaftaran(data: {
   });
 }
 
+export async function getDashboardPendaftaran() {
+  return fetcher("/pendaftaran/me");
+}
+
+export async function submitPendaftaran() {
+  return fetcher("/pendaftaran/submit", {
+    method: "PATCH",
+  });
+}
+
 export async function getBiodata() {
   return fetcher("/biodata");
 }
@@ -86,7 +96,8 @@ export async function saveBiodata(data: Record<string, unknown>) {
 }
 
 export async function uploadDokumen(file: File, tipeDokumen: string) {
-  const token = localStorage.getItem("token");
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
   const formData = new FormData();
   formData.append("file", file);

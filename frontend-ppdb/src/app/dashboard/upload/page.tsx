@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, type ChangeEvent } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { uploadDokumen } from "@/lib/api";
+import { submitPendaftaran, uploadDokumen } from "@/lib/api";
 
 const daftarBerkas = [
   {
@@ -12,42 +13,56 @@ const daftarBerkas = [
     label: "Akta Kelahiran",
     desc: "Format PDF/JPG, maks 2MB",
     required: true,
+    maxSizeMb: 2,
   },
   {
     id: "kk",
     label: "Kartu Keluarga (KK)",
     desc: "Format PDF/JPG, maks 2MB",
     required: true,
+    maxSizeMb: 2,
   },
   {
     id: "ijazah",
     label: "Ijazah / STTB SD",
     desc: "Format PDF/JPG, maks 2MB",
     required: true,
+    maxSizeMb: 2,
   },
   {
     id: "rapor",
     label: "Rapor Kelas 4, 5, 6",
     desc: "Format PDF/JPG, maks 5MB",
     required: true,
+    maxSizeMb: 5,
   },
   {
     id: "foto",
     label: "Pas Foto 3x4",
     desc: "Format JPG/PNG, maks 1MB, background merah",
     required: true,
+    maxSizeMb: 1,
   },
   {
     id: "skhu",
     label: "SKHU (Surat Keterangan Hasil Ujian)",
     desc: "Format PDF/JPG, maks 2MB",
     required: false,
+    maxSizeMb: 2,
   },
   {
     id: "prestasi",
     label: "Sertifikat Prestasi (jika ada)",
     desc: "Format PDF/JPG, maks 2MB",
     required: false,
+    maxSizeMb: 2,
+  },
+  {
+    id: "kip",
+    label: "Kartu Indonesia Pintar (KIP)",
+    desc: "Format PDF/JPG, maks 2MB",
+    required: false,
+    maxSizeMb: 2,
   },
 ];
 
@@ -55,9 +70,12 @@ type FileStatus = {
   file: File | null;
   preview: string | null;
   status: "idle" | "uploaded" | "error";
+  errorMessage?: string;
 };
 
 export default function UploadBerkasPage() {
+  const router = useRouter();
+
   const [files, setFiles] = useState<Record<string, FileStatus>>(
     Object.fromEntries(
       daftarBerkas.map((b) => [
@@ -66,8 +84,8 @@ export default function UploadBerkasPage() {
       ]),
     ),
   );
+
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [loadingSkeleton, setLoadingSkeleton] = useState(true);
 
   useEffect(() => {
@@ -80,14 +98,22 @@ export default function UploadBerkasPage() {
 
   const handleFileChange = (id: string, e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    const berkasConfig = daftarBerkas.find((b) => b.id === id);
 
-    if (!file) return;
+    if (!file || !berkasConfig) return;
 
-    if (file.size > 5 * 1024 * 1024) {
+    if (file.size > berkasConfig.maxSizeMb * 1024 * 1024) {
       setFiles((prev) => ({
         ...prev,
-        [id]: { file: null, preview: null, status: "error" },
+        [id]: {
+          file: null,
+          preview: null,
+          status: "error",
+          errorMessage: `File terlalu besar. Maksimal ${berkasConfig.maxSizeMb}MB.`,
+        },
       }));
+
+      e.target.value = "";
       return;
     }
 
@@ -117,7 +143,9 @@ export default function UploadBerkasPage() {
   const uploadedCount = Object.values(files).filter(
     (f) => f.status === "uploaded",
   ).length;
+
   const requiredCount = daftarBerkas.filter((b) => b.required).length;
+
   const requiredUploaded = daftarBerkas
     .filter((b) => b.required)
     .filter((b) => files[b.id]?.status === "uploaded").length;
@@ -147,6 +175,7 @@ export default function UploadBerkasPage() {
         foto: "FOTO",
         skhu: "SKHU",
         prestasi: "PRESTASI",
+        kip: "KIP",
       };
 
       for (const berkas of daftarBerkas) {
@@ -157,14 +186,16 @@ export default function UploadBerkasPage() {
         await uploadDokumen(fileData.file, tipeMap[berkas.id]);
       }
 
-      setSuccess(true);
+      await submitPendaftaran();
+
+      router.push("/dashboard");
     } catch (error) {
       console.error(error);
 
       if (error instanceof Error) {
         alert(error.message);
       } else {
-        alert("Gagal upload dokumen");
+        alert("Gagal mengirim berkas");
       }
     } finally {
       setLoading(false);
@@ -173,34 +204,6 @@ export default function UploadBerkasPage() {
 
   if (loadingSkeleton) {
     return <UploadSkeleton />;
-  }
-
-  if (success) {
-    return (
-      <div className="flex min-h-[65vh] items-center justify-center">
-        <div className="w-full max-w-lg rounded-[2rem] border border-slate-100 bg-white p-8 text-center shadow-sm">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-green-50 text-3xl">
-            ✅
-          </div>
-
-          <h2 className="mt-5 text-xl font-bold text-slate-900">
-            Berkas Berhasil Dikirim!
-          </h2>
-
-          <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-500">
-            Semua berkas sudah terkirim. Tunggu proses verifikasi dari panitia
-            PPDB sekolah tujuan.
-          </p>
-
-          <Link
-            href="/dashboard"
-            className="mt-6 inline-flex rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700"
-          >
-            Kembali ke Dashboard →
-          </Link>
-        </div>
-      </div>
-    );
   }
 
   return (
@@ -219,8 +222,9 @@ export default function UploadBerkasPage() {
             </h1>
 
             <p className="mt-3 max-w-xl text-sm leading-6 text-blue-50/90">
-              Unggah dokumen persyaratan sesuai format yang diminta. Berkas
-              bertanda wajib harus lengkap sebelum dikirim.
+              Unggah dokumen persyaratan sesuai format yang diminta. Setelah
+              berkas wajib lengkap, pendaftaran akan dikirim ke sekolah pilihan
+              pertama untuk diverifikasi.
             </p>
           </div>
 
@@ -323,7 +327,8 @@ export default function UploadBerkasPage() {
                       </p>
                     ) : isError ? (
                       <p className="mt-1 text-xs font-semibold text-red-500">
-                        File terlalu besar. Maksimal 5MB.
+                        {fileData.errorMessage ||
+                          `File terlalu besar. Maksimal ${berkas.maxSizeMb}MB.`}
                       </p>
                     ) : (
                       <p className="mt-1 text-xs text-slate-500">
