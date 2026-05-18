@@ -53,8 +53,6 @@ const totalDitolak = statsSekolah.reduce((acc, s) => acc + s.ditolak, 0);
 const dataJalur = [
   { jalur: "Zonasi", jumlah: 215, warna: "bg-blue-500", persen: 43 },
   { jalur: "Prestasi", jumlah: 150, warna: "bg-purple-500", persen: 30 },
-  { jalur: "Afirmasi", jumlah: 85, warna: "bg-green-500", persen: 17 },
-  { jalur: "Domisili", jumlah: 65, warna: "bg-orange-500", persen: 13 },
 ];
 
 export default function SuperAdminDashboard() {
