@@ -1,22 +1,23 @@
-import Sidebar from "@/components/sidebarAdmin";
-import Navbar from "@/components/navbarAdmin";
+import Footer from "@/components/footer";
+import NavbarAdmin from "@/components/navbarAdmin";
+import SidebarAdmin from "@/components/sidebarAdmin";
 
-export default function DashboardLayout({
+export default function AdminSekolahLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex">
-      <Navbar />
-      
-      {/* Sidebar */}
-      <Sidebar />
+    <div className="min-h-screen bg-slate-50 font-sans">
+      <NavbarAdmin />
+      <SidebarAdmin />
 
+      <main className="ml-64 pt-16 min-h-screen flex flex-col">
+        <div className="flex-1 p-6">
+          {children}
+        </div>
 
-      {/* Content */}
-      <main className="flex-1 ml-52 p-6 pt-20">
-        {children}
+        <Footer />
       </main>
     </div>
   );

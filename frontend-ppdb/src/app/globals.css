@@ -49,7 +49,8 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root { /* slate-900 */
+  :root {
+    /* slate-900 */
   }
 }
 
@@ -127,14 +128,22 @@ body {
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
   html {
-    @apply font-sans;
+    font-size: 20px;
+  }
+
+  body {
+    font-family: var(--font-poppins), sans-serif;
   }
 }

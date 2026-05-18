@@ -1,5 +1,18 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL!;
-console.log("BASE_URL:", BASE_URL);
+const BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+
+async function parseResponse(res: Response) {
+  const contentType = res.headers.get("content-type") || "";
+  const text = await res.text();
+
+  if (!contentType.includes("application/json")) {
+    throw new Error(
+      `API tidak mengembalikan JSON. Status: ${res.status}. Cek NEXT_PUBLIC_API_URL atau route backend.`,
+    );
+  }
+
+  return text ? JSON.parse(text) : null;
+}
 
 export async function fetcher(url: string, options: RequestInit = {}) {
   const token =
@@ -14,10 +27,10 @@ export async function fetcher(url: string, options: RequestInit = {}) {
     },
   });
 
-  const data = await res.json();
+  const data = await parseResponse(res);
 
   if (!res.ok) {
-    throw new Error(data.message || "Terjadi kesalahan");
+    throw new Error(data?.message || "Terjadi kesalahan");
   }
 
   return data;
@@ -47,6 +60,13 @@ export async function createPendaftaran(data: {
   sekolah1Id: string;
   sekolah2Id?: string;
   jalur: string;
+  nisn?: string;
+  namaSekolahAsal?: string;
+  npsn?: string;
+  tahunLulus?: string;
+  nilaiRataRata?: string;
+  jenisPrestasi?: string;
+  tingkatPrestasi?: string;
 }) {
   return fetcher("/pendaftaran", {
     method: "POST",
@@ -54,6 +74,7 @@ export async function createPendaftaran(data: {
   });
 }
 
+ backend
 export async function getSekolah() {
   return fetcher("/sekolah");
 }
@@ -78,12 +99,31 @@ export async function updateBiodata(data: {
   longitude: number;
 }) {
   return fetcher("/user/biodata", {
+
+export async function getDashboardPendaftaran() {
+  return fetcher("/pendaftaran/me");
+}
+
+export async function submitPendaftaran() {
+  return fetcher("/pendaftaran/submit", {
+    method: "PATCH",
+  });
+}
+
+export async function getBiodata() {
+  return fetcher("/biodata");
+}
+
+export async function saveBiodata(data: Record<string, unknown>) {
+  return fetcher("/biodata", {
+ frontend
     method: "PUT",
     body: JSON.stringify(data),
   });
 }
 
 export async function uploadDokumen(file: File, tipeDokumen: string) {
+ backend
   const token = localStorage.getItem("token");
 
   const formData = new FormData();
@@ -110,3 +150,28 @@ export async function uploadDokumen(file: File, tipeDokumen: string) {
 
   return data;
 }
+
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("tipeDokumen", tipeDokumen);
+
+  const res = await fetch(`${BASE_URL}/dokumen/upload`, {
+    method: "POST",
+    headers: {
+      ...(token && { Authorization: `Bearer ${token}` }),
+    },
+    body: formData,
+  });
+
+  const data = await parseResponse(res);
+
+  if (!res.ok) {
+    throw new Error(data?.message || "Gagal upload dokumen");
+  }
+
+  return data;
+}
+ frontend
