@@ -73,7 +73,6 @@ model User {
   adminSekolah AdminSekolah?
   biodata      Biodata?
   pendaftaran  Pendaftaran?
-  biodata Biodata?
   pengumuman   Pengumuman[]
   verifikasi   VerifikasiLog[]
   notifikasi Notifikasi[]
