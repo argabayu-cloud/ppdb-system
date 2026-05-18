@@ -1,11 +1,16 @@
+import { TipeDokumen } from "@prisma/client";
 import prisma from "../config/prisma";
 
 export const uploadDokumen = async (
   userId: string,
   file: Express.Multer.File,
-  tipeDokumen: "KK" | "AKTA" | "RAPOR" | "PRESTASI"
+  tipeDokumen: TipeDokumen,
 ) => {
-  const pendaftaran = await prisma.pendaftaran.findFirst({
+  if (!Object.values(TipeDokumen).includes(tipeDokumen)) {
+    throw new Error("Tipe dokumen tidak valid");
+  }
+
+  const pendaftaran = await prisma.pendaftaran.findUnique({
     where: { userId },
   });
 
@@ -13,7 +18,12 @@ export const uploadDokumen = async (
     throw new Error("Pendaftaran tidak ditemukan");
   }
 
-  // 🔥 optional: cegah upload ganda per tipe
+  if (pendaftaran.submittedAt) {
+    throw new Error(
+      "Berkas tidak bisa diubah karena pendaftaran sudah dikirim",
+    );
+  }
+
   const existing = await prisma.dokumen.findFirst({
     where: {
       pendaftaranId: pendaftaran.id,
@@ -22,10 +32,19 @@ export const uploadDokumen = async (
   });
 
   if (existing) {
-    throw new Error(`Dokumen ${tipeDokumen} sudah diupload`);
+    return prisma.dokumen.update({
+      where: { id: existing.id },
+      data: {
+        namaFile: file.originalname,
+        urlFile: file.path,
+        tipe: file.mimetype,
+        ukuran: file.size,
+        status: "MENUNGGU",
+      },
+    });
   }
 
-  return await prisma.dokumen.create({
+  return prisma.dokumen.create({
     data: {
       pendaftaranId: pendaftaran.id,
       namaFile: file.originalname,
