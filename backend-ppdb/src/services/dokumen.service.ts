@@ -19,7 +19,9 @@ export const uploadDokumen = async (
   }
 
   if (pendaftaran.submittedAt) {
-    throw new Error("Berkas tidak bisa diubah karena pendaftaran sudah dikirim");
+    throw new Error(
+      "Berkas tidak bisa diubah karena pendaftaran sudah dikirim",
+    );
   }
 
   const existing = await prisma.dokumen.findFirst({
