@@ -1,4 +1,5 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+const BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 async function parseResponse(res: Response) {
   const contentType = res.headers.get("content-type") || "";
@@ -55,7 +56,20 @@ export async function loginUser(data: { email: string; password: string }) {
   });
 }
 
+export type Sekolah = {
+  id: string;
+  nama: string;
+  alamat: string;
+  latitude: number;
+  longitude: number;
+  kuota: number;
+};
+
 export async function getSekolah() {
+  return fetcher("/sekolah");
+}
+
+export async function getSekolahPublic() {
   return fetcher("/sekolah");
 }
 
@@ -98,35 +112,18 @@ export async function saveBiodata(data: Record<string, unknown>) {
   });
 }
 
-export async function updateBiodata(data: {
-  alamat: string;
-  kelurahan: string;
-  kecamatan: string;
-  noTlpn: string;
-  latitude: number;
-  longitude: number;
-}) {
-  return fetcher("/biodata", {
-    method: "PUT",
-    body: JSON.stringify(data),
-  });
-}
-
 export async function uploadDokumen(file: File, tipeDokumen: string) {
   const token =
     typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
   const formData = new FormData();
-
   formData.append("file", file);
   formData.append("tipeDokumen", tipeDokumen);
 
   const res = await fetch(`${BASE_URL}/dokumen/upload`, {
     method: "POST",
     headers: {
-      ...(token && {
-        Authorization: `Bearer ${token}`,
-      }),
+      ...(token && { Authorization: `Bearer ${token}` }),
     },
     body: formData,
   });
