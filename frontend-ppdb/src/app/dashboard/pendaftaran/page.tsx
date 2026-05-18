@@ -1,19 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
- backend
-import { createPendaftaran, getSekolah } from "@/lib/api";
-
+import { useEffect, useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 
-import { createPendaftaran, uploadDokumen } from "@/lib/api";
+import {
+  createPendaftaran,
+  getSekolahPublic,
+  uploadDokumen,
+  type Sekolah,
+} from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
-
-const daftarSekolah = Array.from(
-  { length: 45 },
-  (_, i) => `SMP Negeri ${i + 1} Bandar Lampung`,
-);
- frontend
 
 const jalurPendaftaran = [
   {
@@ -54,43 +50,38 @@ export default function PendaftaranPage() {
     tingkatPrestasi: "",
   });
 
+  const [sekolahList, setSekolahList] = useState<Sekolah[]>([]);
   const [pilihan1, setPilihan1] = useState("");
   const [pilihan2, setPilihan2] = useState("");
   const [fileRaporPrestasi, setFileRaporPrestasi] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
- backend
-  const [success, setSuccess] = useState(false);
-  const [sekolahList, setSekolahList] = useState<
-    { id: string; nama: string }[]
-  >([]);
-
-  useEffect(() => {
-    const fetchSekolah = async () => {
-      try {
-        const response = await getSekolah();
-        setSekolahList(response.data);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-    fetchSekolah();
-
   const [loadingSkeleton, setLoadingSkeleton] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoadingSkeleton(false);
-    }, 900);
+    const loadSekolah = async () => {
+      try {
+        const res = await getSekolahPublic();
+        setSekolahList(res.data || []);
+      } catch (error) {
+        console.error(error);
+        alert("Gagal mengambil daftar sekolah");
+      } finally {
+        setLoadingSkeleton(false);
+      }
+    };
 
-    return () => clearTimeout(timer);
- frontend
+    loadSekolah();
   }, []);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const handleJalurChange = (selectedJalur: string) => {
@@ -105,9 +96,7 @@ export default function PendaftaranPage() {
     setFileRaporPrestasi(null);
   };
 
-  const handleJenisPrestasiChange = (
-    e: React.ChangeEvent<HTMLSelectElement>,
-  ) => {
+  const handleJenisPrestasiChange = (e: ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
 
     setForm((prev) => ({
@@ -121,9 +110,7 @@ export default function PendaftaranPage() {
     }
   };
 
-  const handleFileRaporPrestasi = (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleFileRaporPrestasi = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
 
     if (!file) return;
@@ -179,22 +166,9 @@ export default function PendaftaranPage() {
     try {
       setLoading(true);
 
- backend
-      // sementara pakai hardcode ID sekolah
-      // ambil dari Prisma Studio tabel Sekolah
-      const response = await createPendaftaran({
+      await createPendaftaran({
         sekolah1Id: pilihan1,
         sekolah2Id: pilihan2 || undefined,
-
-      const sekolah1Id = "35ca2c3e-3c86-4c79-aff7-3d8d88e85413";
-      const sekolah2Id = pilihan2
-        ? "2e9ef8c7-fbe5-43ce-b7de-d42d8378d146"
-        : undefined;
-
-      await createPendaftaran({
-        sekolah1Id,
-        sekolah2Id,
- frontend
         jalur: jalur.toUpperCase(),
         nisn: form.nisn,
         namaSekolahAsal: form.namaSekolahAsal,
@@ -210,18 +184,11 @@ export default function PendaftaranPage() {
         form.jenisPrestasi === "Nilai Rapor" &&
         fileRaporPrestasi
       ) {
-        await uploadDokumen(fileRaporPrestasi, "RAPOR");
+        await uploadDokumen(fileRaporPrestasi, "PRESTASI");
       }
 
- backend
-      setSuccess(true);
-    } catch (error: unknown) {
-      console.log(error);
-
-
       router.push("/dashboard/upload");
-    } catch (error: unknown) {
- frontend
+    } catch (error) {
       if (error instanceof Error) {
         alert(error.message);
       } else {
@@ -237,6 +204,8 @@ export default function PendaftaranPage() {
   }
 
   const selectedJalur = jalurPendaftaran.find((item) => item.id === jalur);
+  const selectedPilihan1 = sekolahList.find((school) => school.id === pilihan1);
+  const selectedPilihan2 = sekolahList.find((school) => school.id === pilihan2);
 
   return (
     <div className="flex flex-col gap-6">
@@ -480,78 +449,37 @@ export default function PendaftaranPage() {
                 label="Pilihan Pertama"
                 required
                 value={pilihan1}
- backend
-                onChange={(e) => setPilihan1(e.target.value)}
-                className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
-              >
-                <option value="">-- Pilih Sekolah Tujuan Pertama --</option>
-                {sekolahList.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.nama}
-                  </option>
-                ))}
-              </select>
-              {pilihan1 && (
-                <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-xl px-4 py-2.5">
-                  <span className="text-blue-600">✓</span>
-                  <span className="text-sm text-blue-700 font-medium">
-                    {pilihan1}
-                  </span>
-                </div>
-              )}
-            </div>
-
                 onChange={setPilihan1}
-                options={daftarSekolah}
+                options={sekolahList}
               />
- frontend
 
               <SchoolSelect
                 nomor="2"
                 label="Pilihan Kedua"
                 value={pilihan2}
- backend
-                onChange={(e) => setPilihan2(e.target.value)}
-                className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
-              >
-                <option value="">-- Pilih Sekolah Tujuan Kedua --</option>
-                {sekolahList
-                  .filter((s) => s.id !== pilihan1)
-                  .map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.nama}
-                    </option>
-                  ))}
-              </select>
-              {pilihan2 && (
-                <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5">
-                  <span className="text-slate-500">✓</span>
-                  <span className="text-sm text-slate-700 font-medium">
-                    {pilihan2}
-                  </span>
-
                 onChange={setPilihan2}
-                options={daftarSekolah.filter((s) => s !== pilihan1)}
+                options={sekolahList.filter((school) => school.id !== pilihan1)}
               />
 
-              {(pilihan1 || pilihan2) && (
+              {(selectedPilihan1 || selectedPilihan2) && (
                 <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
                   <p className="text-xs font-bold uppercase tracking-wide text-blue-700">
                     Ringkasan Pilihan
                   </p>
 
-                  {pilihan1 && (
+                  {selectedPilihan1 && (
                     <p className="mt-2 text-sm text-slate-700">
-                      <span className="font-bold">1.</span> {pilihan1}
+                      <span className="font-bold">1.</span>{" "}
+                      {selectedPilihan1.nama}
                     </p>
                   )}
 
-                  {pilihan2 && (
+                  {selectedPilihan2 && (
                     <p className="mt-1 text-sm text-slate-700">
-                      <span className="font-bold">2.</span> {pilihan2}
+                      <span className="font-bold">2.</span>{" "}
+                      {selectedPilihan2.nama}
                     </p>
                   )}
- frontend
                 </div>
               )}
             </div>
@@ -583,8 +511,10 @@ function SchoolSelect({
   required?: boolean;
   value: string;
   onChange: (value: string) => void;
-  options: string[];
+  options: Sekolah[];
 }) {
+  const selectedSchool = options.find((school) => school.id === value);
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2">
@@ -613,16 +543,18 @@ function SchoolSelect({
       >
         <option value="">-- Pilih Sekolah Tujuan --</option>
         {options.map((school) => (
-          <option key={school} value={school}>
-            {school}
+          <option key={school.id} value={school.id}>
+            {school.nama}
           </option>
         ))}
       </select>
 
-      {value && (
+      {selectedSchool && (
         <div className="flex items-center gap-2 rounded-xl border border-blue-100 bg-blue-50 px-4 py-2.5">
           <span className="text-blue-600">✓</span>
-          <span className="text-sm font-semibold text-blue-700">{value}</span>
+          <span className="text-sm font-semibold text-blue-700">
+            {selectedSchool.nama}
+          </span>
         </div>
       )}
     </div>

@@ -1,15 +1,10 @@
 "use client";
 
- backend
-import { useState } from "react";
-import { uploadDokumen } from "@/lib/api";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ChangeEvent } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { submitPendaftaran, uploadDokumen } from "@/lib/api";
- frontend
 
 const daftarBerkas = [
   {
@@ -97,20 +92,31 @@ export default function UploadBerkasPage() {
       setLoadingSkeleton(false);
     }, 900);
 
- backend
-  const handleFileChange = (
-    id: string,
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
     return () => clearTimeout(timer);
   }, []);
 
   const handleFileChange = (id: string, e: ChangeEvent<HTMLInputElement>) => {
- frontend
     const file = e.target.files?.[0];
     const berkasConfig = daftarBerkas.find((b) => b.id === id);
 
     if (!file || !berkasConfig) return;
+
+    const allowedTypes = ["application/pdf", "image/jpeg", "image/png"];
+
+    if (!allowedTypes.includes(file.type)) {
+      setFiles((prev) => ({
+        ...prev,
+        [id]: {
+          file: null,
+          preview: null,
+          status: "error",
+          errorMessage: "Format file tidak didukung. Gunakan PDF, JPG, atau PNG.",
+        },
+      }));
+
+      e.target.value = "";
+      return;
+    }
 
     if (file.size > berkasConfig.maxSizeMb * 1024 * 1024) {
       setFiles((prev) => ({
@@ -153,21 +159,17 @@ export default function UploadBerkasPage() {
   const uploadedCount = Object.values(files).filter(
     (f) => f.status === "uploaded",
   ).length;
- backend
- frontend
+
   const requiredCount = daftarBerkas.filter((b) => b.required).length;
 
   const requiredUploaded = daftarBerkas
     .filter((b) => b.required)
     .filter((b) => files[b.id]?.status === "uploaded").length;
 
- backend
-
   const progressPercent = Math.round(
     (uploadedCount / daftarBerkas.length) * 100,
   );
 
- frontend
   const handleSubmit = async () => {
     if (requiredUploaded < requiredCount) {
       alert(
@@ -189,10 +191,7 @@ export default function UploadBerkasPage() {
         foto: "FOTO",
         skhu: "SKHU",
         prestasi: "PRESTASI",
- backend
-
         kip: "KIP",
- frontend
       };
 
       for (const berkas of daftarBerkas) {
@@ -203,74 +202,21 @@ export default function UploadBerkasPage() {
         await uploadDokumen(fileData.file, tipeMap[berkas.id]);
       }
 
- backend
-      setSuccess(true);
-    } catch (error) {
-      console.log(error);
-
       await submitPendaftaran();
 
       router.push("/dashboard");
     } catch (error) {
       console.error(error);
- frontend
 
       if (error instanceof Error) {
         alert(error.message);
       } else {
- backend
-        alert("Gagal upload dokumen");
-
         alert("Gagal mengirim berkas");
- frontend
       }
     } finally {
       setLoading(false);
     }
   };
-
- backend
-  if (success) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center text-3xl">
-          ✅
-        </div>
-        <h2 className="text-xl font-bold text-slate-800">
-          Berkas Berhasil Dikirim!
-        </h2>
-        <p className="text-slate-500 text-sm text-center max-w-sm">
-          Semua berkas sudah terkirim. Tunggu verifikasi dari panitia PPDB.
-        </p>
-        <a
-          href="/dashboard"
-          className="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold text-sm hover:bg-blue-700 transition-colors"
-        >
-          Kembali ke Dashboard →
-        </a>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex flex-col gap-6 max-w-3xl">
-      {/* Header */}
-      <div>
-        <h1 className="text-xl font-bold text-slate-800">📁 Upload Berkas</h1>
-        <p className="text-slate-500 text-sm mt-1">
-          Upload semua dokumen persyaratan PPDB. Berkas bertanda{" "}
-          <span className="text-red-500 font-semibold">*</span> wajib diupload.
-        </p>
-      </div>
-
-      {/* Progress Upload */}
-      <div className="bg-white rounded-2xl shadow p-5">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-semibold text-slate-700">
-            Progress Upload
-          </span>
-          <span className="text-sm font-bold text-blue-600">
-            {uploadedCount} / {daftarBerkas.length} berkas
 
   if (loadingSkeleton) {
     return <UploadSkeleton />;
@@ -325,7 +271,6 @@ export default function UploadBerkasPage() {
 
           <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-bold text-blue-700">
             {progressPercent}%
- frontend
           </span>
         </div>
 
@@ -335,22 +280,6 @@ export default function UploadBerkasPage() {
             style={{ width: `${progressPercent}%` }}
           />
         </div>
- backend
-        <p className="text-xs text-slate-400 mt-2">
-          Wajib: {requiredUploaded}/{requiredCount} · Opsional:{" "}
-          {uploadedCount - requiredUploaded}/
-          {daftarBerkas.length - requiredCount}
-        </p>
-      </div>
-
-      {/* Daftar Berkas */}
-      <div className="bg-white rounded-2xl shadow p-6 flex flex-col gap-4">
-        <h2 className="font-semibold text-blue-700 text-sm uppercase tracking-wide border-b border-slate-100 pb-2">
-          📄 Daftar Berkas
-        </h2>
-
-        <div className="flex flex-col gap-4">
-
       </section>
 
       <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
@@ -362,7 +291,6 @@ export default function UploadBerkasPage() {
         </div>
 
         <div className="flex flex-col gap-3">
- frontend
           {daftarBerkas.map((berkas) => {
             const fileData = files[berkas.id];
             const isUploaded = fileData.status === "uploaded";
@@ -379,45 +307,6 @@ export default function UploadBerkasPage() {
                       : "border-slate-100 bg-slate-50"
                 }`}
               >
- backend
-                {/* Icon Status */}
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center text-lg flex-shrink-0
-                  ${isUploaded ? "bg-green-100" : isError ? "bg-red-100" : "bg-white border border-slate-200"}`}
-                >
-                  {isUploaded ? "✅" : isError ? "❌" : "📄"}
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1">
-                    <p className="text-sm font-semibold text-slate-800">
-                      {berkas.label}
-                    </p>
-                    {berkas.required && (
-                      <span className="text-red-500 text-xs">*</span>
-                    )}
-                    {!berkas.required && (
-                      <span className="text-xs bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded-full ml-1">
-                        Opsional
-                      </span>
-                    )}
-                  </div>
-                  {isUploaded ? (
-                    <p className="text-xs text-green-600 mt-0.5 truncate">
-                      ✓ {fileData.file?.name}
-                    </p>
-                  ) : isError ? (
-                    <p className="text-xs text-red-500 mt-0.5">
-                      File terlalu besar! Maks 5MB
-                    </p>
-                  ) : (
-                    <p className="text-xs text-slate-400 mt-0.5">
-                      {berkas.desc}
-                    </p>
-                  )}
-                </div>
-
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                   <div
                     className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl text-xl ${
@@ -463,7 +352,6 @@ export default function UploadBerkasPage() {
                       </p>
                     )}
                   </div>
- frontend
 
                   {isUploaded && fileData.preview && (
                     <img
@@ -533,6 +421,7 @@ function UploadSkeleton() {
             <Skeleton className="h-5 w-40" />
             <Skeleton className="mt-2 h-3 w-64" />
           </div>
+
           <Skeleton className="h-7 w-14 rounded-full" />
         </div>
 
