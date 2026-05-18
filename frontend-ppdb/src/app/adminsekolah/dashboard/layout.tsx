@@ -12,11 +12,8 @@ export default function AdminSekolahLayout({
       <NavbarAdmin />
       <SidebarAdmin />
 
-      <main className="ml-64 pt-16 min-h-screen flex flex-col">
-        <div className="flex-1 p-6">
-          {children}
-        </div>
-
+      <main className="ml-60 pt-16 min-h-screen flex flex-col">
+        <div className="flex-1 p-6">{children}</div>
         <Footer />
       </main>
     </div>

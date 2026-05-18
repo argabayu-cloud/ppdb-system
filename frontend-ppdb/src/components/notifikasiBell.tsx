@@ -71,11 +71,16 @@ export default function NotificationBell() {
   };
 
   useEffect(() => {
-    fetchNotif();
+    const timeout = window.setTimeout(() => {
+      void fetchNotif();
+    }, 0);
 
     const interval = setInterval(fetchNotif, 5000);
 
-    return () => clearInterval(interval);
+    return () => {
+      window.clearTimeout(timeout);
+      clearInterval(interval);
+    };
   }, []);
 
   const unreadCount = notif.filter((n) => !n.isRead).length;
@@ -84,9 +89,10 @@ export default function NotificationBell() {
     <div className="relative">
       <button
         onClick={() => setOpen((prev) => !prev)}
-        className="relative flex items-center justify-center text-white transition duration-200 hover:scale-110"
+        className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-blue-100 bg-blue-50 text-blue-700 transition hover:bg-blue-100"
+        aria-label="Buka notifikasi"
       >
-        <BellNotificationIcon size={20} color="#ffffff" shadow={2} />
+        <BellNotificationIcon size={20} color="#1d4ed8" />
 
         {unreadCount > 0 && (
           <span className="absolute -right-2 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
