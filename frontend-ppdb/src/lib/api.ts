@@ -92,6 +92,8 @@ export async function createPendaftaran(data: {
   nilaiRataRata?: string;
   jenisPrestasi?: string;
   tingkatPrestasi?: string;
+  latitude?: number | null;
+  longitude?: number | null;
 }) {
   return fetcher("/pendaftaran", {
     method: "POST",
