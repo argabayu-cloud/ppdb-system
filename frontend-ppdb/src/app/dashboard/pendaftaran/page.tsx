@@ -202,11 +202,16 @@ export default function PendaftaranPage() {
         )
       : null;
 
-  const isInsideRadius =
-    distance !== null &&
+  const radiusZonasi =
     selectedPilihan1?.radiusZonasi !== undefined &&
-    selectedPilihan1?.radiusZonasi !== null
-      ? distance <= selectedPilihan1.radiusZonasi
+    selectedPilihan1?.radiusZonasi !== null &&
+    selectedPilihan1.radiusZonasi > 0
+      ? selectedPilihan1.radiusZonasi
+      : null;
+
+  const isInsideRadius =
+    distance !== null && radiusZonasi !== null
+      ? distance <= radiusZonasi
       : false;
 
   const isSubmitDisabled =
@@ -244,6 +249,11 @@ export default function PendaftaranPage() {
 
       if (latitude === null || longitude === null) {
         alert("Lokasi rumah belum terdeteksi. Aktifkan lokasi atau refresh halaman.");
+        return;
+      }
+
+      if (radiusZonasi === null) {
+        alert("Radius zonasi sekolah belum diatur. Hubungi admin terlebih dahulu.");
         return;
       }
 
@@ -657,7 +667,9 @@ export default function PendaftaranPage() {
 
                         <p>
                           <span className="font-bold">Radius Zonasi:</span>{" "}
-                          {selectedPilihan1.radiusZonasi ?? 0} KM
+                          {radiusZonasi !== null
+                            ? `${radiusZonasi} KM`
+                            : "Belum diatur"}
                         </p>
 
                         <p
@@ -665,9 +677,11 @@ export default function PendaftaranPage() {
                             isInsideRadius ? "text-green-600" : "text-red-600"
                           }`}
                         >
-                          {isInsideRadius
-                            ? "Masuk radius zonasi"
-                            : "Di luar radius zonasi"}
+                          {radiusZonasi === null
+                            ? "Radius zonasi belum diatur"
+                            : isInsideRadius
+                              ? "Masuk radius zonasi"
+                              : "Di luar radius zonasi"}
                         </p>
                       </div>
                     )}

@@ -67,11 +67,11 @@ export async function loginUser(data: { email: string; password: string }) {
 export type Sekolah = {
   id: string;
   nama: string;
-  alamat: string;
-  latitude: number;
-  longitude: number;
+  alamat: string | null;
+  latitude: number | null;
+  longitude: number | null;
   kuota: number;
-  radiusZonasi?: number;
+  radiusZonasi: number | null;
 };
 
 export async function getSekolah() {
