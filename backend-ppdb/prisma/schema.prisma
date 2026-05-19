@@ -81,11 +81,11 @@ model User {
 model Sekolah {
   id        String   @id @default(uuid())
   nama      String   @unique
-  alamat    String
-  latitude  Float
-  longitude Float
-  radiusZonasi Float?
+  alamat    String?
+  latitude  Float?
+  longitude Float?
   kuota     Int
+  radiusZonasi Float? @default(3)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -158,6 +158,9 @@ model Pendaftaran {
   tahunLulus        String?
   jenisPrestasi     String?
   tingkatPrestasi   String?
+
+    latitude  Float
+  longitude Float
 
   nilaiRapor    Float?
   nilaiPrestasi Float?
