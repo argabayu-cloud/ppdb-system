@@ -8,10 +8,17 @@ import {
   createPendaftaran,
   getSekolah,
   uploadDokumen,
-  updateBiodata,
   type Sekolah,
 } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
+
+type GeoStatus =
+  | "idle"
+  | "checking"
+  | "granted"
+  | "denied"
+  | "unsupported"
+  | "error";
 
 const ZonasiMap = dynamic(() => import("@/components/zonasiMap"), {
   ssr: false,
@@ -46,7 +53,7 @@ function calculateDistance(
   lat1: number,
   lon1: number,
   lat2: number,
-  lon2: number,
+  lon2: number
 ) {
   const R = 6371;
 
@@ -81,8 +88,13 @@ export default function PendaftaranPage() {
 
   const [sekolahList, setSekolahList] = useState<Sekolah[]>([]);
   const [pilihan1, setPilihan1] = useState("");
+
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
+
+  const [geoStatus, setGeoStatus] = useState<GeoStatus>("idle");
+  const [geoMessage, setGeoMessage] = useState("");
+
   const [fileRaporPrestasi, setFileRaporPrestasi] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingSkeleton, setLoadingSkeleton] = useState(true);
@@ -104,7 +116,7 @@ export default function PendaftaranPage() {
   }, []);
 
   const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
 
@@ -126,6 +138,9 @@ export default function PendaftaranPage() {
     setLatitude(null);
     setLongitude(null);
     setFileRaporPrestasi(null);
+
+    setGeoStatus("idle");
+    setGeoMessage("");
   };
 
   const handleJenisPrestasiChange = (e: ChangeEvent<HTMLSelectElement>) => {
@@ -162,6 +177,49 @@ export default function PendaftaranPage() {
     setFileRaporPrestasi(file);
   };
 
+  if (loadingSkeleton) {
+    return <PendaftaranSkeleton />;
+  }
+
+  const selectedJalur = jalurPendaftaran.find((item) => item.id === jalur);
+  const selectedPilihan1 = sekolahList.find((school) => school.id === pilihan1);
+
+  const latitudeValue = latitude !== null ? latitude.toFixed(6) : "";
+  const longitudeValue = longitude !== null ? longitude.toFixed(6) : "";
+
+  const distance =
+    latitude !== null &&
+    longitude !== null &&
+    selectedPilihan1?.latitude !== undefined &&
+    selectedPilihan1?.latitude !== null &&
+    selectedPilihan1?.longitude !== undefined &&
+    selectedPilihan1?.longitude !== null
+      ? calculateDistance(
+          latitude,
+          longitude,
+          selectedPilihan1.latitude,
+          selectedPilihan1.longitude
+        )
+      : null;
+
+  const isInsideRadius =
+    distance !== null &&
+    selectedPilihan1?.radiusZonasi !== undefined &&
+    selectedPilihan1?.radiusZonasi !== null
+      ? distance <= selectedPilihan1.radiusZonasi
+      : false;
+
+  const isSubmitDisabled =
+    loading || (jalur === "zonasi" && geoStatus !== "granted");
+
+  const submitButtonText = loading
+    ? "Menyimpan..."
+    : jalur === "zonasi" && geoStatus === "checking"
+      ? "Mengecek Lokasi..."
+      : jalur === "zonasi" && geoStatus !== "granted"
+        ? "Aktifkan Lokasi untuk Melanjutkan"
+        : "Simpan Pendaftaran";
+
   const handleSubmit = async () => {
     if (!jalur) {
       alert("Pilih jalur pendaftaran terlebih dahulu!");
@@ -179,8 +237,13 @@ export default function PendaftaranPage() {
     }
 
     if (jalur === "zonasi") {
-      if (!latitude || !longitude) {
-        alert("Pilih lokasi rumah pada peta terlebih dahulu!");
+      if (geoStatus !== "granted") {
+        alert("Aktifkan izin lokasi terlebih dahulu sebelum menyimpan pendaftaran!");
+        return;
+      }
+
+      if (latitude === null || longitude === null) {
+        alert("Lokasi rumah belum terdeteksi. Aktifkan lokasi atau refresh halaman.");
         return;
       }
 
@@ -188,11 +251,6 @@ export default function PendaftaranPage() {
         alert("Lokasi rumah berada di luar radius zonasi sekolah!");
         return;
       }
-
-      await updateBiodata({
-        latitude,
-        longitude,
-      });
     }
 
     if (jalur === "prestasi") {
@@ -237,42 +295,18 @@ export default function PendaftaranPage() {
         await uploadDokumen(fileRaporPrestasi, "PRESTASI");
       }
 
+      alert("Pendaftaran berhasil disimpan!");
       router.push("/dashboard/upload");
     } catch (error) {
       if (error instanceof Error) {
         alert(error.message);
       } else {
-        alert("Terjadi kesalahan");
+        alert("Terjadi kesalahan saat menyimpan pendaftaran");
       }
     } finally {
       setLoading(false);
     }
   };
-
-  if (loadingSkeleton) {
-    return <PendaftaranSkeleton />;
-  }
-
-  const selectedJalur = jalurPendaftaran.find((item) => item.id === jalur);
-  const selectedPilihan1 = sekolahList.find((school) => school.id === pilihan1);
-
-  const distance =
-    latitude &&
-    longitude &&
-    selectedPilihan1?.latitude &&
-    selectedPilihan1?.longitude
-      ? calculateDistance(
-          latitude,
-          longitude,
-          selectedPilihan1.latitude,
-          selectedPilihan1.longitude,
-        )
-      : null;
-
-  const isInsideRadius =
-    distance !== null && selectedPilihan1?.radiusZonasi !== undefined
-      ? distance <= selectedPilihan1.radiusZonasi
-      : false;
 
   return (
     <div className="flex flex-col gap-6">
@@ -324,6 +358,7 @@ export default function PendaftaranPage() {
             return (
               <button
                 key={item.id}
+                type="button"
                 onClick={() => handleJalurChange(item.id)}
                 className={`rounded-2xl border p-4 text-left transition ${
                   active
@@ -424,8 +459,8 @@ export default function PendaftaranPage() {
                   Peta Zonasi Sekolah
                 </h2>
                 <p className="mt-1 text-xs text-blue-700/80">
-                  Klik titik lokasi rumah peserta pada peta untuk menentukan
-                  koordinat zonasi.
+                  Aktifkan izin lokasi browser agar sistem bisa mendeteksi
+                  koordinat rumah peserta secara otomatis.
                 </p>
               </div>
 
@@ -435,14 +470,71 @@ export default function PendaftaranPage() {
                   longitude={longitude}
                   setLatitude={setLatitude}
                   setLongitude={setLongitude}
+                  onGeolocationStatusChange={(status, message) => {
+                    setGeoStatus(status);
+                    setGeoMessage(message || "");
+                  }}
                 />
               </div>
 
-              {latitude && longitude && (
-                <div className="mt-3 rounded-xl border border-blue-100 bg-white px-4 py-3 text-xs font-semibold text-blue-700">
-                  Lokasi dipilih: {latitude.toFixed(6)}, {longitude.toFixed(6)}
+              <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1.5 block text-sm font-semibold text-blue-700">
+                    Latitude
+                  </label>
+
+                  <input
+                    type="text"
+                    readOnly
+                    value={latitudeValue}
+                    placeholder="Contoh: -5.442261"
+                    className="w-full rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 outline-none placeholder:text-slate-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-sm font-semibold text-blue-700">
+                    Longitude
+                  </label>
+
+                  <input
+                    type="text"
+                    readOnly
+                    value={longitudeValue}
+                    placeholder="Contoh: 105.272784"
+                    className="w-full rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 outline-none placeholder:text-slate-400"
+                  />
+                </div>
+              </div>
+
+              {geoStatus !== "idle" && geoStatus !== "granted" && (
+                <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  <p className="font-bold">Geolocation belum aktif</p>
+                  <p className="mt-1 text-xs leading-5">
+                    {geoMessage ||
+                      "Silakan aktifkan izin lokasi browser agar bisa melanjutkan pendaftaran jalur zonasi."}
+                  </p>
                 </div>
               )}
+
+              {geoStatus === "checking" && (
+                <div className="mt-3 rounded-xl border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-700">
+                  <p className="font-bold">Mengecek lokasi...</p>
+                  <p className="mt-1 text-xs leading-5">
+                    Mohon izinkan akses lokasi saat browser menampilkan popup
+                    perizinan.
+                  </p>
+                </div>
+              )}
+
+              {geoStatus === "granted" &&
+                latitude !== null &&
+                longitude !== null && (
+                  <div className="mt-3 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-xs font-semibold text-green-700">
+                    Lokasi berhasil terdeteksi: {latitude.toFixed(6)},{" "}
+                    {longitude.toFixed(6)}
+                  </div>
+                )}
             </section>
           )}
 
@@ -555,9 +647,9 @@ export default function PendaftaranPage() {
                     Ringkasan Pilihan
                   </p>
 
-                  <p className="mt-2 text-sm text-slate-700">
+                  <div className="mt-2 text-sm text-slate-700">
                     {jalur === "zonasi" && distance !== null && (
-                      <div className="mt-3 rounded-xl bg-white p-3 text-sm">
+                      <div className="mb-3 rounded-xl bg-white p-3 text-sm">
                         <p>
                           <span className="font-bold">Jarak Rumah:</span>{" "}
                           {distance.toFixed(2)} KM
@@ -579,20 +671,24 @@ export default function PendaftaranPage() {
                         </p>
                       </div>
                     )}
-                    <span className="font-bold">Sekolah tujuan:</span>{" "}
-                    {selectedPilihan1.nama}
-                  </p>
+
+                    <p>
+                      <span className="font-bold">Sekolah tujuan:</span>{" "}
+                      {selectedPilihan1.nama}
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
           </section>
 
           <button
+            type="button"
             onClick={handleSubmit}
-            disabled={loading}
-            className="rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
+            disabled={isSubmitDisabled}
+            className="rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
           >
-            {loading ? "Menyimpan..." : "Simpan Pendaftaran"}
+            {submitButtonText}
           </button>
         </>
       )}

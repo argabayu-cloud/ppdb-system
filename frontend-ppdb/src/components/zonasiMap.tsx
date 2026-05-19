@@ -1,7 +1,7 @@
 "use client";
 
 import L from "leaflet";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import {
   MapContainer,
@@ -16,22 +16,41 @@ import {
   OpenStreetMapProvider,
 } from "leaflet-geosearch";
 
+export type GeoStatus =
+  | "idle"
+  | "checking"
+  | "granted"
+  | "denied"
+  | "unsupported"
+  | "error";
+
 type Props = {
   latitude: number | null;
   longitude: number | null;
   setLatitude: (value: number) => void;
   setLongitude: (value: number) => void;
+  onGeolocationStatusChange?: (status: GeoStatus, message?: string) => void;
+};
+
+type SearchFieldProps = {
+  setLatitude: (value: number) => void;
+  setLongitude: (value: number) => void;
+};
+
+type AutoDetectLocationProps = {
+  setLatitude: (value: number) => void;
+  setLongitude: (value: number) => void;
+  onGeolocationStatusChange?: (status: GeoStatus, message?: string) => void;
 };
 
 const markerIcon = new L.Icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  shadowUrl:
-    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
   iconSize: [25, 41],
   iconAnchor: [12, 41],
 });
 
-function SearchField() {
+function SearchField({ setLatitude, setLongitude }: SearchFieldProps) {
   const map = useMap();
 
   useEffect(() => {
@@ -49,10 +68,99 @@ function SearchField() {
 
     map.addControl(searchControl);
 
+    const handleSearch = (result: any) => {
+      const lat = result?.location?.y;
+      const lng = result?.location?.x;
+
+      if (typeof lat === "number" && typeof lng === "number") {
+        setLatitude(lat);
+        setLongitude(lng);
+        map.flyTo([lat, lng], 16);
+      }
+    };
+
+    map.on("geosearch/showlocation", handleSearch);
+
     return () => {
+      map.off("geosearch/showlocation", handleSearch);
       map.removeControl(searchControl);
     };
-  }, [map]);
+  }, [map, setLatitude, setLongitude]);
+
+  return null;
+}
+
+function AutoDetectLocation({
+  setLatitude,
+  setLongitude,
+  onGeolocationStatusChange,
+}: AutoDetectLocationProps) {
+  const map = useMap();
+  const hasDetected = useRef(false);
+
+  useEffect(() => {
+    if (hasDetected.current) return;
+    hasDetected.current = true;
+
+    onGeolocationStatusChange?.(
+      "checking",
+      "Sedang mengecek izin lokasi perangkat..."
+    );
+
+    if (!navigator.geolocation) {
+      const message =
+        "Browser Panjenengan tidak mendukung geolocation. Silakan gunakan browser lain.";
+
+      onGeolocationStatusChange?.("unsupported", message);
+      alert(message);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+
+        setLatitude(lat);
+        setLongitude(lng);
+
+        onGeolocationStatusChange?.("granted", "Lokasi berhasil diaktifkan.");
+
+        map.flyTo([lat, lng], 16);
+      },
+      (error) => {
+        let status: GeoStatus = "error";
+        let message =
+          "Gagal mengambil lokasi otomatis. Pastikan layanan lokasi perangkat Panjenengan aktif.";
+
+        if (error.code === error.PERMISSION_DENIED) {
+          status = "denied";
+          message =
+            "Izin lokasi belum diaktifkan. Silakan aktifkan izin lokasi di browser, lalu refresh halaman.";
+        }
+
+        if (error.code === error.POSITION_UNAVAILABLE) {
+          status = "error";
+          message =
+            "Lokasi tidak tersedia. Pastikan GPS atau layanan lokasi perangkat Panjenengan aktif.";
+        }
+
+        if (error.code === error.TIMEOUT) {
+          status = "error";
+          message =
+            "Waktu pengambilan lokasi habis. Coba refresh halaman atau aktifkan lokasi perangkat.";
+        }
+
+        onGeolocationStatusChange?.(status, message);
+        alert(message);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
+    );
+  }, [map, setLatitude, setLongitude, onGeolocationStatusChange]);
 
   return null;
 }
@@ -70,11 +178,8 @@ function LocationMarker({
     },
   });
 
-  return latitude && longitude ? (
-    <Marker
-      position={[latitude, longitude]}
-      icon={markerIcon}
-    />
+  return latitude !== null && longitude !== null ? (
+    <Marker position={[latitude, longitude]} icon={markerIcon} />
   ) : null;
 }
 
@@ -83,10 +188,17 @@ export default function ZonasiMap({
   longitude,
   setLatitude,
   setLongitude,
+  onGeolocationStatusChange,
 }: Props) {
+  const defaultCenter: [number, number] = [-5.429, 105.261];
+
   return (
     <MapContainer
-      center={[-5.429, 105.261]}
+      center={
+        latitude !== null && longitude !== null
+          ? [latitude, longitude]
+          : defaultCenter
+      }
       zoom={13}
       style={{
         height: "400px",
@@ -99,7 +211,13 @@ export default function ZonasiMap({
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
-      <SearchField />
+      <AutoDetectLocation
+        setLatitude={setLatitude}
+        setLongitude={setLongitude}
+        onGeolocationStatusChange={onGeolocationStatusChange}
+      />
+
+      <SearchField setLatitude={setLatitude} setLongitude={setLongitude} />
 
       <LocationMarker
         latitude={latitude}
