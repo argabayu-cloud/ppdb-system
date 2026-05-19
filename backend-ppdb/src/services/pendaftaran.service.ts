@@ -1,8 +1,4 @@
-import {
-  StatusPendaftaran,
-  StatusPilihan,
-  TipeDokumen,
-} from "@prisma/client";
+import { StatusPendaftaran, StatusPilihan, TipeDokumen } from "@prisma/client";
 
 import prisma from "../config/prisma";
 import { haversineDistance } from "../utils/distance";
@@ -27,6 +23,8 @@ export const createPendaftaran = async (userId: string, data: any) => {
     nilaiRataRata,
     jenisPrestasi,
     tingkatPrestasi,
+    latitude,
+    longitude,
   } = data;
 
   if (!sekolah1Id) {
@@ -82,20 +80,20 @@ export const createPendaftaran = async (userId: string, data: any) => {
     ? haversineDistance(
         user.latitude as number,
         user.longitude as number,
-        sekolah1.latitude,
-        sekolah1.longitude,
+        sekolah1.latitude as number,
+        sekolah1.longitude as number,
       )
     : null;
 
-  const jarak2 =
-    bisaHitungJarak && sekolah2
-      ? haversineDistance(
-          user.latitude as number,
-          user.longitude as number,
-          sekolah2.latitude,
-          sekolah2.longitude,
-        )
-      : null;
+  // const jarak2 =
+  //   bisaHitungJarak && sekolah2
+  //     ? haversineDistance(
+  //         user.latitude as number,
+  //         user.longitude as number,
+  //         sekolah2.latitude,
+  //         sekolah2.longitude,
+  //       )
+  //     : null;
 
   const nilaiRapor =
     nilaiRataRata && !Number.isNaN(Number(nilaiRataRata))
@@ -108,13 +106,18 @@ export const createPendaftaran = async (userId: string, data: any) => {
         userId,
         jalur,
         status: StatusPendaftaran.MENUNGGU,
+
         nisn: nisn || null,
         namaSekolahAsal: namaSekolahAsal || null,
         npsn: npsn || null,
         tahunLulus: tahunLulus || null,
+
         nilaiRapor,
         jenisPrestasi: jenisPrestasi || null,
         tingkatPrestasi: tingkatPrestasi || null,
+
+        latitude: latitude ?? null,
+        longitude: longitude ?? null,
       },
     });
 
@@ -128,17 +131,17 @@ export const createPendaftaran = async (userId: string, data: any) => {
       },
     });
 
-    if (sekolah2Id) {
-      await tx.pilihanSekolah.create({
-        data: {
-          pendaftaranId: pendaftaran.id,
-          sekolahId: sekolah2Id,
-          pilihanKe: 2,
-          status: StatusPilihan.MENUNGGU,
-          jarak: jarak2,
-        },
-      });
-    }
+    // if (sekolah2Id) {
+    //   await tx.pilihanSekolah.create({
+    //     data: {
+    //       pendaftaranId: pendaftaran.id,
+    //       sekolahId: sekolah2Id,
+    //       pilihanKe: 2,
+    //       status: StatusPilihan.MENUNGGU,
+    //       jarak: jarak2,
+    //     },
+    //   });
+    // }
 
     return pendaftaran;
   });
@@ -276,12 +279,8 @@ export const getDashboardPendaftaran = async (userId: string) => {
   const progressPercent = isSubmitted
     ? 100
     : Math.round(
-        ([
-          true,
-          hasBiodata,
-          hasPendaftaran,
-          requiredUploaded,
-        ].filter(Boolean).length /
+        ([true, hasBiodata, hasPendaftaran, requiredUploaded].filter(Boolean)
+          .length /
           4) *
           100,
       );
