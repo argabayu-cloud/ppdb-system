@@ -84,6 +84,7 @@ model Sekolah {
   alamat    String
   latitude  Float
   longitude Float
+  radiusZonasi Float?
   kuota     Int
 
   createdAt DateTime @default(now())
