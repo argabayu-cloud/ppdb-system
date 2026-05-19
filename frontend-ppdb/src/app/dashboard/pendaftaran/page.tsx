@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 
@@ -7,9 +8,14 @@ import {
   createPendaftaran,
   getSekolah,
   uploadDokumen,
+  updateBiodata,
   type Sekolah,
 } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
+
+const ZonasiMap = dynamic(() => import("@/components/zonasiMap"), {
+  ssr: false,
+});
 
 const jalurPendaftaran = [
   {
@@ -52,6 +58,8 @@ export default function PendaftaranPage() {
 
   const [sekolahList, setSekolahList] = useState<Sekolah[]>([]);
   const [pilihan1, setPilihan1] = useState("");
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
   const [fileRaporPrestasi, setFileRaporPrestasi] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingSkeleton, setLoadingSkeleton] = useState(true);
@@ -92,6 +100,8 @@ export default function PendaftaranPage() {
       tingkatPrestasi: "",
     }));
 
+    setLatitude(null);
+    setLongitude(null);
     setFileRaporPrestasi(null);
   };
 
@@ -145,6 +155,18 @@ export default function PendaftaranPage() {
       return;
     }
 
+    if (jalur === "zonasi") {
+      if (!latitude || !longitude) {
+        alert("Pilih lokasi rumah pada peta terlebih dahulu!");
+        return;
+      }
+
+      await updateBiodata({
+        latitude,
+        longitude,
+      });
+    }
+
     if (jalur === "prestasi") {
       if (!form.jenisPrestasi) {
         alert("Jenis prestasi wajib dipilih!");
@@ -175,6 +197,8 @@ export default function PendaftaranPage() {
         nilaiRataRata: form.nilaiRataRata,
         jenisPrestasi: form.jenisPrestasi,
         tingkatPrestasi: form.tingkatPrestasi,
+        latitude,
+        longitude,
       });
 
       if (
@@ -346,6 +370,36 @@ export default function PendaftaranPage() {
               ))}
             </div>
           </section>
+
+          {jalur === "zonasi" && (
+            <section className="rounded-2xl border border-blue-100 bg-blue-50 p-6">
+              <div className="mb-4">
+                <h2 className="text-base font-bold text-blue-700">
+                  Peta Zonasi Sekolah
+                </h2>
+                <p className="mt-1 text-xs text-blue-700/80">
+                  Klik titik lokasi rumah peserta pada peta untuk menentukan
+                  koordinat zonasi.
+                </p>
+              </div>
+
+              <div className="overflow-hidden rounded-2xl border border-blue-100 bg-white">
+                <ZonasiMap
+                  latitude={latitude}
+                  longitude={longitude}
+                  setLatitude={setLatitude}
+                  setLongitude={setLongitude}
+                />
+              </div>
+
+              {latitude && longitude && (
+                <div className="mt-3 rounded-xl border border-blue-100 bg-white px-4 py-3 text-xs font-semibold text-blue-700">
+                  Lokasi dipilih: {latitude.toFixed(6)},{" "}
+                  {longitude.toFixed(6)}
+                </div>
+              )}
+            </section>
+          )}
 
           {jalur === "prestasi" && (
             <section className="rounded-2xl border border-purple-100 bg-purple-50 p-6">

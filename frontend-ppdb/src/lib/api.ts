@@ -92,6 +92,8 @@ export async function createPendaftaran(data: {
   nilaiRataRata?: string;
   jenisPrestasi?: string;
   tingkatPrestasi?: string;
+  latitude?: number | null;
+  longitude?: number | null;
 }) {
   return fetcher("/pendaftaran", {
     method: "POST",
@@ -143,4 +145,14 @@ export async function uploadDokumen(file: File, tipeDokumen: string) {
   }
 
   return data;
+}
+
+export async function updateBiodata(data: {
+  latitude?: number;
+  longitude?: number;
+}) {
+  return fetcher("/biodata", {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
 }
