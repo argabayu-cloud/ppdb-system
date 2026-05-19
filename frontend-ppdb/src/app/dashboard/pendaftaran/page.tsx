@@ -52,7 +52,6 @@ export default function PendaftaranPage() {
 
   const [sekolahList, setSekolahList] = useState<Sekolah[]>([]);
   const [pilihan1, setPilihan1] = useState("");
-  const [pilihan2, setPilihan2] = useState("");
   const [fileRaporPrestasi, setFileRaporPrestasi] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingSkeleton, setLoadingSkeleton] = useState(true);
@@ -142,7 +141,7 @@ export default function PendaftaranPage() {
     }
 
     if (!pilihan1) {
-      alert("Pilihan sekolah pertama wajib diisi!");
+      alert("Pilihan sekolah wajib diisi!");
       return;
     }
 
@@ -168,7 +167,6 @@ export default function PendaftaranPage() {
 
       await createPendaftaran({
         sekolah1Id: pilihan1,
-        sekolah2Id: pilihan2 || undefined,
         jalur: jalur.toUpperCase(),
         nisn: form.nisn,
         namaSekolahAsal: form.namaSekolahAsal,
@@ -205,7 +203,6 @@ export default function PendaftaranPage() {
 
   const selectedJalur = jalurPendaftaran.find((item) => item.id === jalur);
   const selectedPilihan1 = sekolahList.find((school) => school.id === pilihan1);
-  const selectedPilihan2 = sekolahList.find((school) => school.id === pilihan2);
 
   return (
     <div className="flex flex-col gap-6">
@@ -224,7 +221,7 @@ export default function PendaftaranPage() {
 
             <p className="mt-3 max-w-xl text-sm leading-6 text-blue-50/90">
               Pilih jalur pendaftaran, lengkapi data akademik, lalu tentukan
-              sekolah tujuan sesuai pilihan kamu.
+              sekolah tujuan utama kamu.
             </p>
           </div>
 
@@ -439,47 +436,30 @@ export default function PendaftaranPage() {
                 Pilihan Sekolah Tujuan
               </h2>
               <p className="mt-1 text-xs text-slate-500">
-                Tentukan sekolah tujuan pertama dan kedua.
+                Tentukan satu sekolah tujuan utama.
               </p>
             </div>
 
             <div className="flex flex-col gap-5">
               <SchoolSelect
                 nomor="1"
-                label="Pilihan Pertama"
+                label="Pilihan Sekolah"
                 required
                 value={pilihan1}
                 onChange={setPilihan1}
                 options={sekolahList}
               />
 
-              <SchoolSelect
-                nomor="2"
-                label="Pilihan Kedua"
-                value={pilihan2}
-                onChange={setPilihan2}
-                options={sekolahList.filter((school) => school.id !== pilihan1)}
-              />
-
-              {(selectedPilihan1 || selectedPilihan2) && (
+              {selectedPilihan1 && (
                 <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
                   <p className="text-xs font-bold uppercase tracking-wide text-blue-700">
                     Ringkasan Pilihan
                   </p>
 
-                  {selectedPilihan1 && (
-                    <p className="mt-2 text-sm text-slate-700">
-                      <span className="font-bold">1.</span>{" "}
-                      {selectedPilihan1.nama}
-                    </p>
-                  )}
-
-                  {selectedPilihan2 && (
-                    <p className="mt-1 text-sm text-slate-700">
-                      <span className="font-bold">2.</span>{" "}
-                      {selectedPilihan2.nama}
-                    </p>
-                  )}
+                  <p className="mt-2 text-sm text-slate-700">
+                    <span className="font-bold">Sekolah tujuan:</span>{" "}
+                    {selectedPilihan1.nama}
+                  </p>
                 </div>
               )}
             </div>
@@ -528,11 +508,6 @@ function SchoolSelect({
 
         <label className="text-sm font-bold text-slate-700">
           {label} {required && <span className="text-red-500">*</span>}
-          {!required && (
-            <span className="ml-1 text-xs font-normal text-slate-400">
-              (opsional)
-            </span>
-          )}
         </label>
       </div>
 
