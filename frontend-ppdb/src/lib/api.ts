@@ -71,6 +71,7 @@ export type Sekolah = {
   latitude: number;
   longitude: number;
   kuota: number;
+  radiusZonasi?: number;
 };
 
 export async function getSekolah() {

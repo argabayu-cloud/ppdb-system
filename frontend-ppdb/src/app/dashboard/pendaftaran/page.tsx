@@ -42,6 +42,29 @@ type FormState = {
   tingkatPrestasi: string;
 };
 
+function calculateDistance(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number,
+) {
+  const R = 6371;
+
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c;
+}
+
 export default function PendaftaranPage() {
   const router = useRouter();
 
@@ -161,6 +184,11 @@ export default function PendaftaranPage() {
         return;
       }
 
+      if (!isInsideRadius) {
+        alert("Lokasi rumah berada di luar radius zonasi sekolah!");
+        return;
+      }
+
       await updateBiodata({
         latitude,
         longitude,
@@ -227,6 +255,24 @@ export default function PendaftaranPage() {
 
   const selectedJalur = jalurPendaftaran.find((item) => item.id === jalur);
   const selectedPilihan1 = sekolahList.find((school) => school.id === pilihan1);
+
+  const distance =
+    latitude &&
+    longitude &&
+    selectedPilihan1?.latitude &&
+    selectedPilihan1?.longitude
+      ? calculateDistance(
+          latitude,
+          longitude,
+          selectedPilihan1.latitude,
+          selectedPilihan1.longitude,
+        )
+      : null;
+
+  const isInsideRadius =
+    distance !== null && selectedPilihan1?.radiusZonasi !== undefined
+      ? distance <= selectedPilihan1.radiusZonasi
+      : false;
 
   return (
     <div className="flex flex-col gap-6">
@@ -394,8 +440,7 @@ export default function PendaftaranPage() {
 
               {latitude && longitude && (
                 <div className="mt-3 rounded-xl border border-blue-100 bg-white px-4 py-3 text-xs font-semibold text-blue-700">
-                  Lokasi dipilih: {latitude.toFixed(6)},{" "}
-                  {longitude.toFixed(6)}
+                  Lokasi dipilih: {latitude.toFixed(6)}, {longitude.toFixed(6)}
                 </div>
               )}
             </section>
@@ -511,6 +556,29 @@ export default function PendaftaranPage() {
                   </p>
 
                   <p className="mt-2 text-sm text-slate-700">
+                    {jalur === "zonasi" && distance !== null && (
+                      <div className="mt-3 rounded-xl bg-white p-3 text-sm">
+                        <p>
+                          <span className="font-bold">Jarak Rumah:</span>{" "}
+                          {distance.toFixed(2)} KM
+                        </p>
+
+                        <p>
+                          <span className="font-bold">Radius Zonasi:</span>{" "}
+                          {selectedPilihan1.radiusZonasi ?? 0} KM
+                        </p>
+
+                        <p
+                          className={`mt-2 font-bold ${
+                            isInsideRadius ? "text-green-600" : "text-red-600"
+                          }`}
+                        >
+                          {isInsideRadius
+                            ? "Masuk radius zonasi"
+                            : "Di luar radius zonasi"}
+                        </p>
+                      </div>
+                    )}
                     <span className="font-bold">Sekolah tujuan:</span>{" "}
                     {selectedPilihan1.nama}
                   </p>
