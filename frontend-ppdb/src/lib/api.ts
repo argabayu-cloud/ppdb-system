@@ -146,3 +146,13 @@ export async function uploadDokumen(file: File, tipeDokumen: string) {
 
   return data;
 }
+
+export async function updateBiodata(data: {
+  latitude?: number;
+  longitude?: number;
+}) {
+  return fetcher("/biodata", {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}

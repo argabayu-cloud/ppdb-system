@@ -8,6 +8,7 @@ import {
   createPendaftaran,
   getSekolah,
   uploadDokumen,
+  updateBiodata,
   type Sekolah,
 } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -154,9 +155,16 @@ export default function PendaftaranPage() {
       return;
     }
 
-    if (jalur === "zonasi" && (!latitude || !longitude)) {
-      alert("Pilih lokasi rumah pada peta terlebih dahulu!");
-      return;
+    if (jalur === "zonasi") {
+      if (!latitude || !longitude) {
+        alert("Pilih lokasi rumah pada peta terlebih dahulu!");
+        return;
+      }
+
+      await updateBiodata({
+        latitude,
+        longitude,
+      });
     }
 
     if (jalur === "prestasi") {
