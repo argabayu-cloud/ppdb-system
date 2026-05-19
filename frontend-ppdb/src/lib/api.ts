@@ -15,22 +15,30 @@ async function parseResponse(res: Response) {
 }
 
 export async function fetcher(url: string, options: RequestInit = {}) {
-  const token =
+  const rawToken =
     typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
+  const token: string | null =
+    typeof rawToken === "string" &&
+    rawToken.trim() !== "" &&
+    rawToken !== "undefined" &&
+    rawToken !== "null"
+      ? rawToken.trim()
+      : null;
 
   const res = await fetch(`${BASE_URL}${url}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
       ...(options.headers || {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
   });
 
-  const data = await parseResponse(res);
+  const data = await res.json().catch(() => null);
 
   if (!res.ok) {
-    throw new Error(data?.message || "Terjadi kesalahan");
+    throw new Error(data?.message || "Terjadi kesalahan pada server");
   }
 
   return data;
