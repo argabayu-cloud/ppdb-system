@@ -1,12 +1,11 @@
 import { Router } from "express";
 import {
   handleCreateSekolah,
+  handleDeleteSekolah,
   handleGetSekolah,
   handleGetSekolahById,
   handleUpdateSekolah,
-  handleDeleteSekolah,
 } from "../controllers/sekolah.controller";
-
 import { authMiddleware } from "../middlewares/auth.middlewares";
 import { requireRole } from "../middlewares/role.middleware";
 
