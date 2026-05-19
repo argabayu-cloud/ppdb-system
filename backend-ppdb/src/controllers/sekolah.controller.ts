@@ -16,10 +16,12 @@ export const handleCreateSekolah = async (req: Request, res: Response) => {
       message: "Sekolah berhasil dibuat",
       data: sekolah,
     });
-  } catch (error) {
+  } catch (error: any) {
+    console.error("CREATE SEKOLAH ERROR:", error);
+
     return res.status(500).json({
       success: false,
-      message: "Gagal membuat sekolah",
+      message: error?.message || "Gagal membuat sekolah",
     });
   }
 };
@@ -28,8 +30,9 @@ export const handleGetSekolah = async (_: Request, res: Response) => {
   try {
     const data = await SekolahService.getAllSekolah();
 
-    return res.json({
+    return res.status(200).json({
       success: true,
+      message: "Data sekolah berhasil diambil",
       data,
     });
   } catch (error: any) {
@@ -62,14 +65,17 @@ export const handleGetSekolahById = async (req: Request, res: Response) => {
       });
     }
 
-    return res.json({
+    return res.status(200).json({
       success: true,
+      message: "Data sekolah berhasil diambil",
       data,
     });
-  } catch {
+  } catch (error: any) {
+    console.error("GET SEKOLAH BY ID ERROR:", error);
+
     return res.status(500).json({
       success: false,
-      message: "Gagal mengambil sekolah",
+      message: error?.message || "Gagal mengambil sekolah",
     });
   }
 };
@@ -87,15 +93,17 @@ export const handleUpdateSekolah = async (req: Request, res: Response) => {
 
     const data = await SekolahService.updateSekolah(id, req.body);
 
-    return res.json({
+    return res.status(200).json({
       success: true,
       message: "Sekolah berhasil diupdate",
       data,
     });
-  } catch {
+  } catch (error: any) {
+    console.error("UPDATE SEKOLAH ERROR:", error);
+
     return res.status(500).json({
       success: false,
-      message: "Gagal update sekolah",
+      message: error?.message || "Gagal update sekolah",
     });
   }
 };
@@ -113,14 +121,16 @@ export const handleDeleteSekolah = async (req: Request, res: Response) => {
 
     await SekolahService.deleteSekolah(id);
 
-    return res.json({
+    return res.status(200).json({
       success: true,
       message: "Sekolah berhasil dihapus",
     });
-  } catch {
+  } catch (error: any) {
+    console.error("DELETE SEKOLAH ERROR:", error);
+
     return res.status(500).json({
       success: false,
-      message: "Gagal menghapus sekolah",
+      message: error?.message || "Gagal menghapus sekolah",
     });
   }
 };
