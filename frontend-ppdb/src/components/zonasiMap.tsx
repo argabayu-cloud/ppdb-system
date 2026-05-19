@@ -1,13 +1,20 @@
 "use client";
 
+import L from "leaflet";
+import { useEffect } from "react";
+
 import {
   MapContainer,
   Marker,
   TileLayer,
+  useMap,
   useMapEvents,
 } from "react-leaflet";
 
-import L from "leaflet";
+import {
+  GeoSearchControl,
+  OpenStreetMapProvider,
+} from "leaflet-geosearch";
 
 type Props = {
   latitude: number | null;
@@ -23,6 +30,32 @@ const markerIcon = new L.Icon({
   iconSize: [25, 41],
   iconAnchor: [12, 41],
 });
+
+function SearchField() {
+  const map = useMap();
+
+  useEffect(() => {
+    const provider = new OpenStreetMapProvider();
+
+    const searchControl: any = new (GeoSearchControl as any)({
+      provider,
+      style: "bar",
+      autoComplete: true,
+      autoCompleteDelay: 250,
+      showMarker: false,
+      retainZoomLevel: false,
+      animateZoom: true,
+    });
+
+    map.addControl(searchControl);
+
+    return () => {
+      map.removeControl(searchControl);
+    };
+  }, [map]);
+
+  return null;
+}
 
 function LocationMarker({
   setLatitude,
@@ -65,6 +98,8 @@ export default function ZonasiMap({
         attribution="OpenStreetMap"
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
+
+      <SearchField />
 
       <LocationMarker
         latitude={latitude}
