@@ -58,12 +58,21 @@ export const upsertBiodata = async (userId: string, data: any) => {
     where: { id: userId },
     data: {
       nama: typeof data.namaLengkap === "string" ? data.namaLengkap : undefined,
+
       noTlpn: typeof data.noHp === "string" ? data.noHp : undefined,
+
       alamat: typeof data.alamat === "string" ? data.alamat : undefined,
+
       kelurahan:
         typeof data.kelurahan === "string" ? data.kelurahan : undefined,
+
       kecamatan:
         typeof data.kecamatan === "string" ? data.kecamatan : undefined,
+
+      latitude: typeof data.latitude === "number" ? data.latitude : undefined,
+
+      longitude:
+        typeof data.longitude === "number" ? data.longitude : undefined,
     },
   });
 
