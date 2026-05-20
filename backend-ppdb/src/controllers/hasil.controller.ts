@@ -7,13 +7,17 @@ export const getHasil = async (req: any, res: Response) => {
 
     const result = await getHasilUser(userId);
 
-    res.status(200).json({
-      message: "Berhasil mengambil hasil",
+    return res.status(200).json({
+      success: true,
+      message: result
+        ? "Berhasil mengambil hasil"
+        : "Hasil seleksi belum tersedia",
       data: result,
     });
   } catch (error: any) {
-    res.status(400).json({
-      message: error.message,
+    return res.status(400).json({
+      success: false,
+      message: error.message || "Gagal mengambil hasil seleksi",
     });
   }
 };

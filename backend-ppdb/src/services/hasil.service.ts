@@ -1,25 +1,37 @@
 import prisma from "../config/prisma";
 
 export const getHasilUser = async (userId: string) => {
-  const pendaftaran = await prisma.pendaftaran.findUnique({
-    where: { userId },
-    include: {
-      hasil: {
-        include: {
-          sekolah: true,
-        },
+  const hasil = await prisma.hasilSeleksi.findFirst({
+    where: {
+      pendaftaran: {
+        userId,
       },
-      pilihan: {
+    },
+    include: {
+      sekolah: true,
+      pendaftaran: {
         include: {
-          sekolah: true,
+          user: {
+            select: {
+              id: true,
+              nama: true,
+              email: true,
+              noTlpn: true,
+              biodata: true,
+            },
+          },
+          pilihan: {
+            include: {
+              sekolah: true,
+            },
+            orderBy: {
+              pilihanKe: "asc",
+            },
+          },
         },
       },
     },
   });
 
-  if (!pendaftaran) {
-    throw new Error("Data pendaftaran tidak ditemukan");
-  }
-
-  return pendaftaran;
+  return hasil;
 };

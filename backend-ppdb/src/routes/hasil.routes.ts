@@ -5,6 +5,9 @@ import { requireRole } from "../middlewares/role.middleware";
 
 const router = Router();
 
+router.get("/me", authMiddleware, requireRole("USER"), getHasil);
+
+// Biar route lama tetap aman kalau masih ada yang pakai.
 router.get("/hasil-saya", authMiddleware, requireRole("USER"), getHasil);
 
 export default router;
