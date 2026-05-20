@@ -9,12 +9,7 @@ import { upload } from "../middlewares/upload.middleware";
 
 const router = Router();
 
-router.get(
-  "/me",
-  authMiddleware,
-  requireRole("USER"),
-  handleGetDokumenSaya,
-);
+router.get("/me", authMiddleware, requireRole("USER"), handleGetDokumenSaya);
 
 router.post(
   "/upload",
