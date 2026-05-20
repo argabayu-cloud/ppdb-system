@@ -1,9 +1,17 @@
+import {
+  StatusDokumen,
+  StatusFinal,
+  StatusPendaftaran,
+  StatusPilihan,
+} from "@prisma/client";
 import prisma from "../config/prisma";
 
-// 🔥 GET PENDAFTAR (WAJIB TAMBAH INI)
 export const getPendaftar = async (adminId: string) => {
   const admin = await prisma.adminSekolah.findUnique({
     where: { userId: adminId },
+    include: {
+      sekolah: true,
+    },
   });
 
   if (!admin) throw new Error("Admin tidak ditemukan");
@@ -11,21 +19,50 @@ export const getPendaftar = async (adminId: string) => {
   const data = await prisma.pilihanSekolah.findMany({
     where: {
       sekolahId: admin.sekolahId,
-    },
-    include: {
+      status: StatusPilihan.DIPROSES,
       pendaftaran: {
-        include: {
-          user: true,
+        submittedAt: {
+          not: null,
         },
       },
+    },
+    include: {
       sekolah: true,
+      pendaftaran: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              nama: true,
+              email: true,
+              noTlpn: true,
+              biodata: true,
+            },
+          },
+          dokumen: {
+            orderBy: {
+              createdAt: "asc",
+            },
+          },
+          pilihan: {
+            include: {
+              sekolah: true,
+            },
+            orderBy: {
+              pilihanKe: "asc",
+            },
+          },
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
     },
   });
 
   return data;
 };
 
-// 🔥 SELEKSI SISWA (punya kamu, sudah oke)
 export const seleksiSiswa = async (
   adminId: string,
   pilihanId: string,
@@ -41,9 +78,11 @@ export const seleksiSiswa = async (
   const pilihan = await prisma.pilihanSekolah.findUnique({
     where: { id: pilihanId },
     include: {
+      sekolah: true,
       pendaftaran: {
         include: {
           dokumen: true,
+          user: true,
         },
       },
     },
@@ -51,136 +90,163 @@ export const seleksiSiswa = async (
 
   if (!pilihan) throw new Error("Data tidak ditemukan");
 
-  // Validasi Dokumen Sebelum Seleksi
+  if (pilihan.sekolahId !== admin.sekolahId) {
+    throw new Error("Akses ditolak");
+  }
+
+  if (pilihan.isLocked) {
+    throw new Error("Data sudah dikunci, tidak bisa diubah");
+  }
+
+  if (!pilihan.pendaftaran.submittedAt) {
+    throw new Error("Pendaftaran belum dikirim oleh peserta");
+  }
+
   const dokumen = pilihan.pendaftaran.dokumen;
 
   if (!dokumen || dokumen.length === 0) {
     throw new Error("Dokumen belum diupload");
   }
 
-  // Jika ada dokumen belum diterima
-  const adaYangBelumValid = dokumen.some(
-    (d: { status: string }) => d.status !== "DITERIMA",
+  const adaDokumenMenunggu = dokumen.some(
+    (item) => item.status === StatusDokumen.MENUNGGU,
   );
 
-  if (adaYangBelumValid) {
+  if (adaDokumenMenunggu) {
     throw new Error("Semua dokumen harus divalidasi terlebih dahulu");
   }
 
-  if (status === "DITOLAK") {
-    await prisma.dokumen.updateMany({
-      where: { pendaftaranId: pilihan.pendaftaranId },
-      data: { status: "DITOLAK" },
-    });
-  }
-
-  // 🔥 validasi akses sekolah
-  if (pilihan.sekolahId !== admin.sekolahId) {
-    throw new Error("Akses ditolak");
-  }
-
-  // 🔒 VALIDASI LOCK
-  if (pilihan.isLocked) {
-    throw new Error("Data sudah dikunci, tidak bisa diubah");
-  }
-
-  // 🔁 LOGIC UTAMA
   if (status === "DITERIMA") {
-    // 🔥 lock semua pilihan (1 & 2)
-    await prisma.pilihanSekolah.updateMany({
-      where: {
-        pendaftaranId: pilihan.pendaftaranId,
-      },
+    const adaDokumenDitolak = dokumen.some(
+      (item) => item.status === StatusDokumen.DITOLAK,
+    );
+
+    if (adaDokumenDitolak) {
+      throw new Error("Tidak bisa menerima siswa karena ada dokumen ditolak");
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.pilihanSekolah.update({
+        where: { id: pilihanId },
+        data: {
+          status: StatusPilihan.DITERIMA,
+          isLocked: true,
+        },
+      });
+
+      await tx.pendaftaran.update({
+        where: { id: pilihan.pendaftaranId },
+        data: {
+          status: StatusPendaftaran.DITERIMA,
+        },
+      });
+
+      await tx.hasilSeleksi.upsert({
+        where: { pendaftaranId: pilihan.pendaftaranId },
+        update: {
+          statusFinal: StatusFinal.DITERIMA,
+          sekolahDiterimaId: pilihan.sekolahId,
+          catatan: null,
+        },
+        create: {
+          pendaftaranId: pilihan.pendaftaranId,
+          sekolahDiterimaId: pilihan.sekolahId,
+          statusFinal: StatusFinal.DITERIMA,
+        },
+      });
+
+      await tx.pengumuman.create({
+        data: {
+          userId: pilihan.pendaftaran.userId,
+          pendaftaranId: pilihan.pendaftaranId,
+          judul: "Hasil Seleksi PPDB",
+          pesan: `Selamat, kamu dinyatakan diterima di ${pilihan.sekolah.nama}.`,
+        },
+      });
+
+      await tx.notifikasi.create({
+        data: {
+          userId: pilihan.pendaftaran.userId,
+          judul: "Pendaftaran Diterima",
+          pesan: `Selamat, pendaftaran kamu diterima di ${pilihan.sekolah.nama}. Silakan cek halaman pengumuman.`,
+        },
+      });
+    });
+
+    return {
+      message: "Siswa berhasil diterima",
+    };
+  }
+
+  if (!alasan || alasan.trim() === "") {
+    throw new Error("Alasan penolakan wajib diisi");
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.pilihanSekolah.update({
+      where: { id: pilihanId },
       data: {
-        status: "DITERIMA",
+        status: StatusPilihan.DITOLAK,
+        alasanPenolakan: alasan,
         isLocked: true,
       },
     });
 
-    await prisma.pendaftaran.update({
+    await tx.pendaftaran.update({
       where: { id: pilihan.pendaftaranId },
-      data: { status: "DITERIMA" },
+      data: {
+        status: StatusPendaftaran.DITOLAK,
+      },
     });
 
-    await prisma.hasilSeleksi.upsert({
+    await tx.hasilSeleksi.upsert({
       where: { pendaftaranId: pilihan.pendaftaranId },
       update: {
-        statusFinal: "DITERIMA",
-        sekolahDiterimaId: pilihan.sekolahId,
+        statusFinal: StatusFinal.DITOLAK,
+        sekolahDiterimaId: null,
+        catatan: alasan,
       },
       create: {
         pendaftaranId: pilihan.pendaftaranId,
-        sekolahDiterimaId: pilihan.sekolahId,
-        statusFinal: "DITERIMA",
+        statusFinal: StatusFinal.DITOLAK,
+        catatan: alasan,
       },
     });
-  } else {
-    // ❌ DITOLAK
-    await prisma.pilihanSekolah.update({
-      where: { id: pilihanId },
+
+    await tx.pengumuman.create({
       data: {
-        status: "DITOLAK",
-        alasanPenolakan: alasan || null,
+        userId: pilihan.pendaftaran.userId,
+        pendaftaranId: pilihan.pendaftaranId,
+        judul: "Hasil Seleksi PPDB",
+        pesan: `Mohon maaf, pendaftaran kamu di ${pilihan.sekolah.nama} belum diterima. Alasan: ${alasan}`,
       },
     });
 
-    if (pilihan.pilihanKe === 1) {
-      // 👉 lanjut ke pilihan 2
-      await prisma.pendaftaran.update({
-        where: { id: pilihan.pendaftaranId },
-        data: { status: "DITOLAK_1" },
-      });
-
-      await prisma.pilihanSekolah.updateMany({
-        where: {
-          pendaftaranId: pilihan.pendaftaranId,
-          pilihanKe: 2,
-        },
-        data: {
-          status: "DIPROSES",
-        },
-      });
-    } else {
-      // ❌ ditolak final
-      await prisma.pendaftaran.update({
-        where: { id: pilihan.pendaftaranId },
-        data: { status: "DITOLAK" },
-      });
-
-      await prisma.hasilSeleksi.upsert({
-        where: { pendaftaranId: pilihan.pendaftaranId },
-        update: {
-          statusFinal: "DITOLAK",
-          catatan: alasan,
-        },
-        create: {
-          pendaftaranId: pilihan.pendaftaranId,
-          statusFinal: "DITOLAK",
-          catatan: alasan,
-        },
-      });
-    }
-  }
+    await tx.notifikasi.create({
+      data: {
+        userId: pilihan.pendaftaran.userId,
+        judul: "Pendaftaran Ditolak",
+        pesan: `Pendaftaran kamu di ${pilihan.sekolah.nama} ditolak. Silakan cek halaman pengumuman untuk melihat alasan penolakan.`,
+      },
+    });
+  });
 
   return {
-    message: "Seleksi berhasil",
+    message: "Siswa berhasil ditolak",
   };
 };
 
-// 🔥 VALIDASI DOKUMEN ADMIN
 export const validasiDokumen = async (
   adminId: string,
   dokumenId: string,
   status: "DITERIMA" | "DITOLAK",
 ) => {
-  // 🔍 cek admin
   const admin = await prisma.adminSekolah.findUnique({
     where: { userId: adminId },
   });
 
   if (!admin) throw new Error("Admin tidak ditemukan");
 
-  // 🔍 ambil dokumen + relasi pendaftaran + pilihan
   const dokumen = await prisma.dokumen.findUnique({
     where: { id: dokumenId },
     include: {
@@ -194,27 +260,25 @@ export const validasiDokumen = async (
 
   if (!dokumen) throw new Error("Dokumen tidak ditemukan");
 
-  // 🔐 VALIDASI AKSES SEKOLAH
   const punyaAkses = dokumen.pendaftaran.pilihan.some(
-    (p: { sekolahId: string }) => {
-      return p.sekolahId === admin.sekolahId;
-    },
+    (pilihan) => pilihan.sekolahId === admin.sekolahId,
   );
 
   if (!punyaAkses) {
     throw new Error("Akses ditolak");
   }
 
-  // 🔒 CEK SUDAH DIVALIDASI ATAU BELUM
-  if (dokumen.status !== "MENUNGGU") {
+  if (dokumen.status !== StatusDokumen.MENUNGGU) {
     throw new Error("Dokumen sudah divalidasi sebelumnya");
   }
 
-  // 🔥 UPDATE STATUS DOKUMEN
   const updated = await prisma.dokumen.update({
     where: { id: dokumenId },
     data: {
-      status,
+      status:
+        status === "DITERIMA"
+          ? StatusDokumen.DITERIMA
+          : StatusDokumen.DITOLAK,
     },
   });
 
