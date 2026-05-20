@@ -1,6 +1,5 @@
 "use client";
 
-import NotificationBell from "./notifikasiBell";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -44,6 +43,7 @@ export default function NavbarAdmin() {
     }
 
     document.addEventListener("mousedown", handleClickOutside);
+
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
@@ -92,8 +92,6 @@ export default function NavbarAdmin() {
 
         {/* RIGHT */}
         <div className="flex items-center gap-3">
-          <NotificationBell />
-
           <div className="relative" ref={dropdownRef}>
             <button
               type="button"

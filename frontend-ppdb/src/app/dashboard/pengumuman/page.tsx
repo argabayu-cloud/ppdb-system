@@ -1,13 +1,17 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+
 import { Skeleton } from "@/components/ui/skeleton";
-import { getHasilSeleksiSaya } from "@/lib/api";
+import { getHasilSeleksiSaya, resetPendaftaranZonasi } from "@/lib/api";
 
 type HasilSeleksi = {
   id: string;
   statusFinal: "DITERIMA" | "DITOLAK";
   catatan?: string | null;
+  jenisPenolakan?: "DOKUMEN" | "ZONASI" | "LAINNYA" | null;
   createdAt: string;
   sekolah?: {
     id: string;
@@ -38,6 +42,8 @@ type HasilSeleksi = {
 };
 
 export default function PengumumanPage() {
+  const router = useRouter();
+
   const [hasil, setHasil] = useState<HasilSeleksi | null>(null);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
@@ -57,6 +63,25 @@ export default function PengumumanPage() {
 
     loadHasil();
   }, []);
+
+  const handleDaftarUlangZonasi = async () => {
+    const yakin = confirm(
+      "Pendaftaran lama akan dihapus dan kamu harus mengisi pendaftaran ulang. Lanjutkan?",
+    );
+
+    if (!yakin) return;
+
+    try {
+      await resetPendaftaranZonasi();
+      router.push("/dashboard/pendaftaran");
+    } catch (error) {
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Gagal memulai daftar ulang",
+      );
+    }
+  };
 
   const handleDownloadPDF = async () => {
     if (!hasil || downloading) return;
@@ -421,6 +446,47 @@ export default function PengumumanPage() {
               </div>
             )}
           </div>
+        </section>
+      )}
+
+      {!isAccepted && hasil.jenisPenolakan === "DOKUMEN" && (
+        <section className="rounded-2xl border border-amber-200 bg-amber-50 p-6">
+          <h2 className="text-base font-bold text-amber-700">
+            Perbaikan Berkas Diperlukan
+          </h2>
+
+          <p className="mt-2 text-sm leading-6 text-amber-700">
+            Pendaftaran kamu ditolak karena ada berkas yang perlu diperbaiki.
+            Silakan upload ulang berkas yang salah, lalu kirim kembali ke admin
+            sekolah.
+          </p>
+
+          <Link
+            href="/dashboard/upload"
+            className="mt-4 inline-flex rounded-xl bg-amber-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-amber-700"
+          >
+            Perbaiki Berkas
+          </Link>
+        </section>
+      )}
+
+      {!isAccepted && hasil.jenisPenolakan === "ZONASI" && (
+        <section className="rounded-2xl border border-rose-200 bg-rose-50 p-6">
+          <h2 className="text-base font-bold text-rose-700">
+            Daftar Ulang Diperlukan
+          </h2>
+
+          <p className="mt-2 text-sm leading-6 text-rose-700">
+            Pendaftaran kamu ditolak karena alasan zonasi. Untuk melanjutkan,
+            kamu perlu melakukan pendaftaran ulang dari awal.
+          </p>
+
+          <button
+            onClick={handleDaftarUlangZonasi}
+            className="mt-4 rounded-xl bg-rose-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-rose-700"
+          >
+            Daftar Ulang
+          </button>
         </section>
       )}
 
