@@ -157,3 +157,32 @@ export async function updateBiodata(data: {
     body: JSON.stringify(data),
   });
 }
+
+export async function getPendaftarAdmin() {
+  return fetcher("/admin/pendaftar");
+}
+
+export async function seleksiPendaftar(data: {
+  pilihanId: string;
+  status: "DITERIMA" | "DITOLAK";
+  alasan?: string;
+}) {
+  return fetcher("/admin/seleksi", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function validasiDokumenAdmin(data: {
+  dokumenId: string;
+  status: "DITERIMA" | "DITOLAK";
+}) {
+  return fetcher("/admin/validasi-dokumen", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getHasilSeleksiSaya() {
+  return fetcher("/hasil/me");
+}
