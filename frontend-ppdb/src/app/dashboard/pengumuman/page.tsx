@@ -2,34 +2,60 @@
 
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getHasilSeleksiSaya } from "@/lib/api";
 
-const simulasiHasil = {
-  nama: "Arga Bayu R",
-  nisn: "1234567890",
-  jalur: "Zonasi",
-  noRegistrasi: "PPDB-2025-00123",
-  status: "diterima",
-  sekolahDiterima: "SMP Negeri 3 Bandar Lampung",
-  pilihan: [
-    { urutan: 1, sekolah: "SMP Negeri 3 Bandar Lampung", status: "diterima" },
-    { urutan: 2, sekolah: "SMP Negeri 7 Bandar Lampung", status: "gugur" },
-  ],
-  tanggalPengumuman: "10 Juni 2025",
-  batasUlang: "11-15 Juni 2025",
+type HasilSeleksi = {
+  id: string;
+  statusFinal: "DITERIMA" | "DITOLAK";
+  catatan?: string | null;
+  createdAt: string;
+  sekolah?: {
+    id: string;
+    nama: string;
+  } | null;
+  pendaftaran: {
+    id: string;
+    nisn?: string | null;
+    jalur: string;
+    noPendaftaran?: string | null;
+    user: {
+      nama: string;
+      email: string;
+      biodata?: {
+        namaLengkap?: string | null;
+      } | null;
+    };
+    pilihan: {
+      id: string;
+      pilihanKe: number;
+      status: "MENUNGGU" | "DIPROSES" | "DITERIMA" | "DITOLAK";
+      alasanPenolakan?: string | null;
+      sekolah: {
+        nama: string;
+      };
+    }[];
+  };
 };
 
 export default function PengumumanPage() {
-  const [hasil, setHasil] = useState<typeof simulasiHasil | null>(null);
+  const [hasil, setHasil] = useState<HasilSeleksi | null>(null);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setHasil(simulasiHasil);
-      setLoading(false);
-    }, 900);
+    const loadHasil = async () => {
+      try {
+        const res = await getHasilSeleksiSaya();
+        setHasil(res.data || null);
+      } catch (error) {
+        console.error(error);
+        setHasil(null);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    return () => clearTimeout(timer);
+    loadHasil();
   }, []);
 
   const handleDownloadPDF = async () => {
@@ -48,7 +74,21 @@ export default function PengumumanPage() {
 
       const pageWidth = doc.internal.pageSize.getWidth();
       const center = pageWidth / 2;
-      const isAccepted = hasil.status === "diterima";
+      const isAccepted = hasil.statusFinal === "DITERIMA";
+
+      const namaPeserta =
+        hasil.pendaftaran.user.biodata?.namaLengkap ||
+        hasil.pendaftaran.user.nama;
+      const nisn = hasil.pendaftaran.nisn || "-";
+      const noRegistrasi = hasil.pendaftaran.noPendaftaran || "-";
+      const tanggalPengumuman = new Date(hasil.createdAt).toLocaleDateString(
+        "id-ID",
+        {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        },
+      );
 
       doc.setFillColor(30, 64, 175);
       doc.rect(0, 0, pageWidth, 40, "F");
@@ -80,7 +120,7 @@ export default function PengumumanPage() {
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(11);
-      doc.text(`No. Registrasi: ${hasil.noRegistrasi}`, center, 66, {
+      doc.text(`No. Registrasi: ${noRegistrasi}`, center, 66, {
         align: "center",
       });
 
@@ -115,11 +155,11 @@ export default function PengumumanPage() {
       doc.line(20, 112, pageWidth - 20, 112);
 
       const rows = [
-        ["Nama Lengkap", hasil.nama],
-        ["NISN", hasil.nisn],
-        ["No. Registrasi", hasil.noRegistrasi],
-        ["Jalur Pendaftaran", hasil.jalur],
-        ["Tanggal Pengumuman", hasil.tanggalPengumuman],
+        ["Nama Lengkap", namaPeserta],
+        ["NISN", nisn],
+        ["No. Registrasi", noRegistrasi],
+        ["Jalur Pendaftaran", hasil.pendaftaran.jalur],
+        ["Tanggal Pengumuman", tanggalPengumuman],
         ["Status", isAccepted ? "Diterima" : "Tidak Diterima"],
       ];
 
@@ -142,16 +182,15 @@ export default function PengumumanPage() {
       doc.setFont("helvetica", "bold");
       doc.setFontSize(12);
       doc.setTextColor(15, 23, 42);
-      doc.text("RINCIAN PILIHAN SEKOLAH", 20, y);
+      doc.text("RINCIAN SEKOLAH TUJUAN", 20, y);
 
       y += 5;
       doc.setDrawColor(226, 232, 240);
       doc.line(20, y, pageWidth - 20, y);
-
       y += 10;
 
-      hasil.pilihan.forEach((p) => {
-        const accepted = p.status === "diterima";
+      hasil.pendaftaran.pilihan.forEach((p) => {
+        const accepted = p.status === "DITERIMA";
 
         if (accepted) {
           doc.setFillColor(220, 252, 231);
@@ -164,15 +203,15 @@ export default function PengumumanPage() {
         doc.roundedRect(20, y - 6, pageWidth - 40, 14, 2, 2, "F");
         doc.setFont("helvetica", "bold");
         doc.setFontSize(10);
-        doc.text(`Pilihan ${p.urutan}: ${p.sekolah}`, 27, y + 2);
-        doc.text(accepted ? "DITERIMA" : "GUGUR", pageWidth - 25, y + 2, {
+        doc.text(`Sekolah Tujuan: ${p.sekolah.nama}`, 27, y + 2);
+        doc.text(accepted ? "DITERIMA" : "DITOLAK", pageWidth - 25, y + 2, {
           align: "right",
         });
 
         y += 18;
       });
 
-      if (isAccepted) {
+      if (isAccepted && hasil.sekolah?.nama) {
         y += 4;
 
         doc.setFillColor(30, 64, 175);
@@ -185,7 +224,7 @@ export default function PengumumanPage() {
 
         doc.setFont("helvetica", "bold");
         doc.setFontSize(13);
-        doc.text(hasil.sekolahDiterima, center, y + 13, {
+        doc.text(hasil.sekolah.nama, center, y + 13, {
           align: "center",
         });
 
@@ -200,7 +239,24 @@ export default function PengumumanPage() {
         doc.text("WAJIB DAFTAR ULANG", 27, y + 8);
 
         doc.setFont("helvetica", "normal");
-        doc.text(`Tanggal: ${hasil.batasUlang}`, 27, y + 15);
+        doc.text("Ikuti jadwal dan arahan daftar ulang dari sekolah.", 27, y + 15);
+
+        y += 34;
+      }
+
+      if (!isAccepted && hasil.catatan) {
+        doc.setFillColor(255, 241, 242);
+        doc.roundedRect(20, y, pageWidth - 40, 24, 3, 3, "F");
+
+        doc.setTextColor(190, 18, 60);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.text("CATATAN PENOLAKAN", 27, y + 8);
+
+        doc.setFont("helvetica", "normal");
+        doc.text(hasil.catatan, 27, y + 16, {
+          maxWidth: pageWidth - 54,
+        });
 
         y += 34;
       }
@@ -208,12 +264,9 @@ export default function PengumumanPage() {
       doc.setTextColor(15, 23, 42);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
-      doc.text(
-        `Bandar Lampung, ${hasil.tanggalPengumuman}`,
-        pageWidth - 25,
-        y,
-        { align: "right" },
-      );
+      doc.text(`Bandar Lampung, ${tanggalPengumuman}`, pageWidth - 25, y, {
+        align: "right",
+      });
 
       y += 7;
       doc.text("Kepala Dinas Pendidikan", pageWidth - 25, y, {
@@ -245,7 +298,7 @@ export default function PengumumanPage() {
         { align: "center" },
       );
 
-      doc.save(`Hasil-PPDB-${hasil.nisn}.pdf`);
+      doc.save(`Hasil-PPDB-${nisn}.pdf`);
     } catch (error) {
       console.error(error);
       alert("Gagal membuat PDF. Pastikan package jspdf sudah terinstall.");
@@ -267,19 +320,29 @@ export default function PengumumanPage() {
           </div>
 
           <h2 className="mt-5 text-xl font-bold text-slate-900">
-            Data Belum Tersedia
+            Hasil Belum Tersedia
           </h2>
 
           <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-500">
-            Hasil seleksi PPDB belum diumumkan atau data peserta tidak
-            ditemukan.
+            Hasil seleksi belum diumumkan. Silakan pantau halaman ini secara
+            berkala setelah admin sekolah melakukan verifikasi.
           </p>
         </div>
       </div>
     );
   }
 
-  const isAccepted = hasil.status === "diterima";
+  const isAccepted = hasil.statusFinal === "DITERIMA";
+  const namaPeserta =
+    hasil.pendaftaran.user.biodata?.namaLengkap || hasil.pendaftaran.user.nama;
+  const tanggalPengumuman = new Date(hasil.createdAt).toLocaleDateString(
+    "id-ID",
+    {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    },
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -297,8 +360,7 @@ export default function PengumumanPage() {
             </h1>
 
             <p className="mt-3 max-w-xl text-sm leading-6 text-blue-50/90">
-              Tahun Ajaran 2025/2026 · Kota Bandar Lampung. Simpan bukti hasil
-              seleksi untuk proses daftar ulang di sekolah tujuan.
+              Hasil ini berdasarkan verifikasi admin sekolah tujuan.
             </p>
           </div>
 
@@ -307,14 +369,12 @@ export default function PengumumanPage() {
             <p className="mt-1 text-lg font-bold text-white">
               {isAccepted ? "Diterima" : "Tidak Diterima"}
             </p>
-            <p className="mt-1 text-xs text-blue-200">
-              {hasil.tanggalPengumuman}
-            </p>
+            <p className="mt-1 text-xs text-blue-200">{tanggalPengumuman}</p>
           </div>
         </div>
       </section>
 
-      {isAccepted && (
+      {isAccepted ? (
         <section className="relative overflow-hidden rounded-[2rem] bg-emerald-950 p-8 text-center text-white shadow-xl">
           <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(2,44,34,0.98),rgba(4,120,87,0.9),rgba(16,185,129,0.72))]" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(110,231,183,0.28),transparent_34%)]" />
@@ -332,14 +392,12 @@ export default function PengumumanPage() {
 
             <div className="mx-auto mt-5 max-w-xl rounded-2xl border border-white/10 bg-white/15 px-6 py-4 backdrop-blur">
               <p className="text-xl font-bold text-white">
-                {hasil.sekolahDiterima}
+                {hasil.sekolah?.nama || "Sekolah tujuan"}
               </p>
             </div>
           </div>
         </section>
-      )}
-
-      {!isAccepted && (
+      ) : (
         <section className="relative overflow-hidden rounded-[2rem] bg-rose-950 p-8 text-center text-white shadow-xl">
           <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(76,5,25,0.98),rgba(159,18,57,0.9),rgba(225,29,72,0.72))]" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(251,113,133,0.28),transparent_34%)]" />
@@ -355,12 +413,13 @@ export default function PengumumanPage() {
               Kamu belum diterima pada seleksi PPDB kali ini.
             </p>
 
-            <div className="mx-auto mt-5 max-w-xl rounded-2xl border border-white/10 bg-white/15 px-6 py-4 backdrop-blur">
-              <p className="text-sm font-semibold text-rose-50">
-                Silakan pantau informasi resmi PPDB untuk tahapan berikutnya
-                atau hubungi panitia sekolah tujuan.
-              </p>
-            </div>
+            {hasil.catatan && (
+              <div className="mx-auto mt-5 max-w-xl rounded-2xl border border-white/10 bg-white/15 px-6 py-4 backdrop-blur">
+                <p className="text-sm font-semibold text-rose-50">
+                  Alasan: {hasil.catatan}
+                </p>
+              </div>
+            )}
           </div>
         </section>
       )}
@@ -375,11 +434,14 @@ export default function PengumumanPage() {
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {[
-            { label: "Nama Lengkap", value: hasil.nama },
-            { label: "NISN", value: hasil.nisn },
-            { label: "No. Registrasi", value: hasil.noRegistrasi },
-            { label: "Jalur Pendaftaran", value: hasil.jalur },
-            { label: "Tanggal Pengumuman", value: hasil.tanggalPengumuman },
+            { label: "Nama Lengkap", value: namaPeserta },
+            { label: "NISN", value: hasil.pendaftaran.nisn || "-" },
+            {
+              label: "No. Registrasi",
+              value: hasil.pendaftaran.noPendaftaran || "-",
+            },
+            { label: "Jalur Pendaftaran", value: hasil.pendaftaran.jalur },
+            { label: "Tanggal Pengumuman", value: tanggalPengumuman },
           ].map((item) => (
             <div
               key={item.label}
@@ -399,20 +461,20 @@ export default function PengumumanPage() {
       <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
         <div className="mb-5">
           <h2 className="text-base font-bold text-slate-800">
-            Rincian Pilihan Sekolah
+            Rincian Sekolah Tujuan
           </h2>
           <p className="mt-1 text-xs text-slate-500">
-            Status hasil seleksi berdasarkan urutan pilihan sekolah.
+            Status hasil seleksi berdasarkan sekolah tujuan.
           </p>
         </div>
 
         <div className="flex flex-col gap-3">
-          {hasil.pilihan.map((p) => {
-            const accepted = p.status === "diterima";
+          {hasil.pendaftaran.pilihan.map((p) => {
+            const accepted = p.status === "DITERIMA";
 
             return (
               <div
-                key={p.urutan}
+                key={p.id}
                 className={`rounded-2xl border p-4 ${
                   accepted
                     ? "border-emerald-100 bg-emerald-50"
@@ -425,15 +487,15 @@ export default function PengumumanPage() {
                       accepted ? "bg-emerald-600" : "bg-rose-600"
                     }`}
                   >
-                    {p.urutan}
+                    {p.pilihanKe}
                   </div>
 
                   <div className="flex-1">
                     <p className="text-sm font-bold text-slate-800">
-                      {p.sekolah}
+                      {p.sekolah.nama}
                     </p>
                     <p className="mt-1 text-xs text-slate-500">
-                      Pilihan ke-{p.urutan}
+                      Sekolah tujuan
                     </p>
                   </div>
 
@@ -444,9 +506,15 @@ export default function PengumumanPage() {
                         : "bg-rose-100 text-rose-700"
                     }`}
                   >
-                    {accepted ? "Diterima" : "Gugur"}
+                    {accepted ? "Diterima" : "Ditolak"}
                   </span>
                 </div>
+
+                {!accepted && p.alasanPenolakan && (
+                  <p className="mt-3 rounded-xl bg-white px-4 py-3 text-xs font-semibold text-rose-700">
+                    Alasan: {p.alasanPenolakan}
+                  </p>
+                )}
               </div>
             );
           })}
@@ -460,8 +528,9 @@ export default function PengumumanPage() {
           </h2>
 
           <p className="mt-2 text-sm leading-6 text-amber-700">
-            Lakukan daftar ulang di <strong>{hasil.sekolahDiterima}</strong>{" "}
-            pada tanggal <strong>{hasil.batasUlang}</strong>.
+            Lakukan daftar ulang di{" "}
+            <strong>{hasil.sekolah?.nama || "sekolah tujuan"}</strong> sesuai
+            jadwal dan arahan resmi dari sekolah.
           </p>
         </section>
       )}
@@ -524,7 +593,7 @@ function PengumumanSkeleton() {
         <Skeleton className="mt-2 h-3 w-72" />
 
         <div className="mt-5 flex flex-col gap-3">
-          {Array.from({ length: 2 }).map((_, i) => (
+          {Array.from({ length: 1 }).map((_, i) => (
             <Skeleton key={i} className="h-24 rounded-2xl" />
           ))}
         </div>
