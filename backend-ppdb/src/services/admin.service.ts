@@ -25,6 +25,7 @@ export const getPendaftar = async (adminId: string) => {
         submittedAt: {
           not: null,
         },
+        status: StatusPendaftaran.DIPROSES_1,
       },
     },
     include: {
@@ -57,7 +58,7 @@ export const getPendaftar = async (adminId: string) => {
       },
     },
     orderBy: {
-      createdAt: "desc",
+      updatedAt: "desc",
     },
   });
 
