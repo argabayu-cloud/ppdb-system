@@ -1,14 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { submitPendaftaran, uploadDokumen } from "@/lib/api";
+import { getDokumenSaya, submitPendaftaran, uploadDokumen } from "@/lib/api";
 
 const daftarBerkas = [
   {
     id: "akta",
+    tipeDokumen: "AKTA",
     label: "Akta Kelahiran",
     desc: "Format PDF/JPG, maks 2MB",
     required: true,
@@ -16,6 +17,7 @@ const daftarBerkas = [
   },
   {
     id: "kk",
+    tipeDokumen: "KK",
     label: "Kartu Keluarga (KK)",
     desc: "Format PDF/JPG, maks 2MB",
     required: true,
@@ -23,6 +25,7 @@ const daftarBerkas = [
   },
   {
     id: "ijazah",
+    tipeDokumen: "IJAZAH",
     label: "Ijazah / STTB SD",
     desc: "Format PDF/JPG, maks 2MB",
     required: true,
@@ -30,6 +33,7 @@ const daftarBerkas = [
   },
   {
     id: "rapor",
+    tipeDokumen: "RAPOR",
     label: "Rapor Kelas 4, 5, 6",
     desc: "Format PDF/JPG, maks 5MB",
     required: true,
@@ -37,6 +41,7 @@ const daftarBerkas = [
   },
   {
     id: "foto",
+    tipeDokumen: "FOTO",
     label: "Pas Foto 3x4",
     desc: "Format JPG/PNG, maks 1MB, background merah",
     required: true,
@@ -44,6 +49,7 @@ const daftarBerkas = [
   },
   {
     id: "skhu",
+    tipeDokumen: "SKHU",
     label: "SKHU (Surat Keterangan Hasil Ujian)",
     desc: "Format PDF/JPG, maks 2MB",
     required: false,
@@ -51,6 +57,7 @@ const daftarBerkas = [
   },
   {
     id: "prestasi",
+    tipeDokumen: "PRESTASI",
     label: "Sertifikat Prestasi (jika ada)",
     desc: "Format PDF/JPG, maks 2MB",
     required: false,
@@ -58,12 +65,21 @@ const daftarBerkas = [
   },
   {
     id: "kip",
+    tipeDokumen: "KIP",
     label: "Kartu Indonesia Pintar (KIP)",
     desc: "Format PDF/JPG, maks 2MB",
     required: false,
     maxSizeMb: 2,
   },
 ];
+
+type ExistingDokumen = {
+  id: string;
+  namaFile: string;
+  urlFile: string;
+  tipeDokumen: string | null;
+  status: "MENUNGGU" | "DITERIMA" | "DITOLAK";
+};
 
 type FileStatus = {
   file: File | null;
@@ -72,27 +88,52 @@ type FileStatus = {
   errorMessage?: string;
 };
 
+const initialFiles = Object.fromEntries(
+  daftarBerkas.map((b) => [
+    b.id,
+    { file: null, preview: null, status: "idle" },
+  ]),
+) as Record<string, FileStatus>;
+
 export default function UploadBerkasPage() {
   const router = useRouter();
 
-  const [files, setFiles] = useState<Record<string, FileStatus>>(
-    Object.fromEntries(
-      daftarBerkas.map((b) => [
-        b.id,
-        { file: null, preview: null, status: "idle" },
-      ]),
-    ),
-  );
-
+  const [files, setFiles] = useState<Record<string, FileStatus>>(initialFiles);
+  const [existingDocs, setExistingDocs] = useState<
+    Record<string, ExistingDokumen>
+  >({});
   const [loading, setLoading] = useState(false);
   const [loadingSkeleton, setLoadingSkeleton] = useState(true);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoadingSkeleton(false);
-    }, 900);
+  const loadDokumen = async () => {
+    try {
+      const res = await getDokumenSaya();
+      const docs: ExistingDokumen[] = res.data || [];
 
-    return () => clearTimeout(timer);
+      const mapped = Object.fromEntries(
+        docs
+          .filter((doc) => doc.tipeDokumen)
+          .map((doc) => [doc.tipeDokumen as string, doc]),
+      ) as Record<string, ExistingDokumen>;
+
+      setExistingDocs(mapped);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingSkeleton(false);
+    }
+  };
+
+  useEffect(() => {
+    loadDokumen();
+
+    return () => {
+      Object.values(files).forEach((fileData) => {
+        if (fileData.preview) {
+          URL.revokeObjectURL(fileData.preview);
+        }
+      });
+    };
   }, []);
 
   const handleFileChange = (id: string, e: ChangeEvent<HTMLInputElement>) => {
@@ -110,7 +151,8 @@ export default function UploadBerkasPage() {
           file: null,
           preview: null,
           status: "error",
-          errorMessage: "Format file tidak didukung. Gunakan PDF, JPG, atau PNG.",
+          errorMessage:
+            "Format file tidak didukung. Gunakan PDF, JPG, atau PNG.",
         },
       }));
 
@@ -156,15 +198,35 @@ export default function UploadBerkasPage() {
     }));
   };
 
-  const uploadedCount = Object.values(files).filter(
-    (f) => f.status === "uploaded",
-  ).length;
+  const getExistingDoc = (tipeDokumen: string) => existingDocs[tipeDokumen];
+
+  const uploadedCount = useMemo(() => {
+    return daftarBerkas.filter((berkas) => {
+      const existing = getExistingDoc(berkas.tipeDokumen);
+      const selected = files[berkas.id];
+
+      return Boolean(existing) || selected.status === "uploaded";
+    }).length;
+  }, [existingDocs, files]);
 
   const requiredCount = daftarBerkas.filter((b) => b.required).length;
 
-  const requiredUploaded = daftarBerkas
-    .filter((b) => b.required)
-    .filter((b) => files[b.id]?.status === "uploaded").length;
+  const requiredUploaded = useMemo(() => {
+    return daftarBerkas
+      .filter((b) => b.required)
+      .filter((berkas) => {
+        const existing = getExistingDoc(berkas.tipeDokumen);
+        const selected = files[berkas.id];
+
+        return Boolean(existing) || selected.status === "uploaded";
+      }).length;
+  }, [existingDocs, files]);
+
+  const rejectedDocs = Object.values(existingDocs).filter(
+    (doc) => doc.status === "DITOLAK",
+  );
+
+  const hasRejectedDocs = rejectedDocs.length > 0;
 
   const progressPercent = Math.round(
     (uploadedCount / daftarBerkas.length) * 100,
@@ -180,26 +242,34 @@ export default function UploadBerkasPage() {
       return;
     }
 
+    const selectedFiles = daftarBerkas.filter(
+      (berkas) => files[berkas.id]?.file,
+    );
+
+    if (hasRejectedDocs) {
+      const rejectedTypes = new Set(
+        rejectedDocs.map((doc) => doc.tipeDokumen).filter(Boolean),
+      );
+
+      const fixedRejected = selectedFiles.filter((berkas) =>
+        rejectedTypes.has(berkas.tipeDokumen),
+      );
+
+      if (fixedRejected.length < rejectedTypes.size) {
+        alert("Upload ulang semua berkas yang ditolak terlebih dahulu.");
+        return;
+      }
+    }
+
     try {
       setLoading(true);
 
-      const tipeMap: Record<string, string> = {
-        akta: "AKTA",
-        kk: "KK",
-        ijazah: "IJAZAH",
-        rapor: "RAPOR",
-        foto: "FOTO",
-        skhu: "SKHU",
-        prestasi: "PRESTASI",
-        kip: "KIP",
-      };
-
-      for (const berkas of daftarBerkas) {
+      for (const berkas of selectedFiles) {
         const fileData = files[berkas.id];
 
         if (!fileData?.file) continue;
 
-        await uploadDokumen(fileData.file, tipeMap[berkas.id]);
+        await uploadDokumen(fileData.file, berkas.tipeDokumen);
       }
 
       await submitPendaftaran();
@@ -238,9 +308,8 @@ export default function UploadBerkasPage() {
             </h1>
 
             <p className="mt-3 max-w-xl text-sm leading-6 text-blue-50/90">
-              Unggah dokumen persyaratan sesuai format yang diminta. Setelah
-              berkas wajib lengkap, pendaftaran akan dikirim ke sekolah pilihan
-              pertama untuk diverifikasi.
+              Unggah dokumen persyaratan sesuai format yang diminta. Jika ada
+              berkas yang ditolak, cukup upload ulang berkas tersebut.
             </p>
           </div>
 
@@ -255,6 +324,18 @@ export default function UploadBerkasPage() {
           </div>
         </div>
       </section>
+
+      {hasRejectedDocs && (
+        <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+          <h2 className="text-base font-bold text-amber-700">
+            Ada Berkas yang Perlu Diperbaiki
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-amber-700">
+            Upload ulang berkas yang berstatus ditolak. Berkas lain yang sudah
+            diterima atau menunggu verifikasi tidak perlu diupload ulang.
+          </p>
+        </section>
+      )}
 
       <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
         <div className="mb-4 flex items-center justify-between gap-3">
@@ -293,8 +374,14 @@ export default function UploadBerkasPage() {
         <div className="flex flex-col gap-3">
           {daftarBerkas.map((berkas) => {
             const fileData = files[berkas.id];
+            const existing = getExistingDoc(berkas.tipeDokumen);
+
             const isUploaded = fileData.status === "uploaded";
             const isError = fileData.status === "error";
+            const isExisting = Boolean(existing);
+            const isRejected = existing?.status === "DITOLAK";
+            const isAccepted = existing?.status === "DITERIMA";
+            const isWaiting = existing?.status === "MENUNGGU";
 
             return (
               <div
@@ -302,9 +389,15 @@ export default function UploadBerkasPage() {
                 className={`rounded-2xl border p-4 transition ${
                   isUploaded
                     ? "border-green-100 bg-green-50"
-                    : isError
-                      ? "border-red-100 bg-red-50"
-                      : "border-slate-100 bg-slate-50"
+                    : isRejected
+                      ? "border-amber-200 bg-amber-50"
+                      : isAccepted
+                        ? "border-emerald-100 bg-emerald-50"
+                        : isWaiting
+                          ? "border-blue-100 bg-blue-50"
+                          : isError
+                            ? "border-red-100 bg-red-50"
+                            : "border-slate-100 bg-slate-50"
                 }`}
               >
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -312,12 +405,28 @@ export default function UploadBerkasPage() {
                     className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl text-xl ${
                       isUploaded
                         ? "bg-green-100"
-                        : isError
-                          ? "bg-red-100"
-                          : "bg-white"
+                        : isRejected
+                          ? "bg-amber-100"
+                          : isAccepted
+                            ? "bg-emerald-100"
+                            : isWaiting
+                              ? "bg-blue-100"
+                              : isError
+                                ? "bg-red-100"
+                                : "bg-white"
                     }`}
                   >
-                    {isUploaded ? "✅" : isError ? "❌" : "📄"}
+                    {isUploaded
+                      ? "✅"
+                      : isRejected
+                        ? "⚠️"
+                        : isAccepted
+                          ? "✅"
+                          : isWaiting
+                            ? "⏳"
+                            : isError
+                              ? "❌"
+                              : "📄"}
                   </div>
 
                   <div className="min-w-0 flex-1">
@@ -335,12 +444,40 @@ export default function UploadBerkasPage() {
                           Opsional
                         </span>
                       )}
+
+                      {isExisting && (
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                            isRejected
+                              ? "bg-amber-100 text-amber-700"
+                              : isAccepted
+                                ? "bg-emerald-100 text-emerald-700"
+                                : "bg-blue-100 text-blue-700"
+                          }`}
+                        >
+                          {existing?.status}
+                        </span>
+                      )}
                     </div>
 
                     {isUploaded ? (
                       <p className="mt-1 truncate text-xs font-semibold text-green-600">
-                        ✓ {fileData.file?.name}
+                        File baru dipilih: {fileData.file?.name}
                       </p>
+                    ) : isExisting ? (
+                      <div className="mt-1">
+                        <p className="truncate text-xs font-semibold text-slate-600">
+                          File tersimpan: {existing?.namaFile}
+                        </p>
+                        <a
+                          href={existing?.urlFile}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-1 inline-block text-xs font-bold text-blue-600 hover:underline"
+                        >
+                          Lihat berkas
+                        </a>
+                      </div>
                     ) : isError ? (
                       <p className="mt-1 text-xs font-semibold text-red-500">
                         {fileData.errorMessage ||
@@ -370,8 +507,14 @@ export default function UploadBerkasPage() {
                         Hapus
                       </button>
                     ) : (
-                      <label className="inline-flex cursor-pointer rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-blue-700">
-                        Pilih File
+                      <label
+                        className={`inline-flex cursor-pointer rounded-xl px-4 py-2 text-xs font-bold text-white transition ${
+                          isRejected
+                            ? "bg-amber-600 hover:bg-amber-700"
+                            : "bg-blue-600 hover:bg-blue-700"
+                        }`}
+                      >
+                        {isRejected ? "Upload Ulang" : isExisting ? "Ganti File" : "Pilih File"}
                         <input
                           type="file"
                           accept=".pdf,.jpg,.jpeg,.png"
