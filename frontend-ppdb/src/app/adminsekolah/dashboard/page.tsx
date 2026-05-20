@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   BarChart3,
   ClipboardCheck,
@@ -9,13 +9,35 @@ import {
   Trophy,
   Users,
 } from "lucide-react";
-import { emptyStats } from "@/lib/adminData";
 
-type AdminData = {
-  nama?: string;
-  namaSekolah?: string;
-  sekolah?: string;
-  schoolName?: string;
+import { getDashboardAdmin } from "@/lib/api";
+
+type Stats = {
+  total: number;
+  menunggu: number;
+  diterima: number;
+  ditolak: number;
+  zonasi: number;
+  prestasi: number;
+  progress: number;
+};
+
+type DashboardAdminResponse = {
+  sekolah?: {
+    id: string;
+    nama: string;
+  };
+  stats?: Stats;
+};
+
+const initialStats: Stats = {
+  total: 0,
+  menunggu: 0,
+  diterima: 0,
+  ditolak: 0,
+  zonasi: 0,
+  prestasi: 0,
+  progress: 0,
 };
 
 function Card({
@@ -27,7 +49,7 @@ function Card({
   title: string;
   value: string | number;
   desc: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
 }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -50,35 +72,34 @@ function Card({
 }
 
 export default function DashboardPage() {
-  const stats = emptyStats;
   const [namaSekolah, setNamaSekolah] = useState("Sekolah");
+  const [stats, setStats] = useState<Stats>(initialStats);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedAdmin = localStorage.getItem("admin");
+    const loadDashboard = async () => {
+      try {
+        const res = await getDashboardAdmin();
+        const data: DashboardAdminResponse = res.data;
 
-    if (!storedAdmin) return;
+        setStats(data.stats || initialStats);
+        setNamaSekolah(data.sekolah?.nama || "Sekolah");
+      } catch (error) {
+        console.error(error);
+        setStats(initialStats);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    try {
-      const admin: AdminData = JSON.parse(storedAdmin);
-
-      setNamaSekolah(
-        admin.namaSekolah ||
-        admin.schoolName ||
-        admin.sekolah ||
-        admin.nama ||
-        "Sekolah"
-      );
-    } catch {
-      setNamaSekolah("Sekolah");
-    }
+    loadDashboard();
   }, []);
 
   return (
     <div className="flex flex-col gap-6">
-      {/* HEADER */}
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-blue-700 to-blue-900 p-8 text-white shadow-sm">
         <div className="absolute -right-10 -top-10 h-44 w-44 rounded-full bg-white/10" />
-        <div className="absolute right-24 bottom-0 h-28 w-28 rounded-full bg-white/10" />
+        <div className="absolute bottom-0 right-24 h-28 w-28 rounded-full bg-white/10" />
 
         <div className="relative max-w-2xl">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-semibold">
@@ -86,48 +107,64 @@ export default function DashboardPage() {
             Panel Admin Sekolah
           </div>
 
-          <h1 className="text-3xl font-bold">{namaSekolah}</h1>
+          <h1 className="text-3xl font-bold">
+            {loading ? "Memuat data sekolah..." : namaSekolah}
+          </h1>
 
           <p className="mt-3 text-sm leading-6 text-blue-100">
             Monitoring pendaftaran jalur Zonasi dan Prestasi untuk{" "}
-            {namaSekolah}. Data akan otomatis terisi saat siswa mulai
-            melakukan pendaftaran.
+            {namaSekolah}. Statistik ini dihitung dari data pendaftar sekolah
+            admin yang sedang login.
           </p>
         </div>
       </section>
 
-      {/* CARDS */}
       <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
         <Card
           title="Total Pendaftar"
-          value={stats.total}
-          desc="Belum ada siswa mendaftar"
+          value={loading ? "..." : stats.total}
+          desc={
+            stats.total > 0
+              ? "Total peserta yang sudah mengirim pendaftaran"
+              : "Belum ada siswa mendaftar"
+          }
           icon={<Users className="h-6 w-6" />}
         />
 
         <Card
           title="Menunggu"
-          value={stats.menunggu}
-          desc="Belum ada berkas menunggu"
+          value={loading ? "..." : stats.menunggu}
+          desc={
+            stats.menunggu > 0
+              ? "Pendaftar yang masih perlu diverifikasi"
+              : "Belum ada berkas menunggu"
+          }
           icon={<Clock3 className="h-6 w-6" />}
         />
 
         <Card
           title="Diterima"
-          value={stats.diterima}
-          desc="Belum ada siswa diterima"
+          value={loading ? "..." : stats.diterima}
+          desc={
+            stats.diterima > 0
+              ? "Peserta yang sudah diterima"
+              : "Belum ada siswa diterima"
+          }
           icon={<ClipboardCheck className="h-6 w-6" />}
         />
 
         <Card
           title="Progress"
-          value={`${stats.progress}%`}
-          desc="Progress verifikasi belum berjalan"
+          value={loading ? "..." : `${stats.progress}%`}
+          desc={
+            stats.progress > 0
+              ? "Progress seleksi diterima dan ditolak"
+              : "Progress verifikasi belum berjalan"
+          }
           icon={<BarChart3 className="h-6 w-6" />}
         />
       </section>
 
-      {/* JALUR */}
       <section className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <div className="rounded-3xl border border-blue-100 bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between">
@@ -136,7 +173,7 @@ export default function DashboardPage() {
                 Jalur Zonasi
               </p>
               <h2 className="mt-2 text-4xl font-bold text-slate-900">
-                {stats.zonasi}
+                {loading ? "..." : stats.zonasi}
               </h2>
               <p className="mt-2 text-sm text-slate-500">
                 Berdasarkan jarak domisili siswa.
@@ -156,7 +193,7 @@ export default function DashboardPage() {
                 Jalur Prestasi
               </p>
               <h2 className="mt-2 text-4xl font-bold text-slate-900">
-                {stats.prestasi}
+                {loading ? "..." : stats.prestasi}
               </h2>
               <p className="mt-2 text-sm text-slate-500">
                 Berdasarkan nilai rapor dan prestasi.
@@ -170,21 +207,22 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      {/* EMPTY STATE */}
-      <section className="rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center shadow-sm">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-blue-50 text-blue-600">
-          <Users className="h-8 w-8" />
-        </div>
+      {stats.total === 0 && !loading && (
+        <section className="rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center shadow-sm">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-blue-50 text-blue-600">
+            <Users className="h-8 w-8" />
+          </div>
 
-        <h2 className="text-lg font-bold text-slate-800">
-          Belum ada pendaftar
-        </h2>
+          <h2 className="text-lg font-bold text-slate-800">
+            Belum ada pendaftar
+          </h2>
 
-        <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
-          Data pendaftar, verifikasi, dan statistik akan otomatis muncul
-          setelah siswa melakukan pendaftaran melalui sistem.
-        </p>
-      </section>
+          <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
+            Data pendaftar, verifikasi, dan statistik akan otomatis muncul
+            setelah siswa menyelesaikan pendaftaran dan mengirim berkas.
+          </p>
+        </section>
+      )}
     </div>
   );
 }
