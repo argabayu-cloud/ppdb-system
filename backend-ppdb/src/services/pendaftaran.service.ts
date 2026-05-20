@@ -71,8 +71,8 @@ export const createPendaftaran = async (userId: string, data: any) => {
 
   const sekolah2 = sekolah2Id
     ? await prisma.sekolah.findUnique({
-        where: { id: sekolah2Id },
-      })
+      where: { id: sekolah2Id },
+    })
     : null;
 
   if (sekolah2Id && !sekolah2) {
@@ -87,11 +87,11 @@ export const createPendaftaran = async (userId: string, data: any) => {
 
   const jarak1 = bisaHitungJarak
     ? haversineDistance(
-        latitude,
-        longitude,
-        sekolah1.latitude as number,
-        sekolah1.longitude as number,
-      )
+      latitude,
+      longitude,
+      sekolah1.latitude as number,
+      sekolah1.longitude as number,
+    )
     : null;
 
   const nilaiRapor =
@@ -154,9 +154,18 @@ export const submitPendaftaran = async (userId: string) => {
     throw new Error("Pendaftaran belum dibuat");
   }
 
+  const adaDokumenMenunggu = pendaftaran.dokumen.some(
+    (dokumen) => dokumen.status === StatusDokumen.MENUNGGU,
+  );
+
+  const pernahDitolak =
+    pendaftaran.hasil?.statusFinal === "DITOLAK" ||
+    pendaftaran.status === StatusPendaftaran.DITOLAK;
+
   const bolehSubmitUlang =
-    pendaftaran.hasil?.statusFinal === "DITOLAK" &&
-    pendaftaran.hasil?.jenisPenolakan === JenisPenolakan.DOKUMEN;
+    pernahDitolak &&
+    (pendaftaran.hasil?.jenisPenolakan === JenisPenolakan.DOKUMEN ||
+      adaDokumenMenunggu);
 
   if (
     pendaftaran.submittedAt &&
@@ -244,7 +253,6 @@ export const submitPendaftaran = async (userId: string) => {
       await tx.hasilSeleksi.deleteMany({
         where: {
           pendaftaranId: pendaftaran.id,
-          jenisPenolakan: JenisPenolakan.DOKUMEN,
         },
       });
     }
@@ -363,11 +371,11 @@ export const getDashboardPendaftaran = async (userId: string) => {
   const progressPercent = isSubmitted
     ? 100
     : Math.round(
-        ([true, hasBiodata, hasPendaftaran, requiredUploaded].filter(Boolean)
-          .length /
-          4) *
-          100,
-      );
+      ([true, hasBiodata, hasPendaftaran, requiredUploaded].filter(Boolean)
+        .length /
+        4) *
+      100,
+    );
 
   return {
     user: {
