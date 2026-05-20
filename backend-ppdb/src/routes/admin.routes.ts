@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  handleGetDashboardAdmin,
   handleGetPendaftar,
   handleSeleksi,
   handleValidasiDokumen,
@@ -9,6 +10,13 @@ import { authMiddleware } from "../middlewares/auth.middlewares";
 import { requireRole } from "../middlewares/role.middleware";
 
 const router = Router();
+
+router.get(
+  "/dashboard",
+  authMiddleware,
+  requireRole("ADMIN"),
+  handleGetDashboardAdmin,
+);
 
 router.get(
   "/pendaftar",
