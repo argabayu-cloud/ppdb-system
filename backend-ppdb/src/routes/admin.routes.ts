@@ -10,7 +10,6 @@ import { requireRole } from "../middlewares/role.middleware";
 
 const router = Router();
 
-// 🔹 GET semua pendaftar sesuai sekolah admin
 router.get(
   "/pendaftar",
   authMiddleware,
@@ -18,7 +17,6 @@ router.get(
   handleGetPendaftar,
 );
 
-// 🔹 POST seleksi siswa (terima / tolak)
 router.post(
   "/seleksi",
   authMiddleware,
@@ -26,7 +24,6 @@ router.post(
   handleSeleksi,
 );
 
-// 🔥 POST validasi dokumen
 router.post(
   "/validasi-dokumen",
   authMiddleware,
