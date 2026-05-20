@@ -514,7 +514,11 @@ export default function UploadBerkasPage() {
                             : "bg-blue-600 hover:bg-blue-700"
                         }`}
                       >
-                        {isRejected ? "Upload Ulang" : isExisting ? "Ganti File" : "Pilih File"}
+                        {isRejected
+                          ? "Upload Ulang"
+                          : isExisting
+                            ? "Ganti File"
+                            : "Pilih File"}
                         <input
                           type="file"
                           accept=".pdf,.jpg,.jpeg,.png"
