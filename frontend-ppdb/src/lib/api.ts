@@ -158,6 +158,10 @@ export async function updateBiodata(data: {
   });
 }
 
+export async function getDashboardAdmin() {
+  return fetcher("/admin/dashboard");
+}
+
 export async function getPendaftarAdmin() {
   return fetcher("/admin/pendaftar");
 }
