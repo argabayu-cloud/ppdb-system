@@ -1,7 +1,26 @@
 import { StatusDokumen, TipeDokumen } from "@prisma/client";
 import prisma from "../config/prisma";
 
-export const uploadDokumenPendaftaran = async (
+export const getDokumenSaya = async (userId: string) => {
+  const pendaftaran = await prisma.pendaftaran.findUnique({
+    where: { userId },
+    include: {
+      dokumen: {
+        orderBy: {
+          createdAt: "asc",
+        },
+      },
+    },
+  });
+
+  if (!pendaftaran) {
+    return [];
+  }
+
+  return pendaftaran.dokumen;
+};
+
+export const uploadDokumen = async (
   userId: string,
   file: Express.Multer.File,
   tipeDokumen: TipeDokumen,
@@ -12,6 +31,10 @@ export const uploadDokumenPendaftaran = async (
 
   if (!pendaftaran) {
     throw new Error("Pendaftaran belum dibuat");
+  }
+
+  if (!Object.values(TipeDokumen).includes(tipeDokumen)) {
+    throw new Error("Tipe dokumen tidak valid");
   }
 
   const existing = await prisma.dokumen.findFirst({
