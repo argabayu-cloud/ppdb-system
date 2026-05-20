@@ -1,4 +1,5 @@
 import {
+  JenisPenolakan,
   StatusDokumen,
   StatusFinal,
   StatusPendaftaran,
@@ -68,6 +69,7 @@ export const seleksiSiswa = async (
   pilihanId: string,
   status: "DITERIMA" | "DITOLAK",
   alasan?: string,
+  jenisPenolakan?: "DOKUMEN" | "ZONASI" | "LAINNYA",
 ) => {
   const admin = await prisma.adminSekolah.findUnique({
     where: { userId: adminId },
@@ -147,6 +149,7 @@ export const seleksiSiswa = async (
           statusFinal: StatusFinal.DITERIMA,
           sekolahDiterimaId: pilihan.sekolahId,
           catatan: null,
+          jenisPenolakan: null,
         },
         create: {
           pendaftaranId: pilihan.pendaftaranId,
@@ -182,6 +185,24 @@ export const seleksiSiswa = async (
     throw new Error("Alasan penolakan wajib diisi");
   }
 
+  if (!jenisPenolakan) {
+    throw new Error("Jenis penolakan wajib diisi");
+  }
+
+  const jenisPenolakanFinal = jenisPenolakan as JenisPenolakan;
+
+  if (jenisPenolakanFinal === JenisPenolakan.DOKUMEN) {
+    const adaDokumenDitolak = dokumen.some(
+      (item) => item.status === StatusDokumen.DITOLAK,
+    );
+
+    if (!adaDokumenDitolak) {
+      throw new Error(
+        "Penolakan dokumen hanya bisa dilakukan jika ada dokumen yang ditolak",
+      );
+    }
+  }
+
   await prisma.$transaction(async (tx) => {
     await tx.pilihanSekolah.update({
       where: { id: pilihanId },
@@ -205,11 +226,13 @@ export const seleksiSiswa = async (
         statusFinal: StatusFinal.DITOLAK,
         sekolahDiterimaId: null,
         catatan: alasan,
+        jenisPenolakan: jenisPenolakanFinal,
       },
       create: {
         pendaftaranId: pilihan.pendaftaranId,
         statusFinal: StatusFinal.DITOLAK,
         catatan: alasan,
+        jenisPenolakan: jenisPenolakanFinal,
       },
     });
 
