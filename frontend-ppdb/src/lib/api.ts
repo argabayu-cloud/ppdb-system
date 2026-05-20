@@ -186,3 +186,9 @@ export async function validasiDokumenAdmin(data: {
 export async function getHasilSeleksiSaya() {
   return fetcher("/hasil/me");
 }
+
+export async function resetPendaftaranZonasi() {
+  return fetcher("/pendaftaran/reset-zonasi", {
+    method: "DELETE",
+  });
+}
