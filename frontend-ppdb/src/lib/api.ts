@@ -182,3 +182,7 @@ export async function validasiDokumenAdmin(data: {
     body: JSON.stringify(data),
   });
 }
+
+export async function getHasilSeleksiSaya() {
+  return fetcher("/hasil/me");
+}
