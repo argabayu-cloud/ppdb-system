@@ -192,3 +192,7 @@ export async function resetPendaftaranZonasi() {
     method: "DELETE",
   });
 }
+
+export async function getDokumenSaya() {
+  return fetcher("/dokumen/me");
+}
