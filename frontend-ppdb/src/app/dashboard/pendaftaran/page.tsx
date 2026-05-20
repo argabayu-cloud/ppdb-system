@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 
@@ -10,6 +11,18 @@ import {
   type Sekolah,
 } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
+
+type GeoStatus =
+  | "idle"
+  | "checking"
+  | "granted"
+  | "denied"
+  | "unsupported"
+  | "error";
+
+const ZonasiMap = dynamic(() => import("@/components/zonasiMap"), {
+  ssr: false,
+});
 
 const jalurPendaftaran = [
   {
@@ -36,6 +49,29 @@ type FormState = {
   tingkatPrestasi: string;
 };
 
+function calculateDistance(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+) {
+  const R = 6371;
+
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c;
+}
+
 export default function PendaftaranPage() {
   const router = useRouter();
 
@@ -52,7 +88,13 @@ export default function PendaftaranPage() {
 
   const [sekolahList, setSekolahList] = useState<Sekolah[]>([]);
   const [pilihan1, setPilihan1] = useState("");
-  const [pilihan2, setPilihan2] = useState("");
+
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+
+  const [geoStatus, setGeoStatus] = useState<GeoStatus>("idle");
+  const [geoMessage, setGeoMessage] = useState("");
+
   const [fileRaporPrestasi, setFileRaporPrestasi] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingSkeleton, setLoadingSkeleton] = useState(true);
@@ -74,7 +116,7 @@ export default function PendaftaranPage() {
   }, []);
 
   const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
 
@@ -93,7 +135,12 @@ export default function PendaftaranPage() {
       tingkatPrestasi: "",
     }));
 
+    setLatitude(null);
+    setLongitude(null);
     setFileRaporPrestasi(null);
+
+    setGeoStatus("idle");
+    setGeoMessage("");
   };
 
   const handleJenisPrestasiChange = (e: ChangeEvent<HTMLSelectElement>) => {
@@ -130,6 +177,54 @@ export default function PendaftaranPage() {
     setFileRaporPrestasi(file);
   };
 
+  if (loadingSkeleton) {
+    return <PendaftaranSkeleton />;
+  }
+
+  const selectedJalur = jalurPendaftaran.find((item) => item.id === jalur);
+  const selectedPilihan1 = sekolahList.find((school) => school.id === pilihan1);
+
+  const latitudeValue = latitude !== null ? latitude.toFixed(6) : "";
+  const longitudeValue = longitude !== null ? longitude.toFixed(6) : "";
+
+  const distance =
+    latitude !== null &&
+    longitude !== null &&
+    selectedPilihan1?.latitude !== undefined &&
+    selectedPilihan1?.latitude !== null &&
+    selectedPilihan1?.longitude !== undefined &&
+    selectedPilihan1?.longitude !== null
+      ? calculateDistance(
+          latitude,
+          longitude,
+          selectedPilihan1.latitude,
+          selectedPilihan1.longitude
+        )
+      : null;
+
+  const radiusZonasi =
+    selectedPilihan1?.radiusZonasi !== undefined &&
+    selectedPilihan1?.radiusZonasi !== null &&
+    selectedPilihan1.radiusZonasi > 0
+      ? selectedPilihan1.radiusZonasi
+      : null;
+
+  const isInsideRadius =
+    distance !== null && radiusZonasi !== null
+      ? distance <= radiusZonasi
+      : false;
+
+  const isSubmitDisabled =
+    loading || (jalur === "zonasi" && geoStatus !== "granted");
+
+  const submitButtonText = loading
+    ? "Menyimpan..."
+    : jalur === "zonasi" && geoStatus === "checking"
+      ? "Mengecek Lokasi..."
+      : jalur === "zonasi" && geoStatus !== "granted"
+        ? "Aktifkan Lokasi untuk Melanjutkan"
+        : "Simpan Pendaftaran";
+
   const handleSubmit = async () => {
     if (!jalur) {
       alert("Pilih jalur pendaftaran terlebih dahulu!");
@@ -142,8 +237,30 @@ export default function PendaftaranPage() {
     }
 
     if (!pilihan1) {
-      alert("Pilihan sekolah pertama wajib diisi!");
+      alert("Pilihan sekolah wajib diisi!");
       return;
+    }
+
+    if (jalur === "zonasi") {
+      if (geoStatus !== "granted") {
+        alert("Aktifkan izin lokasi terlebih dahulu sebelum menyimpan pendaftaran!");
+        return;
+      }
+
+      if (latitude === null || longitude === null) {
+        alert("Lokasi rumah belum terdeteksi. Aktifkan lokasi atau refresh halaman.");
+        return;
+      }
+
+      if (radiusZonasi === null) {
+        alert("Radius zonasi sekolah belum diatur. Hubungi admin terlebih dahulu.");
+        return;
+      }
+
+      if (!isInsideRadius) {
+        alert("Lokasi rumah berada di luar radius zonasi sekolah!");
+        return;
+      }
     }
 
     if (jalur === "prestasi") {
@@ -168,7 +285,6 @@ export default function PendaftaranPage() {
 
       await createPendaftaran({
         sekolah1Id: pilihan1,
-        sekolah2Id: pilihan2 || undefined,
         jalur: jalur.toUpperCase(),
         nisn: form.nisn,
         namaSekolahAsal: form.namaSekolahAsal,
@@ -177,6 +293,8 @@ export default function PendaftaranPage() {
         nilaiRataRata: form.nilaiRataRata,
         jenisPrestasi: form.jenisPrestasi,
         tingkatPrestasi: form.tingkatPrestasi,
+        latitude,
+        longitude,
       });
 
       if (
@@ -187,25 +305,18 @@ export default function PendaftaranPage() {
         await uploadDokumen(fileRaporPrestasi, "PRESTASI");
       }
 
+      alert("Pendaftaran berhasil disimpan!");
       router.push("/dashboard/upload");
     } catch (error) {
       if (error instanceof Error) {
         alert(error.message);
       } else {
-        alert("Terjadi kesalahan");
+        alert("Terjadi kesalahan saat menyimpan pendaftaran");
       }
     } finally {
       setLoading(false);
     }
   };
-
-  if (loadingSkeleton) {
-    return <PendaftaranSkeleton />;
-  }
-
-  const selectedJalur = jalurPendaftaran.find((item) => item.id === jalur);
-  const selectedPilihan1 = sekolahList.find((school) => school.id === pilihan1);
-  const selectedPilihan2 = sekolahList.find((school) => school.id === pilihan2);
 
   return (
     <div className="flex flex-col gap-6">
@@ -224,7 +335,7 @@ export default function PendaftaranPage() {
 
             <p className="mt-3 max-w-xl text-sm leading-6 text-blue-50/90">
               Pilih jalur pendaftaran, lengkapi data akademik, lalu tentukan
-              sekolah tujuan sesuai pilihan kamu.
+              sekolah tujuan utama kamu.
             </p>
           </div>
 
@@ -257,6 +368,7 @@ export default function PendaftaranPage() {
             return (
               <button
                 key={item.id}
+                type="button"
                 onClick={() => handleJalurChange(item.id)}
                 className={`rounded-2xl border p-4 text-left transition ${
                   active
@@ -350,6 +462,92 @@ export default function PendaftaranPage() {
             </div>
           </section>
 
+          {jalur === "zonasi" && (
+            <section className="rounded-2xl border border-blue-100 bg-blue-50 p-6">
+              <div className="mb-4">
+                <h2 className="text-base font-bold text-blue-700">
+                  Peta Zonasi Sekolah
+                </h2>
+                <p className="mt-1 text-xs text-blue-700/80">
+                  Aktifkan izin lokasi browser agar sistem bisa mendeteksi
+                  koordinat rumah peserta secara otomatis.
+                </p>
+              </div>
+
+              <div className="overflow-hidden rounded-2xl border border-blue-100 bg-white">
+                <ZonasiMap
+                  latitude={latitude}
+                  longitude={longitude}
+                  setLatitude={setLatitude}
+                  setLongitude={setLongitude}
+                  onGeolocationStatusChange={(status, message) => {
+                    setGeoStatus(status);
+                    setGeoMessage(message || "");
+                  }}
+                />
+              </div>
+
+              <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1.5 block text-sm font-semibold text-blue-700">
+                    Latitude
+                  </label>
+
+                  <input
+                    type="text"
+                    readOnly
+                    value={latitudeValue}
+                    placeholder="Contoh: -5.442261"
+                    className="w-full rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 outline-none placeholder:text-slate-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-sm font-semibold text-blue-700">
+                    Longitude
+                  </label>
+
+                  <input
+                    type="text"
+                    readOnly
+                    value={longitudeValue}
+                    placeholder="Contoh: 105.272784"
+                    className="w-full rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 outline-none placeholder:text-slate-400"
+                  />
+                </div>
+              </div>
+
+              {geoStatus !== "idle" && geoStatus !== "granted" && (
+                <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  <p className="font-bold">Geolocation belum aktif</p>
+                  <p className="mt-1 text-xs leading-5">
+                    {geoMessage ||
+                      "Silakan aktifkan izin lokasi browser agar bisa melanjutkan pendaftaran jalur zonasi."}
+                  </p>
+                </div>
+              )}
+
+              {geoStatus === "checking" && (
+                <div className="mt-3 rounded-xl border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-700">
+                  <p className="font-bold">Mengecek lokasi...</p>
+                  <p className="mt-1 text-xs leading-5">
+                    Mohon izinkan akses lokasi saat browser menampilkan popup
+                    perizinan.
+                  </p>
+                </div>
+              )}
+
+              {geoStatus === "granted" &&
+                latitude !== null &&
+                longitude !== null && (
+                  <div className="mt-3 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-xs font-semibold text-green-700">
+                    Lokasi berhasil terdeteksi: {latitude.toFixed(6)},{" "}
+                    {longitude.toFixed(6)}
+                  </div>
+                )}
+            </section>
+          )}
+
           {jalur === "prestasi" && (
             <section className="rounded-2xl border border-purple-100 bg-purple-50 p-6">
               <h2 className="text-base font-bold text-purple-700">
@@ -439,58 +637,72 @@ export default function PendaftaranPage() {
                 Pilihan Sekolah Tujuan
               </h2>
               <p className="mt-1 text-xs text-slate-500">
-                Tentukan sekolah tujuan pertama dan kedua.
+                Tentukan satu sekolah tujuan utama.
               </p>
             </div>
 
             <div className="flex flex-col gap-5">
               <SchoolSelect
                 nomor="1"
-                label="Pilihan Pertama"
+                label="Pilihan Sekolah"
                 required
                 value={pilihan1}
                 onChange={setPilihan1}
                 options={sekolahList}
               />
 
-              <SchoolSelect
-                nomor="2"
-                label="Pilihan Kedua"
-                value={pilihan2}
-                onChange={setPilihan2}
-                options={sekolahList.filter((school) => school.id !== pilihan1)}
-              />
-
-              {(selectedPilihan1 || selectedPilihan2) && (
+              {selectedPilihan1 && (
                 <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
                   <p className="text-xs font-bold uppercase tracking-wide text-blue-700">
                     Ringkasan Pilihan
                   </p>
 
-                  {selectedPilihan1 && (
-                    <p className="mt-2 text-sm text-slate-700">
-                      <span className="font-bold">1.</span>{" "}
+                  <div className="mt-2 text-sm text-slate-700">
+                    {jalur === "zonasi" && distance !== null && (
+                      <div className="mb-3 rounded-xl bg-white p-3 text-sm">
+                        <p>
+                          <span className="font-bold">Jarak Rumah:</span>{" "}
+                          {distance.toFixed(2)} KM
+                        </p>
+
+                        <p>
+                          <span className="font-bold">Radius Zonasi:</span>{" "}
+                          {radiusZonasi !== null
+                            ? `${radiusZonasi} KM`
+                            : "Belum diatur"}
+                        </p>
+
+                        <p
+                          className={`mt-2 font-bold ${
+                            isInsideRadius ? "text-green-600" : "text-red-600"
+                          }`}
+                        >
+                          {radiusZonasi === null
+                            ? "Radius zonasi belum diatur"
+                            : isInsideRadius
+                              ? "Masuk radius zonasi"
+                              : "Di luar radius zonasi"}
+                        </p>
+                      </div>
+                    )}
+
+                    <p>
+                      <span className="font-bold">Sekolah tujuan:</span>{" "}
                       {selectedPilihan1.nama}
                     </p>
-                  )}
-
-                  {selectedPilihan2 && (
-                    <p className="mt-1 text-sm text-slate-700">
-                      <span className="font-bold">2.</span>{" "}
-                      {selectedPilihan2.nama}
-                    </p>
-                  )}
+                  </div>
                 </div>
               )}
             </div>
           </section>
 
           <button
+            type="button"
             onClick={handleSubmit}
-            disabled={loading}
-            className="rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
+            disabled={isSubmitDisabled}
+            className="rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
           >
-            {loading ? "Menyimpan..." : "Simpan Pendaftaran"}
+            {submitButtonText}
           </button>
         </>
       )}
@@ -528,11 +740,6 @@ function SchoolSelect({
 
         <label className="text-sm font-bold text-slate-700">
           {label} {required && <span className="text-red-500">*</span>}
-          {!required && (
-            <span className="ml-1 text-xs font-normal text-slate-400">
-              (opsional)
-            </span>
-          )}
         </label>
       </div>
 
