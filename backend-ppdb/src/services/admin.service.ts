@@ -1,11 +1,89 @@
 import {
+  Jalur,
   JenisPenolakan,
   StatusDokumen,
   StatusFinal,
   StatusPendaftaran,
   StatusPilihan,
 } from "@prisma/client";
+
 import prisma from "../config/prisma";
+
+export const getDashboardAdmin = async (adminId: string) => {
+  const admin = await prisma.adminSekolah.findUnique({
+    where: { userId: adminId },
+    include: {
+      sekolah: true,
+    },
+  });
+
+  if (!admin) throw new Error("Admin tidak ditemukan");
+
+  const pilihan = await prisma.pilihanSekolah.findMany({
+    where: {
+      sekolahId: admin.sekolahId,
+      pendaftaran: {
+        submittedAt: {
+          not: null,
+        },
+      },
+    },
+    include: {
+      pendaftaran: {
+        include: {
+          dokumen: true,
+        },
+      },
+    },
+  });
+
+  const total = pilihan.length;
+
+  const menunggu = pilihan.filter(
+    (item) =>
+      item.status === StatusPilihan.DIPROSES ||
+      item.pendaftaran.status === StatusPendaftaran.DIPROSES_1 ||
+      item.pendaftaran.dokumen.some(
+        (dokumen) => dokumen.status === StatusDokumen.MENUNGGU,
+      ),
+  ).length;
+
+  const diterima = pilihan.filter(
+    (item) =>
+      item.status === StatusPilihan.DITERIMA ||
+      item.pendaftaran.status === StatusPendaftaran.DITERIMA,
+  ).length;
+
+  const ditolak = pilihan.filter(
+    (item) =>
+      item.status === StatusPilihan.DITOLAK ||
+      item.pendaftaran.status === StatusPendaftaran.DITOLAK,
+  ).length;
+
+  const zonasi = pilihan.filter(
+    (item) => item.pendaftaran.jalur === Jalur.ZONASI,
+  ).length;
+
+  const prestasi = pilihan.filter(
+    (item) => item.pendaftaran.jalur === Jalur.PRESTASI,
+  ).length;
+
+  const progress =
+    total > 0 ? Math.round(((diterima + ditolak) / total) * 100) : 0;
+
+  return {
+    sekolah: admin.sekolah,
+    stats: {
+      total,
+      menunggu,
+      diterima,
+      ditolak,
+      zonasi,
+      prestasi,
+      progress,
+    },
+  };
+};
 
 export const getPendaftar = async (adminId: string) => {
   const admin = await prisma.adminSekolah.findUnique({
@@ -156,6 +234,8 @@ export const seleksiSiswa = async (
           pendaftaranId: pilihan.pendaftaranId,
           sekolahDiterimaId: pilihan.sekolahId,
           statusFinal: StatusFinal.DITERIMA,
+          catatan: null,
+          jenisPenolakan: null,
         },
       });
 

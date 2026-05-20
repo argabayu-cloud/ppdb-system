@@ -1,27 +1,33 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import {
+  getDashboardAdmin,
   getPendaftar,
   seleksiSiswa,
   validasiDokumen,
 } from "../services/admin.service";
 
-interface AuthRequest extends Request {
-  user?: {
-    id: string;
-    role?: string;
-  };
-}
-
-export const handleGetPendaftar = async (req: AuthRequest, res: Response) => {
+export const handleGetDashboardAdmin = async (req: any, res: Response) => {
   try {
-    const adminId = req.user?.id;
+    const adminId = req.user.id;
 
-    if (!adminId) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized",
-      });
-    }
+    const data = await getDashboardAdmin(adminId);
+
+    return res.json({
+      success: true,
+      message: "Dashboard admin berhasil diambil",
+      data,
+    });
+  } catch (error: any) {
+    return res.status(400).json({
+      success: false,
+      message: error.message || "Gagal mengambil dashboard admin",
+    });
+  }
+};
+
+export const handleGetPendaftar = async (req: any, res: Response) => {
+  try {
+    const adminId = req.user.id;
 
     const data = await getPendaftar(adminId);
 
@@ -30,28 +36,18 @@ export const handleGetPendaftar = async (req: AuthRequest, res: Response) => {
       message: "Berhasil mengambil data pendaftar",
       data,
     });
-  } catch (error) {
-    return res.status(400).json({
+  } catch (error: any) {
+    return res.status(500).json({
       success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Gagal mengambil data pendaftar",
+      message: error.message || "Terjadi kesalahan",
     });
   }
 };
 
-export const handleSeleksi = async (req: AuthRequest, res: Response) => {
+export const handleSeleksi = async (req: any, res: Response) => {
   try {
-    const adminId = req.user?.id;
+    const adminId = req.user.id;
     const { pilihanId, status, alasan, jenisPenolakan } = req.body;
-
-    if (!adminId) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized",
-      });
-    }
 
     if (!pilihanId || !status) {
       return res.status(400).json({
@@ -73,7 +69,7 @@ export const handleSeleksi = async (req: AuthRequest, res: Response) => {
     ) {
       return res.status(400).json({
         success: false,
-        message: "Jenis penolakan wajib dipilih",
+        message: "Jenis penolakan harus DOKUMEN, ZONASI, atau LAINNYA",
       });
     }
 
@@ -89,29 +85,18 @@ export const handleSeleksi = async (req: AuthRequest, res: Response) => {
       success: true,
       ...result,
     });
-  } catch (error) {
-    return res.status(400).json({
+  } catch (error: any) {
+    return res.status(500).json({
       success: false,
-      message:
-        error instanceof Error ? error.message : "Gagal melakukan seleksi siswa",
+      message: error.message || "Terjadi kesalahan",
     });
   }
 };
 
-export const handleValidasiDokumen = async (
-  req: AuthRequest,
-  res: Response,
-) => {
+export const handleValidasiDokumen = async (req: any, res: Response) => {
   try {
-    const adminId = req.user?.id;
+    const adminId = req.user.id;
     const { dokumenId, status } = req.body;
-
-    if (!adminId) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized",
-      });
-    }
 
     if (!dokumenId || !status) {
       return res.status(400).json({
@@ -134,11 +119,10 @@ export const handleValidasiDokumen = async (
       message: "Dokumen berhasil divalidasi",
       data: result,
     });
-  } catch (error) {
-    return res.status(400).json({
+  } catch (error: any) {
+    return res.status(500).json({
       success: false,
-      message:
-        error instanceof Error ? error.message : "Gagal validasi dokumen",
+      message: error.message || "Terjadi kesalahan",
     });
   }
 };
