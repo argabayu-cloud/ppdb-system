@@ -1,4 +1,10 @@
-import { StatusPendaftaran, StatusPilihan, TipeDokumen } from "@prisma/client";
+import {
+  JenisPenolakan,
+  StatusDokumen,
+  StatusPendaftaran,
+  StatusPilihan,
+  TipeDokumen,
+} from "@prisma/client";
 
 import prisma from "../config/prisma";
 import { haversineDistance } from "../utils/distance";
@@ -65,8 +71,8 @@ export const createPendaftaran = async (userId: string, data: any) => {
 
   const sekolah2 = sekolah2Id
     ? await prisma.sekolah.findUnique({
-        where: { id: sekolah2Id },
-      })
+      where: { id: sekolah2Id },
+    })
     : null;
 
   if (sekolah2Id && !sekolah2) {
@@ -74,26 +80,19 @@ export const createPendaftaran = async (userId: string, data: any) => {
   }
 
   const bisaHitungJarak =
-    typeof user.latitude === "number" && typeof user.longitude === "number";
+    typeof latitude === "number" &&
+    typeof longitude === "number" &&
+    typeof sekolah1.latitude === "number" &&
+    typeof sekolah1.longitude === "number";
 
   const jarak1 = bisaHitungJarak
     ? haversineDistance(
-        user.latitude as number,
-        user.longitude as number,
-        sekolah1.latitude as number,
-        sekolah1.longitude as number,
-      )
+      latitude,
+      longitude,
+      sekolah1.latitude as number,
+      sekolah1.longitude as number,
+    )
     : null;
-
-  // const jarak2 =
-  //   bisaHitungJarak && sekolah2
-  //     ? haversineDistance(
-  //         user.latitude as number,
-  //         user.longitude as number,
-  //         sekolah2.latitude,
-  //         sekolah2.longitude,
-  //       )
-  //     : null;
 
   const nilaiRapor =
     nilaiRataRata && !Number.isNaN(Number(nilaiRataRata))
@@ -116,8 +115,8 @@ export const createPendaftaran = async (userId: string, data: any) => {
         jenisPrestasi: jenisPrestasi || null,
         tingkatPrestasi: tingkatPrestasi || null,
 
-        latitude: latitude ?? null,
-        longitude: longitude ?? null,
+        latitude,
+        longitude,
       },
     });
 
@@ -131,18 +130,6 @@ export const createPendaftaran = async (userId: string, data: any) => {
       },
     });
 
-    // if (sekolah2Id) {
-    //   await tx.pilihanSekolah.create({
-    //     data: {
-    //       pendaftaranId: pendaftaran.id,
-    //       sekolahId: sekolah2Id,
-    //       pilihanKe: 2,
-    //       status: StatusPilihan.MENUNGGU,
-    //       jarak: jarak2,
-    //     },
-    //   });
-    // }
-
     return pendaftaran;
   });
 
@@ -154,6 +141,7 @@ export const submitPendaftaran = async (userId: string) => {
     where: { userId },
     include: {
       dokumen: true,
+      hasil: true,
       pilihan: {
         include: { sekolah: true },
         orderBy: { pilihanKe: "asc" },
@@ -166,12 +154,20 @@ export const submitPendaftaran = async (userId: string) => {
     throw new Error("Pendaftaran belum dibuat");
   }
 
-  if (pendaftaran.submittedAt && pendaftaran.noPendaftaran) {
+  const bolehSubmitUlang =
+    pendaftaran.hasil?.statusFinal === "DITOLAK" &&
+    pendaftaran.hasil?.jenisPenolakan === JenisPenolakan.DOKUMEN;
+
+  if (
+    pendaftaran.submittedAt &&
+    pendaftaran.noPendaftaran &&
+    !bolehSubmitUlang
+  ) {
     return pendaftaran;
   }
 
   const uploadedTypes = new Set(
-    pendaftaran.dokumen.map((d) => d.tipeDokumen).filter(Boolean),
+    pendaftaran.dokumen.map((dokumen) => dokumen.tipeDokumen).filter(Boolean),
   );
 
   const missing = requiredDokumen.filter((tipe) => !uploadedTypes.has(tipe));
@@ -180,26 +176,42 @@ export const submitPendaftaran = async (userId: string) => {
     throw new Error(`Berkas wajib belum lengkap: ${missing.join(", ")}`);
   }
 
-  const pilihanPertama = pendaftaran.pilihan.find((p) => p.pilihanKe === 1);
+  const masihAdaDitolak = pendaftaran.dokumen.some(
+    (dokumen) => dokumen.status === StatusDokumen.DITOLAK,
+  );
+
+  if (masihAdaDitolak) {
+    throw new Error(
+      "Masih ada dokumen yang ditolak. Upload ulang dokumen tersebut.",
+    );
+  }
+
+  const pilihanPertama = pendaftaran.pilihan.find(
+    (pilihan) => pilihan.pilihanKe === 1,
+  );
 
   if (!pilihanPertama) {
     throw new Error("Pilihan sekolah pertama tidak ditemukan");
   }
 
   return prisma.$transaction(async (tx) => {
-    const totalSebelumnya = await tx.pilihanSekolah.count({
-      where: {
-        sekolahId: pilihanPertama.sekolahId,
-        pilihanKe: 1,
-        pendaftaran: {
-          submittedAt: {
-            not: null,
+    let noPendaftaran = pendaftaran.noPendaftaran;
+
+    if (!noPendaftaran) {
+      const totalSebelumnya = await tx.pilihanSekolah.count({
+        where: {
+          sekolahId: pilihanPertama.sekolahId,
+          pilihanKe: 1,
+          pendaftaran: {
+            submittedAt: {
+              not: null,
+            },
           },
         },
-      },
-    });
+      });
 
-    const noPendaftaran = String(totalSebelumnya + 1).padStart(2, "0");
+      noPendaftaran = String(totalSebelumnya + 1).padStart(2, "0");
+    }
 
     const updated = await tx.pendaftaran.update({
       where: { id: pendaftaran.id },
@@ -217,28 +229,99 @@ export const submitPendaftaran = async (userId: string) => {
       },
     });
 
-    await tx.pilihanSekolah.update({
+    await tx.pilihanSekolah.updateMany({
       where: {
-        pendaftaranId_pilihanKe: {
-          pendaftaranId: pendaftaran.id,
-          pilihanKe: 1,
-        },
+        pendaftaranId: pendaftaran.id,
       },
       data: {
         status: StatusPilihan.DIPROSES,
+        isLocked: false,
+        alasanPenolakan: null,
       },
     });
+
+    if (bolehSubmitUlang) {
+      await tx.hasilSeleksi.deleteMany({
+        where: {
+          pendaftaranId: pendaftaran.id,
+          jenisPenolakan: JenisPenolakan.DOKUMEN,
+        },
+      });
+    }
 
     await tx.notifikasi.create({
       data: {
         userId,
-        judul: "Pendaftaran berhasil dikirim",
-        pesan: `Terima kasih sudah mendaftar di PPDB SMP Terpadu. Nomor pendaftaran kamu adalah ${noPendaftaran}. Berkas kamu sedang menunggu verifikasi dari ${pilihanPertama.sekolah.nama}.`,
+        judul: bolehSubmitUlang
+          ? "Berkas berhasil dikirim ulang"
+          : "Pendaftaran berhasil dikirim",
+        pesan: bolehSubmitUlang
+          ? `Berkas perbaikan kamu sudah dikirim ulang dan sedang menunggu verifikasi dari ${pilihanPertama.sekolah.nama}.`
+          : `Terima kasih sudah mendaftar di PPDB SMP Terpadu. Nomor pendaftaran kamu adalah ${noPendaftaran}. Berkas kamu sedang menunggu verifikasi dari ${pilihanPertama.sekolah.nama}.`,
       },
     });
 
     return updated;
   });
+};
+
+export const resetPendaftaranZonasi = async (userId: string) => {
+  const pendaftaran = await prisma.pendaftaran.findUnique({
+    where: { userId },
+    include: {
+      hasil: true,
+    },
+  });
+
+  if (!pendaftaran) {
+    throw new Error("Pendaftaran tidak ditemukan");
+  }
+
+  if (
+    pendaftaran.hasil?.statusFinal !== "DITOLAK" ||
+    pendaftaran.hasil?.jenisPenolakan !== JenisPenolakan.ZONASI
+  ) {
+    throw new Error("Daftar ulang hanya tersedia untuk penolakan zonasi");
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.pengumuman.deleteMany({
+      where: { pendaftaranId: pendaftaran.id },
+    });
+
+    await tx.hasilSeleksi.deleteMany({
+      where: { pendaftaranId: pendaftaran.id },
+    });
+
+    await tx.dokumen.deleteMany({
+      where: { pendaftaranId: pendaftaran.id },
+    });
+
+    await tx.pilihanSekolah.deleteMany({
+      where: { pendaftaranId: pendaftaran.id },
+    });
+
+    await tx.verifikasiLog.deleteMany({
+      where: { pendaftaranId: pendaftaran.id },
+    });
+
+    await tx.pendaftaran.delete({
+      where: { id: pendaftaran.id },
+    });
+
+    await tx.notifikasi.create({
+      data: {
+        userId,
+        judul: "Daftar ulang dibuka",
+        pesan:
+          "Pendaftaran lama karena zonasi sudah direset. Silakan isi pendaftaran ulang.",
+      },
+    });
+  });
+
+  return {
+    message: "Pendaftaran berhasil direset. Silakan daftar ulang.",
+  };
 };
 
 export const getDashboardPendaftaran = async (userId: string) => {
@@ -248,6 +331,7 @@ export const getDashboardPendaftaran = async (userId: string) => {
       biodata: true,
       pendaftaran: {
         include: {
+          hasil: true,
           dokumen: true,
           pilihan: {
             include: { sekolah: true },
@@ -279,11 +363,11 @@ export const getDashboardPendaftaran = async (userId: string) => {
   const progressPercent = isSubmitted
     ? 100
     : Math.round(
-        ([true, hasBiodata, hasPendaftaran, requiredUploaded].filter(Boolean)
-          .length /
-          4) *
-          100,
-      );
+      ([true, hasBiodata, hasPendaftaran, requiredUploaded].filter(Boolean)
+        .length /
+        4) *
+      100,
+    );
 
   return {
     user: {

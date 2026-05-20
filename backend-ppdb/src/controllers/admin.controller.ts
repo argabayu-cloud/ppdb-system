@@ -34,7 +34,9 @@ export const handleGetPendaftar = async (req: AuthRequest, res: Response) => {
     return res.status(400).json({
       success: false,
       message:
-        error instanceof Error ? error.message : "Gagal mengambil data pendaftar",
+        error instanceof Error
+          ? error.message
+          : "Gagal mengambil data pendaftar",
     });
   }
 };
@@ -42,7 +44,7 @@ export const handleGetPendaftar = async (req: AuthRequest, res: Response) => {
 export const handleSeleksi = async (req: AuthRequest, res: Response) => {
   try {
     const adminId = req.user?.id;
-    const { pilihanId, status, alasan } = req.body;
+    const { pilihanId, status, alasan, jenisPenolakan } = req.body;
 
     if (!adminId) {
       return res.status(401).json({
@@ -65,7 +67,23 @@ export const handleSeleksi = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    const result = await seleksiSiswa(adminId, pilihanId, status, alasan);
+    if (
+      status === "DITOLAK" &&
+      !["DOKUMEN", "ZONASI", "LAINNYA"].includes(jenisPenolakan)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Jenis penolakan wajib dipilih",
+      });
+    }
+
+    const result = await seleksiSiswa(
+      adminId,
+      pilihanId,
+      status,
+      alasan,
+      jenisPenolakan,
+    );
 
     return res.json({
       success: true,

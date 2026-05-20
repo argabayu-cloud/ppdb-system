@@ -53,6 +53,12 @@ enum TipeDokumen {
   KIP
 }
 
+enum JenisPenolakan {
+  DOKUMEN
+  ZONASI
+  PRESTASI
+}
+
 model User {
   id        String   @id @default(uuid())
   nama      String
@@ -230,6 +236,7 @@ model HasilSeleksi {
 
   statusFinal       StatusFinal
   catatan           String?
+  jenisPenolakan    JenisPenolakan?
 
   createdAt DateTime @default(now())
 
