@@ -8,6 +8,20 @@ async function main() {
 
   const hashedPassword = await bcrypt.hash("admin123", 10);
 
+  await prisma.adminSekolah.deleteMany();
+
+  await prisma.sekolah.deleteMany({
+    where: {
+      nama: {
+        notIn: [
+          "SMP Negeri 1 Bandar Lampung",
+          "SMP Negeri 2 Bandar Lampung",
+          "SMP Negeri 3 Bandar Lampung",
+        ],
+      },
+    },
+  });
+
   // ========================
   // 🏫 DATA SEKOLAH
   // ========================
