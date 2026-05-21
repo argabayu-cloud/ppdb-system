@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { getDokumenSaya, submitPendaftaran, uploadDokumen } from "@/lib/api";
@@ -14,6 +14,8 @@ const daftarBerkas = [
     desc: "Format PDF/JPG, maks 2MB",
     required: true,
     maxSizeMb: 2,
+    accept: ".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png",
+    allowedTypes: ["application/pdf", "image/jpeg", "image/png"],
   },
   {
     id: "kk",
@@ -22,6 +24,8 @@ const daftarBerkas = [
     desc: "Format PDF/JPG, maks 2MB",
     required: true,
     maxSizeMb: 2,
+    accept: ".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png",
+    allowedTypes: ["application/pdf", "image/jpeg", "image/png"],
   },
   {
     id: "ijazah",
@@ -30,6 +34,8 @@ const daftarBerkas = [
     desc: "Format PDF/JPG, maks 2MB",
     required: true,
     maxSizeMb: 2,
+    accept: ".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png",
+    allowedTypes: ["application/pdf", "image/jpeg", "image/png"],
   },
   {
     id: "rapor",
@@ -38,6 +44,8 @@ const daftarBerkas = [
     desc: "Format PDF/JPG, maks 5MB",
     required: true,
     maxSizeMb: 5,
+    accept: ".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png",
+    allowedTypes: ["application/pdf", "image/jpeg", "image/png"],
   },
   {
     id: "foto",
@@ -46,6 +54,8 @@ const daftarBerkas = [
     desc: "Format JPG/PNG, maks 1MB, background merah",
     required: true,
     maxSizeMb: 1,
+    accept: ".jpg,.jpeg,.png,image/jpeg,image/png",
+    allowedTypes: ["image/jpeg", "image/png"],
   },
   {
     id: "skhu",
@@ -54,6 +64,8 @@ const daftarBerkas = [
     desc: "Format PDF/JPG, maks 2MB",
     required: false,
     maxSizeMb: 2,
+    accept: ".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png",
+    allowedTypes: ["application/pdf", "image/jpeg", "image/png"],
   },
   {
     id: "prestasi",
@@ -62,6 +74,8 @@ const daftarBerkas = [
     desc: "Format PDF/JPG, maks 2MB",
     required: false,
     maxSizeMb: 2,
+    accept: ".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png",
+    allowedTypes: ["application/pdf", "image/jpeg", "image/png"],
   },
   {
     id: "kip",
@@ -70,6 +84,8 @@ const daftarBerkas = [
     desc: "Format PDF/JPG, maks 2MB",
     required: false,
     maxSizeMb: 2,
+    accept: ".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png",
+    allowedTypes: ["application/pdf", "image/jpeg", "image/png"],
   },
 ];
 
@@ -97,6 +113,7 @@ const initialFiles = Object.fromEntries(
 
 export default function UploadBerkasPage() {
   const router = useRouter();
+  const previewsRef = useRef<string[]>([]);
 
   const [files, setFiles] = useState<Record<string, FileStatus>>(initialFiles);
   const [existingDocs, setExistingDocs] = useState<
@@ -128,11 +145,7 @@ export default function UploadBerkasPage() {
     loadDokumen();
 
     return () => {
-      Object.values(files).forEach((fileData) => {
-        if (fileData.preview) {
-          URL.revokeObjectURL(fileData.preview);
-        }
-      });
+      previewsRef.current.forEach((preview) => URL.revokeObjectURL(preview));
     };
   }, []);
 
@@ -142,9 +155,7 @@ export default function UploadBerkasPage() {
 
     if (!file || !berkasConfig) return;
 
-    const allowedTypes = ["application/pdf", "image/jpeg", "image/png"];
-
-    if (!allowedTypes.includes(file.type)) {
+    if (!berkasConfig.allowedTypes.includes(file.type)) {
       setFiles((prev) => ({
         ...prev,
         [id]: {
@@ -152,7 +163,7 @@ export default function UploadBerkasPage() {
           preview: null,
           status: "error",
           errorMessage:
-            "Format file tidak didukung. Gunakan PDF, JPG, atau PNG.",
+            "Format file tidak didukung. Gunakan format sesuai ketentuan.",
         },
       }));
 
@@ -179,10 +190,25 @@ export default function UploadBerkasPage() {
       ? URL.createObjectURL(file)
       : null;
 
-    setFiles((prev) => ({
-      ...prev,
-      [id]: { file, preview, status: "uploaded" },
-    }));
+    if (preview) {
+      previewsRef.current.push(preview);
+    }
+
+    setFiles((prev) => {
+      const oldPreview = prev[id]?.preview;
+
+      if (oldPreview) {
+        URL.revokeObjectURL(oldPreview);
+        previewsRef.current = previewsRef.current.filter(
+          (item) => item !== oldPreview,
+        );
+      }
+
+      return {
+        ...prev,
+        [id]: { file, preview, status: "uploaded" },
+      };
+    });
   };
 
   const handleRemove = (id: string) => {
@@ -190,6 +216,9 @@ export default function UploadBerkasPage() {
 
     if (currentPreview) {
       URL.revokeObjectURL(currentPreview);
+      previewsRef.current = previewsRef.current.filter(
+        (item) => item !== currentPreview,
+      );
     }
 
     setFiles((prev) => ({
@@ -198,11 +227,9 @@ export default function UploadBerkasPage() {
     }));
   };
 
-  const getExistingDoc = (tipeDokumen: string) => existingDocs[tipeDokumen];
-
   const uploadedCount = useMemo(() => {
     return daftarBerkas.filter((berkas) => {
-      const existing = getExistingDoc(berkas.tipeDokumen);
+      const existing = existingDocs[berkas.tipeDokumen];
       const selected = files[berkas.id];
 
       return Boolean(existing) || selected.status === "uploaded";
@@ -215,7 +242,7 @@ export default function UploadBerkasPage() {
     return daftarBerkas
       .filter((b) => b.required)
       .filter((berkas) => {
-        const existing = getExistingDoc(berkas.tipeDokumen);
+        const existing = existingDocs[berkas.tipeDokumen];
         const selected = files[berkas.id];
 
         return Boolean(existing) || selected.status === "uploaded";
@@ -367,14 +394,14 @@ export default function UploadBerkasPage() {
         <div className="mb-4">
           <h2 className="text-base font-bold text-slate-800">Daftar Berkas</h2>
           <p className="mt-1 text-xs text-slate-500">
-            Pilih file dokumen dalam format PDF, JPG, JPEG, atau PNG.
+            Pilih file dokumen sesuai format yang tersedia di file manager.
           </p>
         </div>
 
         <div className="flex flex-col gap-3">
           {daftarBerkas.map((berkas) => {
             const fileData = files[berkas.id];
-            const existing = getExistingDoc(berkas.tipeDokumen);
+            const existing = existingDocs[berkas.tipeDokumen];
 
             const isUploaded = fileData.status === "uploaded";
             const isError = fileData.status === "error";
@@ -521,7 +548,7 @@ export default function UploadBerkasPage() {
                             : "Pilih File"}
                         <input
                           type="file"
-                          accept=".pdf,.jpg,.jpeg,.png"
+                          accept={berkas.accept}
                           onChange={(e) => handleFileChange(berkas.id, e)}
                           className="hidden"
                         />
