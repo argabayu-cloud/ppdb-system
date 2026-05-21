@@ -1,47 +1,65 @@
 "use client";
 
+import Image from "next/image";
+import { Bell, ChevronDown, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function NavbarSuperAdmin() {
   const router = useRouter();
 
   const handleLogout = () => {
-    localStorage.removeItem("superAdminToken");
+    localStorage.removeItem("token");
     localStorage.removeItem("user");
-    
-    router.replace("/auth/login");
+    localStorage.removeItem("admin");
+    router.push("/auth/login");
   };
 
   return (
-    <nav className="w-full bg-indigo-700 text-white px-6 py-3 flex items-center justify-between shadow-md fixed top-0 left-0 right-0 z-50">
-      <div className="flex items-center gap-2">
-        <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center">
-          <span className="text-indigo-700 font-bold text-sm">P</span>
-        </div>
-        <div className="flex flex-col leading-tight">
-          <span className="font-bold text-sm tracking-wide uppercase hidden sm:block">
-            PPDB SMP Terpadu
-          </span>
-          <span className="text-indigo-200 text-xs hidden sm:block">
-            Panel Super Admin · Dinas Pendidikan
-          </span>
-        </div>
-      </div>
+    <nav className="fixed left-0 right-0 top-0 z-50 h-16 border-b border-slate-200 bg-white px-6 shadow-sm">
+      <div className="flex h-full items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 ring-1 ring-blue-100">
+            <Image
+              src="/images/logo-ppdb.png"
+              alt="Logo PPDB"
+              width={30}
+              height={30}
+              className="h-8 w-8 object-contain"
+            />
+          </div>
 
-      <div className="flex items-center gap-3">
-        <div className="hidden sm:flex flex-col items-end leading-tight">
-          <span className="font-semibold text-sm">Super Admin</span>
-          <span className="text-indigo-200 text-xs">Dinas Pendidikan Kota Bandar Lampung</span>
+          <div>
+            <p className="text-sm font-bold text-slate-900">Super Admin</p>
+            <p className="text-xs text-slate-500">Monitoring PPDB Kota</p>
+          </div>
         </div>
-        <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center font-bold text-sm">
-          S
+
+        <div className="flex items-center gap-3">
+          <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100">
+            <Bell className="h-5 w-5" />
+          </button>
+
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 hover:bg-slate-50"
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-xs font-bold text-white">
+              SA
+            </div>
+            <span className="hidden text-sm font-semibold text-slate-700 sm:block">
+              Super Admin
+            </span>
+            <ChevronDown className="h-4 w-4 text-slate-400" />
+          </button>
+
+          <button
+            onClick={handleLogout}
+            className="hidden rounded-xl bg-red-50 px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-100 md:flex"
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            Logout
+          </button>
         </div>
-        <button
-          onClick={handleLogout}
-          className="text-indigo-200 hover:text-white text-xs border border-indigo-500 hover:border-white px-3 py-1 rounded-lg transition-colors"
-        >
-          Keluar
-        </button>
       </div>
     </nav>
   );

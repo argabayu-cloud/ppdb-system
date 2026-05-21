@@ -1,383 +1,126 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import Link from "next/link";
+import {
+  ArrowRight,
+  BarChart3,
+  Building2,
+  ClipboardCheck,
+  ShieldCheck,
+  Trophy,
+  Users,
+} from "lucide-react";
 
-import { Skeleton } from "@/components/ui/skeleton";
-
-const statsSekolah = [
-  {
-    nama: "SMP Negeri 1 Bandar Lampung",
-    pendaftar: 120,
-    terverifikasi: 80,
-    menunggu: 30,
-    ditolak: 10,
-  },
-  {
-    nama: "SMP Negeri 2 Bandar Lampung",
-    pendaftar: 95,
-    terverifikasi: 60,
-    menunggu: 25,
-    ditolak: 10,
-  },
-  {
-    nama: "SMP Negeri 3 Bandar Lampung",
-    pendaftar: 110,
-    terverifikasi: 75,
-    menunggu: 20,
-    ditolak: 15,
-  },
-  {
-    nama: "SMP Negeri 4 Bandar Lampung",
-    pendaftar: 88,
-    terverifikasi: 55,
-    menunggu: 22,
-    ditolak: 11,
-  },
-  {
-    nama: "SMP Negeri 5 Bandar Lampung",
-    pendaftar: 102,
-    terverifikasi: 70,
-    menunggu: 18,
-    ditolak: 14,
-  },
-];
-
-const totalPendaftar = statsSekolah.reduce((acc, s) => acc + s.pendaftar, 0);
-const totalTerverifikasi = statsSekolah.reduce(
-  (acc, s) => acc + s.terverifikasi,
-  0,
-);
-const totalMenunggu = statsSekolah.reduce((acc, s) => acc + s.menunggu, 0);
-const totalDitolak = statsSekolah.reduce((acc, s) => acc + s.ditolak, 0);
-
-const dataJalur = [
-  { jalur: "Zonasi", jumlah: 215, warna: "bg-blue-500", persen: 43 },
-  { jalur: "Prestasi", jumlah: 150, warna: "bg-purple-500", persen: 30 },
-];
-
-export default function SuperAdminDashboard() {
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 800);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (isLoading) {
-    return <DashboardSkeleton />;
-  }
-
+export default function DashboardSuperAdminPage() {
   return (
     <div className="flex flex-col gap-6">
-      <div className="bg-gradient-to-r from-indigo-600 to-indigo-800 rounded-2xl p-6 text-white shadow-lg">
-        <p className="text-indigo-200 text-sm mb-1">Selamat Datang 👋</p>
-        <h1 className="text-2xl font-bold">Super Admin</h1>
-        <p className="text-indigo-100 text-sm mt-1">
-          Dinas Pendidikan Kota Bandar Lampung · PPDB 2025/2026
-        </p>
-      </div>
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-700 via-blue-800 to-slate-950 p-8 text-white shadow-sm">
+        <div className="absolute -right-10 -top-10 h-44 w-44 rounded-full bg-white/10" />
+        <div className="absolute right-24 bottom-0 h-28 w-28 rounded-full bg-white/10" />
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {[
-          {
-            label: "Total Pendaftar",
-            value: totalPendaftar,
-            icon: "👥",
-            color: "bg-blue-500",
-          },
-          {
-            label: "Terverifikasi",
-            value: totalTerverifikasi,
-            icon: "✅",
-            color: "bg-green-500",
-          },
-          {
-            label: "Menunggu",
-            value: totalMenunggu,
-            icon: "⏳",
-            color: "bg-amber-500",
-          },
-          {
-            label: "Ditolak",
-            value: totalDitolak,
-            icon: "❌",
-            color: "bg-red-500",
-          },
-        ].map((s) => (
-          <div
-            key={s.label}
-            className="bg-white rounded-2xl shadow p-5 flex flex-col gap-2"
-          >
-            <div
-              className={`w-10 h-10 rounded-xl ${s.color} flex items-center justify-center text-xl`}
-            >
-              {s.icon}
-            </div>
-            <p className="text-2xl font-bold text-slate-800">{s.value}</p>
-            <p className="text-xs text-slate-500">{s.label}</p>
-          </div>
-        ))}
-      </div>
+        <div className="relative">
+          <p className="text-sm font-semibold text-blue-100">Super Admin</p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {[
-          {
-            label: "Total Sekolah",
-            value: 45,
-            icon: "🏫",
-            color: "border-indigo-400",
-          },
-          {
-            label: "Sekolah Aktif",
-            value: 45,
-            icon: "✅",
-            color: "border-green-400",
-          },
-          {
-            label: "Jalur Tersedia",
-            value: 4,
-            icon: "🛤️",
-            color: "border-blue-400",
-          },
-        ].map((item) => (
-          <div
-            key={item.label}
-            className={`bg-white rounded-2xl shadow border-l-4 ${item.color} p-5 flex items-center gap-4`}
-          >
-            <span className="text-3xl">{item.icon}</span>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">
-                {item.value}
-              </p>
-              <p className="text-xs text-slate-500">{item.label}</p>
-            </div>
-          </div>
-        ))}
-      </div>
+          <h1 className="mt-2 text-3xl font-bold">
+            Dashboard Monitoring PPDB
+          </h1>
 
-      <div className="bg-white rounded-2xl shadow p-6">
-        <h2 className="font-semibold text-slate-700 mb-4">
-          🛤️ Pendaftar Per Jalur
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-100">
+            Pantau ringkasan pendaftaran jalur Zonasi dan Prestasi dari seluruh
+            sekolah secara terpusat.
+          </p>
+        </div>
+      </section>
+
+      <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+        <Card title="Total Sekolah" value="0" icon={<Building2 />} />
+        <Card title="Pendaftar Zonasi" value="0" icon={<Users />} />
+        <Card title="Pendaftar Prestasi" value="0" icon={<Trophy />} />
+        <Card title="Terverifikasi" value="0" icon={<ClipboardCheck />} />
+      </section>
+
+      <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <QuickCard
+          title="Monitoring Pendaftar"
+          desc="Lihat data pendaftar Zonasi dan Prestasi dari semua sekolah."
+          href="/superadmin/dashboard/monitoring"
+          icon={<ShieldCheck className="h-7 w-7" />}
+        />
+
+        <QuickCard
+          title="Statistik Kota"
+          desc="Pantau statistik ringkas pendaftaran PPDB tingkat kota."
+          href="/superadmin/dashboard/statistik"
+          icon={<BarChart3 className="h-7 w-7" />}
+        />
+      </section>
+
+      <section className="rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center shadow-sm">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-blue-50 text-blue-600">
+          <ShieldCheck className="h-8 w-8" />
+        </div>
+
+        <h2 className="font-bold text-slate-800">
+          Belum ada data monitoring
         </h2>
-        <div className="flex flex-col gap-3">
-          {dataJalur.map((j) => (
-            <div key={j.jalur} className="flex items-center gap-3">
-              <span className="text-sm text-slate-600 w-20">{j.jalur}</span>
-              <div className="flex-1 bg-slate-100 rounded-full h-4">
-                <div
-                  className={`${j.warna} h-4 rounded-full transition-all duration-500`}
-                  style={{ width: `${j.persen}%` }}
-                />
-              </div>
-              <span className="text-sm font-semibold text-slate-700 w-12 text-right">
-                {j.jumlah}
-              </span>
-              <span className="text-xs text-slate-400 w-10 text-right">
-                {j.persen}%
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
 
-      <div className="bg-white rounded-2xl shadow p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-slate-700">🏫 Rekap Per Sekolah</h2>
-          <a
-            href="/superadmin/monitoring"
-            className="text-xs text-indigo-600 hover:underline font-medium"
-          >
-            Lihat Semua →
-          </a>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="text-left py-3 px-4 text-xs text-slate-500 font-semibold">
-                  Sekolah
-                </th>
-                <th className="text-center py-3 px-4 text-xs text-slate-500 font-semibold">
-                  Pendaftar
-                </th>
-                <th className="text-center py-3 px-4 text-xs text-slate-500 font-semibold">
-                  Terverifikasi
-                </th>
-                <th className="text-center py-3 px-4 text-xs text-slate-500 font-semibold">
-                  Menunggu
-                </th>
-                <th className="text-center py-3 px-4 text-xs text-slate-500 font-semibold">
-                  Ditolak
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {statsSekolah.map((s) => (
-                <tr
-                  key={s.nama}
-                  className="border-b border-slate-50 hover:bg-slate-50 transition-colors"
-                >
-                  <td className="py-3 px-4 font-medium text-slate-800 text-xs">
-                    {s.nama}
-                  </td>
-                  <td className="py-3 px-4 text-center font-bold text-slate-800">
-                    {s.pendaftar}
-                  </td>
-                  <td className="py-3 px-4 text-center text-green-600 font-semibold">
-                    {s.terverifikasi}
-                  </td>
-                  <td className="py-3 px-4 text-center text-amber-600 font-semibold">
-                    {s.menunggu}
-                  </td>
-                  <td className="py-3 px-4 text-center text-red-500 font-semibold">
-                    {s.ditolak}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {[
-          {
-            label: "Kelola Sekolah",
-            desc: "45 sekolah terdaftar",
-            href: "/superadmin/sekolah",
-            icon: "🏫",
-            color: "border-indigo-400",
-          },
-          {
-            label: "Monitoring",
-            desc: "Pantau semua sekolah",
-            href: "/superadmin/monitoring",
-            icon: "📡",
-            color: "border-blue-400",
-          },
-          {
-            label: "Laporan",
-            desc: "Unduh laporan PPDB",
-            href: "/superadmin/laporan",
-            icon: "📊",
-            color: "border-purple-400",
-          },
-        ].map((item) => (
-          <a
-            key={item.label}
-            href={item.href}
-            className={`bg-white rounded-2xl shadow border-l-4 ${item.color} p-5 flex items-center gap-4 hover:shadow-md transition-shadow`}
-          >
-            <span className="text-3xl">{item.icon}</span>
-            <div>
-              <p className="font-semibold text-slate-800 text-sm">
-                {item.label}
-              </p>
-              <p className="text-xs text-slate-500 mt-0.5">{item.desc}</p>
-            </div>
-          </a>
-        ))}
-      </div>
+        <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
+          Data akan otomatis muncul setelah sekolah memiliki pendaftar jalur
+          Zonasi atau Prestasi.
+        </p>
+      </section>
     </div>
   );
 }
 
-function DashboardSkeleton() {
+function Card({
+  title,
+  value,
+  icon,
+}: {
+  title: string;
+  value: string;
+  icon: React.ReactNode;
+}) {
   return (
-    <div className="flex flex-col gap-6">
-      <div className="bg-white rounded-2xl shadow p-6">
-        <Skeleton className="h-4 w-36 mb-3" />
-        <Skeleton className="h-8 w-48 mb-3" />
-        <Skeleton className="h-4 w-72" />
+    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+        {icon}
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div
-            key={i}
-            className="bg-white rounded-2xl shadow p-5 flex flex-col gap-3"
-          >
-            <Skeleton className="w-10 h-10 rounded-xl" />
-            <Skeleton className="h-7 w-20" />
-            <Skeleton className="h-3 w-24" />
-          </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div
-            key={i}
-            className="bg-white rounded-2xl shadow border-l-4 border-slate-200 p-5 flex items-center gap-4"
-          >
-            <Skeleton className="h-10 w-10 rounded-xl" />
-            <div className="flex flex-col gap-2">
-              <Skeleton className="h-7 w-14" />
-              <Skeleton className="h-3 w-24" />
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="bg-white rounded-2xl shadow p-6">
-        <Skeleton className="h-5 w-44 mb-5" />
-        <div className="flex flex-col gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="flex items-center gap-3">
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-4 flex-1 rounded-full" />
-              <Skeleton className="h-4 w-12" />
-              <Skeleton className="h-4 w-10" />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="bg-white rounded-2xl shadow p-6">
-        <div className="flex items-center justify-between mb-4">
-          <Skeleton className="h-5 w-40" />
-          <Skeleton className="h-4 w-20" />
-        </div>
-
-        <div className="overflow-hidden">
-          <div className="grid grid-cols-5 gap-4 bg-slate-50 px-4 py-3">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-4 w-full" />
-            ))}
-          </div>
-
-          <div className="divide-y divide-slate-50">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="grid grid-cols-5 gap-4 px-4 py-3">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-16 mx-auto" />
-                <Skeleton className="h-4 w-16 mx-auto" />
-                <Skeleton className="h-4 w-16 mx-auto" />
-                <Skeleton className="h-4 w-16 mx-auto" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div
-            key={i}
-            className="bg-white rounded-2xl shadow border-l-4 border-slate-200 p-5 flex items-center gap-4"
-          >
-            <Skeleton className="h-10 w-10 rounded-xl" />
-            <div className="flex flex-col gap-2">
-              <Skeleton className="h-4 w-28" />
-              <Skeleton className="h-3 w-32" />
-            </div>
-          </div>
-        ))}
-      </div>
+      <h2 className="text-4xl font-bold text-slate-900">{value}</h2>
+      <p className="mt-1 text-sm text-slate-500">{title}</p>
     </div>
+  );
+}
+
+function QuickCard({
+  title,
+  desc,
+  href,
+  icon,
+}: {
+  title: string;
+  desc: string;
+  href: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-blue-200 hover:shadow-md"
+    >
+      <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+        {icon}
+      </div>
+
+      <h2 className="font-bold text-slate-900">{title}</h2>
+      <p className="mt-2 text-sm leading-6 text-slate-500">{desc}</p>
+
+      <div className="mt-5 flex items-center gap-2 text-sm font-semibold text-blue-600">
+        Buka halaman
+        <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+      </div>
+    </Link>
   );
 }

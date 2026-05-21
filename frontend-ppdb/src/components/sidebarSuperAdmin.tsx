@@ -2,49 +2,68 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import {
+  BarChart3,
+  LayoutDashboard,
+  Users,
+} from "lucide-react";
 
-const menuItems = [
-  { label: "Dashboard", href: "/superadmin/dashboard", icon: "🏠" },
-  { label: "Kelola Sekolah", href: "/superadmin/sekolah", icon: "🏫" },
-  { label: "Monitoring", href: "/superadmin/monitoring", icon: "📡" },
-  { label: "Laporan", href: "/superadmin/laporan", icon: "📊" },
+const menu = [
+  {
+    label: "Dashboard",
+    href: "/superadmin/dashboard",
+    icon: LayoutDashboard,
+  },
+  {
+    label: "Monitoring",
+    href: "/superadmin/dashboard/monitoring",
+    icon: Users,
+  },
+  {
+    label: "Statistik Kota",
+    href: "/superadmin/dashboard/statistik",
+    icon: BarChart3,
+  },
 ];
 
 export default function SidebarSuperAdmin() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-52 bg-white border-r border-slate-100 shadow-sm fixed top-[52px] left-0 bottom-0 flex flex-col justify-between z-40">
-      <nav className="flex flex-col gap-1 p-3 mt-2">
-        {menuItems.map((item) => {
-          const isActive =
-            item.href === "/superadmin/dashboard"
-              ? pathname === "/superadmin/dashboard"
-              : pathname.startsWith(item.href);
+    <aside className="fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] w-60 border-r border-slate-200 bg-white">
+      <div className="flex h-full flex-col">
+        <nav className="flex-1 space-y-1.5 p-4">
+          {menu.map((item) => {
+            const Icon = item.icon;
+            const active =
+              pathname === item.href || pathname.startsWith(`${item.href}/`);
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors
-                ${isActive
-                  ? "bg-indigo-600 text-white shadow-sm"
-                  : "text-slate-600 hover:bg-indigo-50 hover:text-indigo-700"
-                }`}
-            >
-              <span className="text-base">{item.icon}</span>
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${active
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "text-slate-600 hover:bg-blue-50 hover:text-blue-700"
+                  }`}
+              >
+                <Icon className="h-5 w-5" />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
 
-      <div className="p-4 border-t border-slate-100">
-        <p className="text-xs text-slate-400 text-center leading-relaxed">
-          © 2025 Dinas Pendidikan
-          <br />
-          Kota Bandar Lampung
-        </p>
+        <div className="border-t border-slate-100 p-4">
+          <div className="rounded-2xl bg-blue-50 p-4">
+            <p className="text-xs font-medium text-blue-600">
+              Jalur Monitoring
+            </p>
+            <p className="mt-1 text-sm font-bold text-slate-800">
+              Zonasi & Prestasi
+            </p>
+          </div>
+        </div>
       </div>
     </aside>
   );
