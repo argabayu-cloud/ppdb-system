@@ -45,6 +45,10 @@ export const getBiodataByUserId = async (userId: string) => {
 export const upsertBiodata = async (userId: string, data: any) => {
   const cleanData = cleanBiodata(data);
 
+  if (!data.nik) {
+    throw new Error("NIK wajib diisi");
+  }
+
   if (data.nik) {
     const existingNik = await prisma.biodata.findFirst({
       where: {
@@ -65,6 +69,7 @@ export const upsertBiodata = async (userId: string, data: any) => {
     update: cleanData,
     create: {
       userId,
+      nik: data.nik,
       ...cleanData,
     },
   });
