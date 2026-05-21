@@ -7,14 +7,13 @@ export default function SuperAdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-slate-50 font-sans">
       <NavbarSuperAdmin />
-      <div className="flex pt-[52px] min-h-screen">
-        <SidebarSuperAdmin />
-        <main className="ml-52 flex-1 p-6 min-h-screen">
-          {children}
-        </main>
-      </div>
+      <SidebarSuperAdmin />
+
+      <main className="ml-60 pt-16 min-h-screen">
+        <div className="p-6">{children}</div>
+      </main>
     </div>
   );
 }
