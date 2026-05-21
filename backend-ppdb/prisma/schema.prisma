@@ -115,7 +115,7 @@ model Biodata {
   userId String @unique
 
   namaLengkap String?
-  nik String?
+  nik String @unique
   tempatLahir String?
   tanggalLahir String?
   jenisKelamin String?
