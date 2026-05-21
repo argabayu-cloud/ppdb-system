@@ -5,14 +5,26 @@ import notifRoutes from "./routes/notifikasi.routes";
 
 const app = express();
 
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://frontend-ppdb-six.vercel.app",
+];
+
 app.use(
   cors({
-    origin: [
-      "http://localhost:3000",
-      "https://frontend-ppdb-six.vercel.app",
-    ],
+    origin: function (origin, callback) {
+      console.log("CORS origin:", origin);
+
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS blocked for origin: ${origin}`));
+      }
+    },
     credentials: true,
-  }),
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
 );
 
 app.use(express.json());
