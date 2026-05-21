@@ -48,18 +48,8 @@ export default function VerifikasiPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL;
-
-        if (!baseUrl) {
-          setData([]);
-          return;
-        }
-
-        const res = await fetch(`${baseUrl}/pendaftaran`, {
-          cache: "no-store",
-        });
-
-        const result = await res.json();
+        const { fetcher } = await import("@/lib/api");
+        const result = await fetcher("/pendaftaran");
         const list: Pendaftaran[] = result.data || result || [];
 
         const khususDuaJalur = list.filter(

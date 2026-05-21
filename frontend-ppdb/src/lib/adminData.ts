@@ -95,17 +95,8 @@ export function hitungStats(
 
 export async function getPendaftaran() {
     try {
-        const baseUrl =
-            process.env.NEXT_PUBLIC_API_URL;
-
-        const res = await fetch(
-            `${baseUrl}/pendaftaran`,
-            {
-                cache: "no-store",
-            }
-        );
-
-        const result = await res.json();
+        const { fetcher } = await import("./api");
+        const result = await fetcher("/pendaftaran");
 
         return result.data || result || [];
     } catch {

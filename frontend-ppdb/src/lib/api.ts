@@ -1,5 +1,5 @@
 const BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+  process.env.NEXT_PUBLIC_API_URL || "/api";
 
 async function parseResponse(res: Response) {
   const contentType = res.headers.get("content-type") || "";
