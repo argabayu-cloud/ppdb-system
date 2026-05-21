@@ -1,353 +1,163 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  Eye,
+  Search,
+  ShieldCheck,
+  Trophy,
+  Users,
+} from "lucide-react";
 
-import NavbarSuperAdmin from "@/components/navbarSuperAdmin";
-import SidebarSuperAdmin from "@/components/sidebarSuperAdmin";
-import Footer from "@/components/footer";
-import { Skeleton } from "@/components/ui/skeleton";
-
-const dataMonitoring = Array.from({ length: 45 }, (_, i) => ({
-  id: i + 1,
-  nama: `SMP Negeri ${i + 1} Bandar Lampung`,
-  kuota: 100 + (i % 3) * 20,
-  pendaftar: 80 + i * 5,
-  terverifikasi: 50 + i * 3,
-  menunggu: 20 + i,
-  ditolak: 10 + i,
-  zonasi: 30 + i * 2,
-  prestasi: 20 + i,
-  afirmasi: 15 + i,
-  domisili: 10 + i,
-}));
-
-export default function MonitoringPage() {
-  const [search, setSearch] = useState("");
-  const [filterJalur, setFilterJalur] = useState("Semua");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const itemPerPage = 10;
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 800);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [search, filterJalur]);
-
-  const filtered = dataMonitoring.filter((s) =>
-    s.nama.toLowerCase().includes(search.toLowerCase().trim()),
-  );
-
-  const totalPage = Math.max(1, Math.ceil(filtered.length / itemPerPage));
-
-  const startIndex = (currentPage - 1) * itemPerPage;
-  const endIndex = currentPage * itemPerPage;
-
-  const paginated = filtered.slice(startIndex, endIndex);
+export default function MonitoringSuperAdminPage() {
+  const data: {
+    nama: string;
+    sekolah: string;
+    jalur: "ZONASI" | "PRESTASI";
+    status: string;
+  }[] = [];
 
   return (
-    <div className="min-h-screen bg-slate-100">
-      <NavbarSuperAdmin />
+    <div className="flex flex-col gap-6">
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-700 via-blue-800 to-slate-950 p-8 text-white shadow-sm">
+        <div className="absolute -right-10 -top-10 h-44 w-44 rounded-full bg-white/10" />
+        <div className="absolute right-24 bottom-0 h-28 w-28 rounded-full bg-white/10" />
 
-      <div className="flex">
-        <SidebarSuperAdmin />
+        <div className="relative">
+          <p className="text-sm font-semibold text-blue-100">Monitoring</p>
 
-        <main className="flex-1 p-6 mt-16 ml-64">
-          <div className="flex flex-col gap-6">
-            <div>
-              <h1 className="text-xl font-bold text-slate-800">
-                📡 Monitoring PPDB
-              </h1>
+          <h1 className="mt-2 text-3xl font-bold">
+            Monitoring Zonasi & Prestasi
+          </h1>
 
-              <p className="text-slate-500 text-sm mt-1">
-                Pantau perkembangan PPDB di seluruh sekolah secara real-time.
-              </p>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-100">
+            Pantau seluruh pendaftar dari jalur Zonasi dan Prestasi di semua
+            sekolah.
+          </p>
+        </div>
+      </section>
+
+      <section className="grid grid-cols-1 gap-5 md:grid-cols-3">
+        <Card title="Total Pendaftar" value="0" icon={<Users />} />
+        <Card title="Jalur Zonasi" value="0" icon={<ShieldCheck />} />
+        <Card title="Jalur Prestasi" value="0" icon={<Trophy />} />
+      </section>
+
+      <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="flex items-center gap-3 rounded-2xl border border-slate-200 px-4 py-3">
+          <Search className="h-5 w-5 text-slate-400" />
+          <input
+            placeholder="Cari nama siswa, sekolah, atau jalur..."
+            className="w-full bg-transparent text-sm outline-none"
+          />
+        </div>
+      </section>
+
+      <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-100 p-6">
+          <h2 className="font-bold text-slate-900">Data Monitoring</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Tabel pendaftar jalur Zonasi dan Prestasi dari seluruh sekolah.
+          </p>
+        </div>
+
+        {data.length === 0 ? (
+          <div className="p-12 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-blue-50 text-blue-600">
+              <Users className="h-8 w-8" />
             </div>
 
-            {isLoading ? (
-              <MonitoringSkeleton />
-            ) : (
-              <>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  {[
-                    {
-                      label: "Total Pendaftar",
-                      value: dataMonitoring.reduce(
-                        (a, s) => a + s.pendaftar,
-                        0,
-                      ),
-                      color: "bg-blue-500",
-                      icon: "👥",
-                    },
-                    {
-                      label: "Terverifikasi",
-                      value: dataMonitoring.reduce(
-                        (a, s) => a + s.terverifikasi,
-                        0,
-                      ),
-                      color: "bg-green-500",
-                      icon: "✅",
-                    },
-                    {
-                      label: "Menunggu",
-                      value: dataMonitoring.reduce(
-                        (a, s) => a + s.menunggu,
-                        0,
-                      ),
-                      color: "bg-amber-500",
-                      icon: "⏳",
-                    },
-                    {
-                      label: "Ditolak",
-                      value: dataMonitoring.reduce(
-                        (a, s) => a + s.ditolak,
-                        0,
-                      ),
-                      color: "bg-red-500",
-                      icon: "❌",
-                    },
-                  ].map((s) => (
-                    <div
-                      key={s.label}
-                      className="bg-white rounded-2xl shadow p-5 flex flex-col gap-2"
-                    >
-                      <div
-                        className={`w-10 h-10 rounded-xl ${s.color} flex items-center justify-center text-xl`}
-                      >
-                        {s.icon}
-                      </div>
+            <h3 className="font-bold text-slate-800">
+              Belum ada data pendaftar
+            </h3>
 
-                      <p className="text-2xl font-bold text-slate-800">
-                        {s.value}
-                      </p>
-
-                      <p className="text-xs text-slate-500">{s.label}</p>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="bg-white rounded-2xl shadow p-4 flex gap-3">
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="🔍 Cari sekolah..."
-                    className="flex-1 border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all"
-                  />
-
-                  <select
-                    value={filterJalur}
-                    onChange={(e) => setFilterJalur(e.target.value)}
-                    className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-indigo-500 transition-all"
-                  >
-                    <option>Semua</option>
-                    <option>Zonasi</option>
-                    <option>Prestasi</option>
-                    <option>Afirmasi</option>
-                    <option>Domisili</option>
-                  </select>
-                </div>
-
-                <div className="bg-white rounded-2xl shadow overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="bg-slate-50 border-b border-slate-100">
-                        <tr>
-                          <th className="text-left py-3 px-4 text-xs text-slate-500 font-semibold">
-                            Sekolah
-                          </th>
-                          <th className="text-center py-3 px-4 text-xs text-slate-500 font-semibold">
-                            Kuota
-                          </th>
-                          <th className="text-center py-3 px-4 text-xs text-slate-500 font-semibold">
-                            Pendaftar
-                          </th>
-                          <th className="text-center py-3 px-4 text-xs text-slate-500 font-semibold">
-                            Terverifikasi
-                          </th>
-                          <th className="text-center py-3 px-4 text-xs text-slate-500 font-semibold">
-                            Menunggu
-                          </th>
-                          <th className="text-center py-3 px-4 text-xs text-slate-500 font-semibold">
-                            Ditolak
-                          </th>
-                          <th className="text-center py-3 px-4 text-xs text-slate-500 font-semibold">
-                            % Terisi
-                          </th>
-                        </tr>
-                      </thead>
-
-                      <tbody>
-                        {paginated.map((s) => {
-                          const persen = Math.round(
-                            (s.terverifikasi / s.kuota) * 100,
-                          );
-
-                          return (
-                            <tr
-                              key={s.id}
-                              className="border-b border-slate-50 hover:bg-slate-50 transition-colors"
-                            >
-                              <td className="py-3 px-4 font-medium text-slate-800 text-xs">
-                                {s.nama}
-                              </td>
-
-                              <td className="py-3 px-4 text-center text-slate-600">
-                                {s.kuota}
-                              </td>
-
-                              <td className="py-3 px-4 text-center font-bold text-blue-600">
-                                {s.pendaftar}
-                              </td>
-
-                              <td className="py-3 px-4 text-center font-bold text-green-600">
-                                {s.terverifikasi}
-                              </td>
-
-                              <td className="py-3 px-4 text-center font-bold text-amber-600">
-                                {s.menunggu}
-                              </td>
-
-                              <td className="py-3 px-4 text-center font-bold text-red-500">
-                                {s.ditolak}
-                              </td>
-
-                              <td className="py-3 px-4 text-center">
-                                <div className="flex items-center justify-center gap-2">
-                                  <div className="w-16 bg-slate-100 rounded-full h-2">
-                                    <div
-                                      className={`h-2 rounded-full ${
-                                        persen >= 80
-                                          ? "bg-red-500"
-                                          : persen >= 50
-                                            ? "bg-amber-500"
-                                            : "bg-green-500"
-                                      }`}
-                                      style={{
-                                        width: `${Math.min(persen, 100)}%`,
-                                      }}
-                                    />
-                                  </div>
-
-                                  <span className="text-xs font-semibold text-slate-600">
-                                    {persen}%
-                                  </span>
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100">
-                    <p className="text-xs text-slate-400">
-                      Menampilkan{" "}
-                      {filtered.length === 0 ? 0 : startIndex + 1} dari{" "}
-                      {filtered.length} sekolah
-                    </p>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() =>
-                          setCurrentPage((prev) => Math.max(1, prev - 1))
-                        }
-                        disabled={currentPage === 1}
-                        className="px-3 py-1.5 text-sm rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50"
-                      >
-                        Prev
-                      </button>
-
-                      <span className="text-sm text-slate-600">
-                        {currentPage} / {totalPage}
-                      </span>
-
-                      <button
-                        onClick={() =>
-                          setCurrentPage((prev) =>
-                            Math.min(prev + 1, totalPage),
-                          )
-                        }
-                        disabled={currentPage === totalPage}
-                        className="px-3 py-1.5 text-sm rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50"
-                      >
-                        Next
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
+            <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
+              Data pendaftar dari seluruh sekolah akan muncul di sini setelah
+              siswa melakukan pendaftaran.
+            </p>
           </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50">
+                <tr>
+                  {["No", "Nama", "Sekolah", "Jalur", "Status", "Aksi"].map(
+                    (head) => (
+                      <th
+                        key={head}
+                        className="px-4 py-3 text-left text-xs font-semibold text-slate-500"
+                      >
+                        {head}
+                      </th>
+                    )
+                  )}
+                </tr>
+              </thead>
 
-          <Footer />
-        </main>
-      </div>
+              <tbody>
+                {data.map((item, index) => (
+                  <tr
+                    key={`${item.nama}-${index}`}
+                    className="border-t border-slate-100 hover:bg-slate-50"
+                  >
+                    <td className="px-4 py-4 text-slate-400">{index + 1}</td>
+
+                    <td className="px-4 py-4 font-semibold text-slate-800">
+                      {item.nama}
+                    </td>
+
+                    <td className="px-4 py-4 text-slate-600">
+                      {item.sekolah}
+                    </td>
+
+                    <td className="px-4 py-4">
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-semibold ${item.jalur === "ZONASI"
+                            ? "bg-blue-100 text-blue-700"
+                            : "bg-purple-100 text-purple-700"
+                          }`}
+                      >
+                        {item.jalur}
+                      </span>
+                    </td>
+
+                    <td className="px-4 py-4 text-slate-600">
+                      {item.status}
+                    </td>
+
+                    <td className="px-4 py-4">
+                      <button className="inline-flex items-center gap-2 rounded-xl bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-100">
+                        <Eye className="h-4 w-4" />
+                        Detail
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
     </div>
   );
 }
 
-function MonitoringSkeleton() {
+function Card({
+  title,
+  value,
+  icon,
+}: {
+  title: string;
+  value: string;
+  icon: React.ReactNode;
+}) {
   return (
-    <>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div
-            key={i}
-            className="bg-white rounded-2xl shadow p-5 flex flex-col gap-3"
-          >
-            <Skeleton className="w-10 h-10 rounded-xl" />
-            <Skeleton className="h-7 w-20" />
-            <Skeleton className="h-3 w-24" />
-          </div>
-        ))}
+    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+        {icon}
       </div>
 
-      <div className="bg-white rounded-2xl shadow p-4 flex gap-3">
-        <Skeleton className="h-11 flex-1 rounded-xl" />
-        <Skeleton className="h-11 w-36 rounded-xl" />
-      </div>
-
-      <div className="bg-white rounded-2xl shadow overflow-hidden">
-        <div className="p-4 border-b border-slate-100">
-          <div className="grid grid-cols-7 gap-4">
-            {Array.from({ length: 7 }).map((_, i) => (
-              <Skeleton key={i} className="h-4 w-full" />
-            ))}
-          </div>
-        </div>
-
-        <div className="divide-y divide-slate-50">
-          {Array.from({ length: 10 }).map((_, i) => (
-            <div key={i} className="grid grid-cols-7 gap-4 px-4 py-3">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-12 mx-auto" />
-              <Skeleton className="h-4 w-12 mx-auto" />
-              <Skeleton className="h-4 w-12 mx-auto" />
-              <Skeleton className="h-4 w-12 mx-auto" />
-              <Skeleton className="h-4 w-12 mx-auto" />
-              <Skeleton className="h-4 w-20 mx-auto" />
-            </div>
-          ))}
-        </div>
-
-        <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100">
-          <Skeleton className="h-4 w-40" />
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-8 w-16 rounded-lg" />
-            <Skeleton className="h-4 w-10" />
-            <Skeleton className="h-8 w-16 rounded-lg" />
-          </div>
-        </div>
-      </div>
-    </>
+      <h2 className="text-4xl font-bold text-slate-900">{value}</h2>
+      <p className="mt-1 text-sm text-slate-500">{title}</p>
+    </div>
   );
 }
