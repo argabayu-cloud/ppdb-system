@@ -16,36 +16,65 @@ type LoginInput = {
 };
 
 export const registerUser = async (data: RegisterInput) => {
-  let { nama, email, noTlpn, password } = data;
+  let { nama, email, noTlpn, password, konfirmasiPassword } = data;
 
-  if (!nama || !email || !noTlpn || !password) {
+  if (!nama || !email || !noTlpn || !password || !konfirmasiPassword) {
     throw new Error("Semua field wajib diisi");
   }
 
   email = email.toLowerCase().trim();
+  noTlpn = noTlpn.trim();
 
-  const existingUser = await prisma.user.findUnique({
-    where: { email },
+  if (password !== konfirmasiPassword) {
+    throw new Error("Konfirmasi password tidak cocok");
+  }
+
+  // ========================
+  // VALIDASI EMAIL
+  // ========================
+  const existingEmail = await prisma.user.findUnique({
+    where: {
+      email,
+    },
   });
 
-  if (existingUser) {
+  if (existingEmail) {
     throw new Error("Email sudah digunakan");
   }
 
+  // ========================
+  // VALIDASI NOMOR TELEPON
+  // ========================
+  const existingPhone = await prisma.user.findUnique({
+    where: {
+      noTlpn,
+    },
+  });
+
+  if (existingPhone) {
+    throw new Error("Nomor telepon sudah digunakan");
+  }
+
+  // ========================
+  // HASH PASSWORD
+  // ========================
   const hashedPassword = await bcrypt.hash(password, 10);
 
+  // ========================
+  // CREATE USER
+  // ========================
   const user = await prisma.user.create({
     data: {
       nama,
       email,
       noTlpn,
       password: hashedPassword,
-      // role default USER dari schema → tidak perlu di-set di sini
     },
     select: {
       id: true,
       nama: true,
       email: true,
+      noTlpn: true,
       role: true,
       createdAt: true,
     },
@@ -64,21 +93,25 @@ export const loginUser = async (data: LoginInput) => {
   email = email.toLowerCase().trim();
 
   const user = await prisma.user.findUnique({
-    where: { email: data.email },
+    where: {
+      email,
+    },
   });
 
   if (!user) {
     throw new Error("User tidak ditemukan");
   }
 
-  const isValid = await bcrypt.compare(data.password, user.password);
+  const isValid = await bcrypt.compare(password, user.password);
 
   if (!isValid) {
     throw new Error("Password salah");
   }
 
   const adminSekolah = await prisma.adminSekolah.findFirst({
-    where: { userId: user.id },
+    where: {
+      userId: user.id,
+    },
     include: {
       sekolah: true,
     },
@@ -93,7 +126,6 @@ export const loginUser = async (data: LoginInput) => {
       nama: user.nama,
       email: user.email,
       role: user.role,
-
       namaSekolah: adminSekolah?.sekolah.nama || null,
     },
   };
