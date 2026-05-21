@@ -65,7 +65,7 @@ model User {
   email     String   @unique
   password  String
   role      Role     @default(USER)
-  noTlpn    String?
+  noTlpn String? @unique
 
   alamat    String?
   kelurahan String?
@@ -158,7 +158,7 @@ model Pendaftaran {
   noPendaftaran String?
   submittedAt DateTime?
 
-  nisn              String?
+  nisn String? @unique
   namaSekolahAsal   String?
   npsn              String?
   tahunLulus        String?
