@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import {
   createPendaftaran,
+  getDashboardPendaftaran,
   getSekolah,
   uploadDokumen,
   type Sekolah,
@@ -72,6 +73,178 @@ function calculateDistance(
   return R * c;
 }
 
+function mergePendaftaranData(container: any) {
+  if (!container || typeof container !== "object" || Array.isArray(container)) {
+    return null;
+  }
+
+  if (
+    container.pendaftaran &&
+    typeof container.pendaftaran === "object" &&
+    !Array.isArray(container.pendaftaran)
+  ) {
+    return {
+      ...container.pendaftaran,
+      pilihanSekolah:
+        container.pilihanSekolah ||
+        container.pilihan ||
+        container.pilihans ||
+        container.PilihanSekolah ||
+        container.pendaftaran.pilihanSekolah ||
+        container.pendaftaran.pilihan ||
+        container.pendaftaran.pilihans ||
+        container.pendaftaran.PilihanSekolah,
+    };
+  }
+
+  return container;
+}
+
+function getSavedPendaftaran(res: any) {
+  const candidates = [
+    mergePendaftaranData(res?.data),
+    mergePendaftaranData(res?.data?.data),
+    mergePendaftaranData(res),
+    mergePendaftaranData(res?.pendaftaran),
+  ];
+
+  const data = candidates.find(
+    (item) => item && typeof item === "object" && !Array.isArray(item)
+  );
+
+  if (!data) return null;
+
+  const hasUsefulData =
+    data.id ||
+    data.jalur ||
+    data.nisn ||
+    data.sekolah1Id ||
+    data.sekolahId ||
+    data.pilihanSekolah ||
+    data.pilihan ||
+    data.pilihans ||
+    data.PilihanSekolah;
+
+  return hasUsefulData ? data : null;
+}
+
+function toNumberOrNull(value: unknown) {
+  if (value === null || value === undefined || value === "") return null;
+
+  const numberValue = Number(value);
+
+  return Number.isNaN(numberValue) ? null : numberValue;
+}
+
+function toStringValue(value: unknown) {
+  if (value === null || value === undefined) return "";
+  return String(value);
+}
+
+function normalizeJalur(value: unknown) {
+  const jalur = String(value || "").toLowerCase();
+
+  if (jalur === "zonasi") return "zonasi";
+  if (jalur === "prestasi") return "prestasi";
+
+  return "";
+}
+
+function getSavedNilaiRataRata(saved: any) {
+  return toStringValue(
+    saved.nilaiRataRata ??
+      saved.nilaiRataRataRapor ??
+      saved.nilaiRapor ??
+      saved.rataRataRapor ??
+      saved.rataRata ??
+      saved.rataRataNilai ??
+      saved.nilaiAkademik ??
+      saved.dataAkademik?.nilaiRataRata ??
+      saved.biodata?.nilaiRataRata
+  );
+}
+
+function getPilihanArray(saved: any) {
+  const pilihan =
+    saved.pilihanSekolah ||
+    saved.pilihan ||
+    saved.pilihans ||
+    saved.PilihanSekolah ||
+    saved.pilihanSekolahList ||
+    [];
+
+  return Array.isArray(pilihan) ? pilihan : [];
+}
+
+function getSavedSekolahName(saved: any) {
+  return (
+    saved.sekolah1?.nama ||
+    saved.sekolah?.nama ||
+    saved.pilihan1?.nama ||
+    saved.pilihan1?.sekolah?.nama ||
+    saved.pilihanSekolah1?.sekolah?.nama ||
+    saved.namaSekolahTujuan ||
+    saved.sekolahTujuan ||
+    ""
+  );
+}
+
+function getSavedSekolahId(saved: any, sekolahOptions: Sekolah[]) {
+  const pilihanArray = getPilihanArray(saved);
+
+  if (pilihanArray.length > 0) {
+    const pilihanPertama =
+      pilihanArray.find(
+        (item: any) =>
+          item.urutan === 1 ||
+          item.pilihanKe === 1 ||
+          item.prioritas === 1 ||
+          item.nomorPilihan === 1
+      ) || pilihanArray[0];
+
+    const id =
+      pilihanPertama.sekolahId ||
+      pilihanPertama.sekolah?.id ||
+      pilihanPertama.idSekolah ||
+      pilihanPertama.Sekolah?.id ||
+      pilihanPertama.schoolId ||
+      pilihanPertama.sekolah1Id ||
+      "";
+
+    if (id) return String(id);
+  }
+
+  const directId =
+    saved.sekolah1Id ||
+    saved.sekolahId ||
+    saved.idSekolah ||
+    saved.pilihan1Id ||
+    saved.schoolId ||
+    saved.sekolah1?.id ||
+    saved.sekolah?.id ||
+    saved.pilihan1?.id ||
+    saved.pilihan1?.sekolah?.id ||
+    saved.pilihanSekolah1?.sekolahId ||
+    saved.pilihanSekolah1?.sekolah?.id ||
+    "";
+
+  if (directId) return String(directId);
+
+  const savedSchoolName = getSavedSekolahName(saved);
+
+  if (savedSchoolName) {
+    const matchedSchool = sekolahOptions.find(
+      (school) =>
+        school.nama.toLowerCase().trim() ===
+        String(savedSchoolName).toLowerCase().trim()
+    );
+
+    if (matchedSchool) return String(matchedSchool.id);
+  }
+
+  return "";
+}
+
 export default function PendaftaranPage() {
   const router = useRouter();
 
@@ -100,19 +273,80 @@ export default function PendaftaranPage() {
   const [loadingSkeleton, setLoadingSkeleton] = useState(true);
 
   useEffect(() => {
-    const loadSekolah = async () => {
+    const loadInitialData = async () => {
       try {
-        const res = await getSekolah();
-        setSekolahList(res.data || []);
+        const [sekolahRes, pendaftaranRes] = await Promise.all([
+          getSekolah(),
+          getDashboardPendaftaran().catch(() => null),
+        ]);
+
+        const sekolahData = Array.isArray(sekolahRes?.data)
+          ? sekolahRes.data
+          : [];
+
+        setSekolahList(sekolahData);
+
+        const saved = getSavedPendaftaran(pendaftaranRes);
+
+        if (saved) {
+          console.log("DATA PENDAFTARAN TERSIMPAN:", saved);
+
+          const savedJalur = normalizeJalur(saved.jalur);
+          const savedSekolahId = getSavedSekolahId(saved, sekolahData);
+
+          if (savedJalur) {
+            setJalur(savedJalur);
+          }
+
+          setForm((prev) => ({
+            ...prev,
+            nisn: toStringValue(saved.nisn ?? saved.biodata?.nisn),
+            namaSekolahAsal: toStringValue(
+              saved.namaSekolahAsal ?? saved.biodata?.namaSekolahAsal
+            ),
+            npsn: toStringValue(saved.npsn ?? saved.biodata?.npsn),
+            tahunLulus: toStringValue(
+              saved.tahunLulus ?? saved.biodata?.tahunLulus
+            ),
+            nilaiRataRata: getSavedNilaiRataRata(saved),
+            jenisPrestasi: toStringValue(saved.jenisPrestasi),
+            tingkatPrestasi: toStringValue(saved.tingkatPrestasi),
+          }));
+
+          if (savedSekolahId) {
+            setPilihan1(savedSekolahId);
+          }
+
+          const savedLatitude = toNumberOrNull(
+            saved.latitude ?? saved.biodata?.latitude
+          );
+
+          const savedLongitude = toNumberOrNull(
+            saved.longitude ?? saved.biodata?.longitude
+          );
+
+          if (savedLatitude !== null) {
+            setLatitude(savedLatitude);
+          }
+
+          if (savedLongitude !== null) {
+            setLongitude(savedLongitude);
+          }
+
+          if (savedLatitude !== null && savedLongitude !== null) {
+            setGeoStatus("granted");
+            setGeoMessage("Lokasi tersimpan dari data pendaftaran.");
+          }
+        }
       } catch (error) {
         console.error(error);
-        alert("Gagal mengambil daftar sekolah");
+        alert("Gagal mengambil data pendaftaran");
       } finally {
         setLoadingSkeleton(false);
       }
     };
 
-    loadSekolah();
+    loadInitialData();
   }, []);
 
   const handleChange = (
@@ -182,7 +416,10 @@ export default function PendaftaranPage() {
   }
 
   const selectedJalur = jalurPendaftaran.find((item) => item.id === jalur);
-  const selectedPilihan1 = sekolahList.find((school) => school.id === pilihan1);
+
+  const selectedPilihan1 = sekolahList.find(
+    (school) => String(school.id) === String(pilihan1)
+  );
 
   const latitudeValue = latitude !== null ? latitude.toFixed(6) : "";
   const longitudeValue = longitude !== null ? longitude.toFixed(6) : "";
@@ -725,7 +962,9 @@ function SchoolSelect({
   onChange: (value: string) => void;
   options: Sekolah[];
 }) {
-  const selectedSchool = options.find((school) => school.id === value);
+  const selectedSchool = options.find(
+    (school) => String(school.id) === String(value)
+  );
 
   return (
     <div className="flex flex-col gap-2">
@@ -750,7 +989,7 @@ function SchoolSelect({
       >
         <option value="">-- Pilih Sekolah Tujuan --</option>
         {options.map((school) => (
-          <option key={school.id} value={school.id}>
+          <option key={school.id} value={String(school.id)}>
             {school.nama}
           </option>
         ))}
