@@ -53,6 +53,21 @@ export const createPendaftaran = async (userId: string, data: any) => {
     throw new Error("User sudah melakukan pendaftaran");
   }
 
+  if (nisn) {
+    const existingNisn = await prisma.pendaftaran.findFirst({
+      where: {
+        nisn,
+        NOT: {
+          userId,
+        },
+      },
+    });
+
+    if (existingNisn) {
+      throw new Error("NISN sudah digunakan");
+    }
+  }
+
   const user = await prisma.user.findUnique({
     where: { id: userId },
   });
