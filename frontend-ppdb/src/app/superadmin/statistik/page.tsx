@@ -1,12 +1,13 @@
 "use client";
 
 import {
-    BarChart3,
-    Building2,
-    CheckCircle2,
-    ShieldCheck,
-    Trophy,
-    Users,
+    BadgeCheck,
+    ChartColumnBig,
+    ClipboardCheck,
+    MapPinned,
+    Medal,
+    School,
+    UserRound,
 } from "lucide-react";
 
 export default function StatistikKotaPage() {
@@ -17,75 +18,60 @@ export default function StatistikKotaPage() {
                 <div className="absolute right-24 bottom-0 h-28 w-28 rounded-full bg-white/10" />
 
                 <div className="relative">
-                    <p className="text-sm font-semibold text-blue-100">
+                    <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-semibold">
+                        <ChartColumnBig className="h-4 w-4" />
                         Statistik Kota
-                    </p>
+                    </div>
 
-                    <h1 className="mt-2 text-3xl font-bold">
+                    <h1 className="text-3xl font-bold">
                         Statistik PPDB Zonasi & Prestasi
                     </h1>
 
                     <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-100">
-                        Pantau perkembangan pendaftaran, verifikasi, dan distribusi jalur
-                        Zonasi serta Prestasi dari seluruh sekolah.
+                        Pantau perkembangan pendaftaran dan verifikasi dari seluruh sekolah.
                     </p>
                 </div>
             </section>
 
             <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
-                <Card title="Total Sekolah" value="0" icon={<Building2 />} />
-                <Card title="Total Siswa" value="0" icon={<Users />} />
-                <Card title="Zonasi" value="0" icon={<ShieldCheck />} />
-                <Card title="Prestasi" value="0" icon={<Trophy />} />
+                <Card title="Total Sekolah" value="0" icon={<School />} />
+                <Card title="Total Pendaftar" value="0" icon={<UserRound />} />
+                <Card title="Zonasi" value="0" icon={<MapPinned />} />
+                <Card title="Prestasi" value="0" icon={<Medal />} />
             </section>
 
             <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                     <div className="mb-6 flex items-center justify-between">
                         <div>
-                            <h2 className="font-bold text-slate-900">
-                                Distribusi Jalur
-                            </h2>
-
+                            <h2 className="font-bold text-slate-900">Distribusi Jalur</h2>
                             <p className="mt-1 text-sm text-slate-500">
-                                Perbandingan jalur Zonasi dan Prestasi.
+                                Perbandingan pendaftar Zonasi dan Prestasi.
                             </p>
                         </div>
 
                         <div className="rounded-2xl bg-blue-50 p-3 text-blue-600">
-                            <BarChart3 className="h-6 w-6" />
+                            <ChartColumnBig className="h-6 w-6" />
                         </div>
                     </div>
 
                     <div className="space-y-5">
-                        <Progress
-                            label="Zonasi"
-                            value={0}
-                            color="bg-blue-600"
-                        />
-
-                        <Progress
-                            label="Prestasi"
-                            value={0}
-                            color="bg-purple-600"
-                        />
+                        <Progress label="Zonasi" value={0} color="bg-blue-600" />
+                        <Progress label="Prestasi" value={0} color="bg-purple-600" />
                     </div>
                 </div>
 
                 <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                     <div className="mb-6 flex items-center justify-between">
                         <div>
-                            <h2 className="font-bold text-slate-900">
-                                Status Verifikasi
-                            </h2>
-
+                            <h2 className="font-bold text-slate-900">Status Verifikasi</h2>
                             <p className="mt-1 text-sm text-slate-500">
-                                Ringkasan status verifikasi pendaftar.
+                                Ringkasan proses verifikasi pendaftar.
                             </p>
                         </div>
 
                         <div className="rounded-2xl bg-emerald-50 p-3 text-emerald-600">
-                            <CheckCircle2 className="h-6 w-6" />
+                            <ClipboardCheck className="h-6 w-6" />
                         </div>
                     </div>
 
@@ -93,6 +79,7 @@ export default function StatistikKotaPage() {
                         <StatusCard
                             title="Sudah Diverifikasi"
                             value="0"
+                            icon={<BadgeCheck />}
                             bg="bg-emerald-50"
                             text="text-emerald-700"
                         />
@@ -100,6 +87,7 @@ export default function StatistikKotaPage() {
                         <StatusCard
                             title="Belum Diverifikasi"
                             value="0"
+                            icon={<ClipboardCheck />}
                             bg="bg-amber-50"
                             text="text-amber-700"
                         />
@@ -109,18 +97,15 @@ export default function StatistikKotaPage() {
 
             <section className="rounded-3xl border border-slate-200 bg-white shadow-sm">
                 <div className="border-b border-slate-100 p-6">
-                    <h2 className="font-bold text-slate-900">
-                        Statistik Sekolah
-                    </h2>
-
+                    <h2 className="font-bold text-slate-900">Statistik Sekolah</h2>
                     <p className="mt-1 text-sm text-slate-500">
-                        Ringkasan statistik pendaftaran tiap sekolah.
+                        Ringkasan statistik pendaftaran per sekolah.
                     </p>
                 </div>
 
                 <div className="p-10 text-center">
                     <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-blue-50 text-blue-600">
-                        <Building2 className="h-8 w-8" />
+                        <School className="h-8 w-8" />
                     </div>
 
                     <h3 className="font-bold text-slate-800">
@@ -147,7 +132,7 @@ function Card({
     icon: React.ReactNode;
 }) {
     return (
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-blue-200 hover:shadow-md">
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
                 {icon}
             </div>
@@ -171,10 +156,7 @@ function Progress({
         <div>
             <div className="mb-2 flex items-center justify-between text-sm">
                 <span className="font-semibold text-slate-700">{label}</span>
-
-                <span className="font-bold text-slate-800">
-                    {value}%
-                </span>
+                <span className="font-bold text-slate-800">{value}%</span>
             </div>
 
             <div className="h-3 rounded-full bg-slate-100">
@@ -190,21 +172,24 @@ function Progress({
 function StatusCard({
     title,
     value,
+    icon,
     bg,
     text,
 }: {
     title: string;
     value: string;
+    icon: React.ReactNode;
     bg: string;
     text: string;
 }) {
     return (
-        <div className={`rounded-2xl p-5 ${bg}`}>
-            <p className="text-sm text-slate-500">{title}</p>
+        <div className={`flex items-center justify-between rounded-2xl p-5 ${bg}`}>
+            <div>
+                <p className="text-sm text-slate-500">{title}</p>
+                <h2 className={`mt-2 text-3xl font-bold ${text}`}>{value}</h2>
+            </div>
 
-            <h2 className={`mt-2 text-3xl font-bold ${text}`}>
-                {value}
-            </h2>
+            <div className={text}>{icon}</div>
         </div>
     );
 }

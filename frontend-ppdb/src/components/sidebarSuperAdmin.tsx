@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  BarChart3,
   LayoutDashboard,
-  Users,
+  ClipboardCheck,
+  ChartColumnBig,
 } from "lucide-react";
 
 const menu = [
@@ -17,12 +17,12 @@ const menu = [
   {
     label: "Monitoring",
     href: "/superadmin/dashboard/monitoring",
-    icon: Users,
+    icon: ClipboardCheck,
   },
   {
     label: "Statistik Kota",
     href: "/superadmin/dashboard/statistik",
-    icon: BarChart3,
+    icon: ChartColumnBig,
   },
 ];
 
@@ -43,8 +43,8 @@ export default function SidebarSuperAdmin() {
                 key={item.href}
                 href={item.href}
                 className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${active
-                    ? "bg-blue-600 text-white shadow-sm"
-                    : "text-slate-600 hover:bg-blue-50 hover:text-blue-700"
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "text-slate-600 hover:bg-blue-50 hover:text-blue-700"
                   }`}
               >
                 <Icon className="h-5 w-5" />
