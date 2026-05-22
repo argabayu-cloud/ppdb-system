@@ -283,7 +283,7 @@ export default function DashboardPage() {
             className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
           >
             <div
-              className={`mb-4 flex h-11 w-11 items-center justify-center rounded-xl text-blue-600 ${item.color}`}
+              className={`mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-blue-200/70 text-blue-600 ${item.color}`}
             >
               {item.icon}
             </div>
