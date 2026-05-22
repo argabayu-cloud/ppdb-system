@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { ClipboardList, FileUp, Megaphone, UserRound } from "lucide-react";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { getDashboardPendaftaran } from "@/lib/api";
 
@@ -122,7 +124,7 @@ export default function DashboardPage() {
       color: stepDone("Isi Biodata")
         ? "bg-blue-50 text-blue-600"
         : "bg-amber-50 text-amber-600",
-      icon: "👤",
+      icon: <UserRound className="h-6 w-6" />,
     },
     {
       label: "Pendaftaran",
@@ -131,7 +133,7 @@ export default function DashboardPage() {
       color: stepDone("Pendaftaran")
         ? "bg-blue-50 text-blue-600"
         : "bg-red-50 text-red-500",
-      icon: "📋",
+      icon: <ClipboardList className="h-6 w-6" />,
     },
     {
       label: "Upload Berkas",
@@ -140,7 +142,7 @@ export default function DashboardPage() {
       color: stepDone("Upload Berkas")
         ? "bg-blue-50 text-blue-600"
         : "bg-red-50 text-red-500",
-      icon: "📁",
+      icon: <FileUp className="h-6 w-6" />,
     },
     {
       label: "Status",
@@ -149,7 +151,7 @@ export default function DashboardPage() {
       color: isRegistered
         ? "bg-emerald-50 text-emerald-600"
         : "bg-slate-100 text-slate-500",
-      icon: "📢",
+      icon: <Megaphone className="h-6 w-6" />,
     },
   ];
 
