@@ -624,8 +624,10 @@ export default function PendaftaranPage() {
               >
                 <div className="flex items-center gap-3">
                   <span
-                    className={`flex h-10 w-10 items-center justify-center rounded-xl text-xl ${
-                      active ? "bg-white/15" : "bg-white"
+                    className={`flex h-10 w-10 items-center justify-center rounded-xl border ${
+                      active
+                        ? "border-white/20 bg-white/15 text-white"
+                        : "border-blue-100 bg-white text-blue-600"
                     }`}
                   >
                     {item.icon}
