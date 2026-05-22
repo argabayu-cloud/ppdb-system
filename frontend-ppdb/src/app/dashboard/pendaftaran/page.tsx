@@ -4,6 +4,8 @@ import dynamic from "next/dynamic";
 import { useEffect, useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 
+import { MapPin, Trophy } from "lucide-react";
+
 import {
   createPendaftaran,
   getDashboardPendaftaran,
@@ -25,20 +27,27 @@ const ZonasiMap = dynamic(() => import("@/components/zonasiMap"), {
   ssr: false,
 });
 
-const jalurPendaftaran = [
+const jalurPendaftaran: JalurOption[] = [
   {
     id: "zonasi",
     label: "Zonasi",
-    icon: "📍",
+    icon: <MapPin className="h-5 w-5" />,
     desc: "Berdasarkan jarak tempat tinggal ke sekolah",
   },
   {
     id: "prestasi",
     label: "Prestasi",
-    icon: "🏆",
+    icon: <Trophy className="h-5 w-5" />,
     desc: "Berdasarkan nilai rapor atau prestasi lomba",
   },
 ];
+
+type JalurOption = {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  desc: string;
+};
 
 type FormState = {
   nisn: string;
