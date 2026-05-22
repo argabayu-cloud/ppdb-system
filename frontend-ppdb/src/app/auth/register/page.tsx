@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { AlertTriangle, UserPlus } from "lucide-react";
+
 import { registerUser } from "@/lib/api";
 
 export default function RegisterPage() {
@@ -142,8 +144,8 @@ export default function RegisterPage() {
             <div className="w-full max-w-md rounded-[2rem] border border-white/15 bg-white/10 p-4 shadow-2xl shadow-blue-950/30 backdrop-blur">
               <div className="rounded-[1.5rem] bg-white p-6 text-slate-900 shadow-xl sm:p-8">
                 <div className="text-center">
-                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 text-2xl shadow-lg shadow-blue-200">
-                    📝
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 shadow-lg shadow-blue-200">
+                    <UserPlus className="h-7 w-7 text-white" />
                   </div>
 
                   <h1 className="mt-5 text-2xl font-bold text-slate-900">
@@ -157,7 +159,10 @@ export default function RegisterPage() {
 
                 {error && (
                   <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-                    ⚠️ {error}
+                    <span className="flex items-start gap-2">
+                      <AlertTriangle className="mt-0.5 h-4 w-4 text-red-600" />
+                      <span>{error}</span>
+                    </span>
                   </div>
                 )}
 
