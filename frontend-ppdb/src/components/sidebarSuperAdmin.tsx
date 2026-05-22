@@ -16,12 +16,12 @@ const menu = [
   },
   {
     label: "Monitoring",
-    href: "/superadmin/dashboard/monitoring",
+    href: "/superadmin/monitoring",
     icon: ClipboardCheck,
   },
   {
     label: "Statistik Kota",
-    href: "/superadmin/dashboard/statistik",
+    href: "/superadmin/statistik",
     icon: ChartColumnBig,
   },
 ];
