@@ -283,6 +283,13 @@ export default function PendaftaranPage() {
 
   useEffect(() => {
     const loadInitialData = async () => {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        router.push("/auth/login");
+        return;
+      }
+
       try {
         const [sekolahRes, pendaftaranRes] = await Promise.all([
           getSekolah(),
@@ -349,7 +356,21 @@ export default function PendaftaranPage() {
         }
       } catch (error) {
         console.error(error);
-        alert("Gagal mengambil data pendaftaran");
+
+        const message = error instanceof Error ? error.message : "";
+
+        // Biasanya terjadi kalau token hilang/invalid -> backend balikin 401
+        if (
+          message.toLowerCase().includes("unauthorized") ||
+          message.toLowerCase().includes("token")
+        ) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          router.push("/auth/login");
+          return;
+        }
+
+        alert(message || "Gagal mengambil data pendaftaran");
       } finally {
         setLoadingSkeleton(false);
       }
