@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { AlertTriangle, UserPlus } from "lucide-react";
+import { AlertTriangle, CheckCircle2, UserPlus } from "lucide-react";
 
 import { registerUser } from "@/lib/api";
 
@@ -19,6 +19,7 @@ export default function RegisterPage() {
   const [konfirmasiPassword, setKonfirmasiPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,6 +30,7 @@ export default function RegisterPage() {
 
     setLoading(true);
     setError("");
+    setSuccess("");
 
     if (
       !trimmedNama ||
@@ -57,8 +59,11 @@ export default function RegisterPage() {
         konfirmasiPassword,
       });
 
-      alert("Register berhasil, silakan login");
-      router.push("/auth/login");
+      setSuccess("Akun berhasil dibuat. Kamu akan diarahkan ke halaman login...");
+
+      setTimeout(() => {
+        router.push("/auth/login");
+      }, 1200);
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
@@ -170,6 +175,22 @@ export default function RegisterPage() {
                       </div>
                     </div>
                     <div className="h-1 w-full bg-red-500/20" />
+                  </div>
+                )}
+
+                {success && (
+                  <div className="mt-6 overflow-hidden rounded-2xl border border-emerald-200/70 bg-gradient-to-r from-emerald-50 to-white shadow-sm">
+                    <div className="flex gap-3 px-4 py-3">
+                      <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600/10 text-emerald-700">
+                        <CheckCircle2 className="h-5 w-5" />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold text-emerald-700">Berhasil</p>
+                        <p className="mt-0.5 break-words text-sm text-slate-700">{success}</p>
+                      </div>
+                    </div>
+                    <div className="h-1 w-full bg-emerald-500/20" />
                   </div>
                 )}
 
