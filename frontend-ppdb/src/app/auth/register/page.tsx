@@ -158,11 +158,18 @@ export default function RegisterPage() {
                 </div>
 
                 {error && (
-                  <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-                    <span className="flex items-start gap-2">
-                      <AlertTriangle className="mt-0.5 h-4 w-4 text-red-600" />
-                      <span>{error}</span>
-                    </span>
+                  <div className="mt-6 overflow-hidden rounded-2xl border border-red-200/70 bg-gradient-to-r from-red-50 to-white shadow-sm">
+                    <div className="flex gap-3 px-4 py-3">
+                      <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-xl bg-red-600/10 text-red-700">
+                        <AlertTriangle className="h-5 w-5" />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold text-red-700">Pendaftaran gagal</p>
+                        <p className="mt-0.5 break-words text-sm text-slate-700">{error}</p>
+                      </div>
+                    </div>
+                    <div className="h-1 w-full bg-red-500/20" />
                   </div>
                 )}
 
