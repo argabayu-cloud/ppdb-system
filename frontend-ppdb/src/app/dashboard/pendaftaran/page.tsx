@@ -627,7 +627,9 @@ export default function PendaftaranPage() {
                     className={`flex h-10 w-10 items-center justify-center rounded-xl border ${
                       active
                         ? "border-white/20 bg-white/15 text-white"
-                        : "border-blue-100 bg-white text-blue-600"
+                        : item.id === "prestasi"
+                          ? "border-purple-100 bg-white text-purple-600"
+                          : "border-blue-100 bg-white text-blue-600"
                     }`}
                   >
                     {item.icon}
