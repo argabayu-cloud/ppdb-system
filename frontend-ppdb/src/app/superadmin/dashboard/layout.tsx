@@ -1,3 +1,4 @@
+import FooterSuperAdmin from "@/components/footer";
 import NavbarSuperAdmin from "@/components/navbarSuperAdmin";
 import SidebarSuperAdmin from "@/components/sidebarSuperAdmin";
 
@@ -11,8 +12,9 @@ export default function SuperAdminLayout({
       <NavbarSuperAdmin />
       <SidebarSuperAdmin />
 
-      <main className="ml-60 pt-16 min-h-screen">
-        <div className="p-6">{children}</div>
+      <main className="ml-60 flex min-h-screen flex-col pt-16">
+        <div className="flex-1 p-6">{children}</div>
+        <FooterSuperAdmin />
       </main>
     </div>
   );
