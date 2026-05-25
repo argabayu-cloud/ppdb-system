@@ -17,11 +17,6 @@ const menu = [
     icon: LayoutDashboard,
   },
   {
-    label: "Verifikasi",
-    href: "/adminsekolah/dashboard/verifikasi",
-    icon: ClipboardCheck,
-  },
-  {
     label: "Pendaftar",
     href: "/adminsekolah/dashboard/pendaftar",
     icon: Users,
