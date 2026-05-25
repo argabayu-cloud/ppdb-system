@@ -7,6 +7,8 @@ import {
   validasiDokumenAdmin,
 } from "@/lib/api";
 
+type StatusPenolakan = "DOKUMEN" | "ZONASI" | "LAINNYA";
+
 type Dokumen = {
   id: string;
   namaFile: string;
@@ -52,11 +54,36 @@ type Pendaftar = {
   };
 };
 
+const jenisPenolakanOptions: {
+  value: StatusPenolakan;
+  label: string;
+  desc: string;
+}[] = [
+  {
+    value: "DOKUMEN",
+    label: "Dokumen",
+    desc: "Berkas peserta salah atau tidak sesuai.",
+  },
+  {
+    value: "ZONASI",
+    label: "Zonasi",
+    desc: "Lokasi peserta tidak masuk radius zonasi.",
+  },
+  {
+    value: "LAINNYA",
+    label: "Lainnya",
+    desc: "Alasan lain di luar dokumen dan zonasi.",
+  },
+];
+
 export default function AdminPendaftarPage() {
   const [pendaftar, setPendaftar] = useState<Pendaftar[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [alasan, setAlasan] = useState<Record<string, string>>({});
+  const [jenisPenolakan, setJenisPenolakan] = useState<
+    Record<string, StatusPenolakan>
+  >({});
 
   const loadPendaftar = async () => {
     try {
@@ -92,9 +119,7 @@ export default function AdminPendaftarPage() {
 
       await loadPendaftar();
     } catch (error) {
-      alert(
-        error instanceof Error ? error.message : "Gagal validasi dokumen",
-      );
+      alert(error instanceof Error ? error.message : "Gagal validasi dokumen");
     } finally {
       setProcessingId(null);
     }
@@ -103,11 +128,24 @@ export default function AdminPendaftarPage() {
   const handleSeleksi = async (
     pilihanId: string,
     status: "DITERIMA" | "DITOLAK",
+    semuaDokumenDiterima: boolean,
   ) => {
     try {
-      if (status === "DITOLAK" && !alasan[pilihanId]?.trim()) {
-        alert("Alasan penolakan wajib diisi");
+      if (status === "DITERIMA" && !semuaDokumenDiterima) {
+        alert("Semua dokumen harus diterima sebelum siswa dinyatakan diterima.");
         return;
+      }
+
+      if (status === "DITOLAK") {
+        if (!alasan[pilihanId]?.trim()) {
+          alert("Alasan penolakan wajib diisi.");
+          return;
+        }
+
+        if (!jenisPenolakan[pilihanId]) {
+          alert("Jenis penolakan wajib dipilih.");
+          return;
+        }
       }
 
       setProcessingId(pilihanId);
@@ -116,6 +154,8 @@ export default function AdminPendaftarPage() {
         pilihanId,
         status,
         alasan: status === "DITOLAK" ? alasan[pilihanId] : undefined,
+        jenisPenolakan:
+          status === "DITOLAK" ? jenisPenolakan[pilihanId] : undefined,
       });
 
       await loadPendaftar();
@@ -183,6 +223,14 @@ export default function AdminPendaftarPage() {
               dokumen.length > 0 &&
               dokumen.every((doc) => doc.status === "DITERIMA");
 
+            const adaDokumenMenunggu = dokumen.some(
+              (doc) => doc.status === "MENUNGGU",
+            );
+
+            const adaDokumenDitolak = dokumen.some(
+              (doc) => doc.status === "DITOLAK",
+            );
+
             return (
               <div
                 key={item.id}
@@ -199,7 +247,7 @@ export default function AdminPendaftarPage() {
                     </h2>
 
                     <p className="mt-1 text-sm text-slate-500">
-                      NISN: {item.pendaftaran.nisn || "-"} · Jalur:{" "}
+                      NISN: {item.pendaftaran.nisn || "-"} - Jalur:{" "}
                       {item.pendaftaran.jalur}
                     </p>
 
@@ -221,7 +269,10 @@ export default function AdminPendaftarPage() {
 
                     <div className="mt-3 grid grid-cols-1 gap-2 text-sm text-slate-600 sm:grid-cols-2">
                       <p>NIK: {biodata?.nik || "-"}</p>
-                      <p>No. HP: {biodata?.noHp || item.pendaftaran.user.noTlpn || "-"}</p>
+                      <p>
+                        No. HP:{" "}
+                        {biodata?.noHp || item.pendaftaran.user.noTlpn || "-"}
+                      </p>
                       <p>Tempat Lahir: {biodata?.tempatLahir || "-"}</p>
                       <p>Tanggal Lahir: {biodata?.tanggalLahir || "-"}</p>
                       <p className="sm:col-span-2">
@@ -252,12 +303,16 @@ export default function AdminPendaftarPage() {
                       className={`rounded-full px-3 py-1 text-xs font-bold ${
                         semuaDokumenDiterima
                           ? "bg-emerald-50 text-emerald-600"
-                          : "bg-amber-50 text-amber-600"
+                          : adaDokumenDitolak
+                            ? "bg-red-50 text-red-600"
+                            : "bg-amber-50 text-amber-600"
                       }`}
                     >
                       {semuaDokumenDiterima
                         ? "Dokumen valid"
-                        : "Perlu validasi"}
+                        : adaDokumenDitolak
+                          ? "Ada dokumen ditolak"
+                          : "Perlu validasi"}
                     </span>
                   </div>
 
@@ -339,6 +394,47 @@ export default function AdminPendaftarPage() {
                     Keputusan Seleksi
                   </h3>
 
+                  <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
+                    <div>
+                      <label className="text-xs font-bold text-slate-600">
+                        Jenis Penolakan
+                      </label>
+
+                      <select
+                        value={jenisPenolakan[item.id] || ""}
+                        onChange={(e) =>
+                          setJenisPenolakan((prev) => ({
+                            ...prev,
+                            [item.id]: e.target.value as StatusPenolakan,
+                          }))
+                        }
+                        className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                      >
+                        <option value="">-- Pilih jika menolak --</option>
+                        {jenisPenolakanOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+                      <p className="text-xs font-bold text-slate-600">
+                        Status Dokumen
+                      </p>
+                      <p className="mt-1 text-sm text-slate-500">
+                        {semuaDokumenDiterima
+                          ? "Semua dokumen sudah diterima."
+                          : adaDokumenMenunggu
+                            ? "Masih ada dokumen yang menunggu validasi."
+                            : adaDokumenDitolak
+                              ? "Ada dokumen yang ditolak."
+                              : "Dokumen belum lengkap."}
+                      </p>
+                    </div>
+                  </div>
+
                   <textarea
                     value={alasan[item.id] || ""}
                     onChange={(e) =>
@@ -354,21 +450,42 @@ export default function AdminPendaftarPage() {
 
                   <div className="mt-3 flex flex-wrap gap-3">
                     <button
-                      onClick={() => handleSeleksi(item.id, "DITERIMA")}
-                      disabled={processingId === item.id}
-                      className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-blue-700 disabled:bg-slate-300"
+                      onClick={() =>
+                        handleSeleksi(item.id, "DITERIMA", semuaDokumenDiterima)
+                      }
+                      disabled={processingId === item.id || !semuaDokumenDiterima}
+                      className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
                     >
                       Terima Siswa
                     </button>
 
                     <button
-                      onClick={() => handleSeleksi(item.id, "DITOLAK")}
+                      onClick={() =>
+                        handleSeleksi(item.id, "DITOLAK", semuaDokumenDiterima)
+                      }
                       disabled={processingId === item.id}
-                      className="rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-red-700 disabled:bg-slate-300"
+                      className="rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-slate-300"
                     >
                       Tolak Siswa
                     </button>
                   </div>
+
+                  {!semuaDokumenDiterima && (
+                    <p className="mt-3 text-xs font-semibold text-amber-600">
+                      Peserta hanya bisa diterima setelah seluruh dokumen
+                      berstatus DITERIMA.
+                    </p>
+                  )}
+
+                  {jenisPenolakan[item.id] && (
+                    <p className="mt-2 text-xs text-slate-500">
+                      {
+                        jenisPenolakanOptions.find(
+                          (option) => option.value === jenisPenolakan[item.id],
+                        )?.desc
+                      }
+                    </p>
+                  )}
                 </div>
               </div>
             );
