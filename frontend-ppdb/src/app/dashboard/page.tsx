@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { ClipboardList, FileUp, Megaphone, UserRound } from "lucide-react";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { getDashboardPendaftaran } from "@/lib/api";
 
@@ -119,37 +121,29 @@ export default function DashboardPage() {
       label: "Biodata",
       status: stepDone("Isi Biodata") ? "Lengkap" : "Belum Lengkap",
       href: "/dashboard/biodata",
-      color: stepDone("Isi Biodata")
-        ? "bg-blue-50 text-blue-600"
-        : "bg-amber-50 text-amber-600",
-      icon: "👤",
+      color: stepDone("Isi Biodata") ? "bg-blue-50" : "bg-amber-50",
+      icon: <UserRound className="h-6 w-6" />,
     },
     {
       label: "Pendaftaran",
       status: stepDone("Pendaftaran") ? "Sudah Diisi" : "Belum Diisi",
       href: "/dashboard/pendaftaran",
-      color: stepDone("Pendaftaran")
-        ? "bg-blue-50 text-blue-600"
-        : "bg-red-50 text-red-500",
-      icon: "📋",
+      color: stepDone("Pendaftaran") ? "bg-blue-50" : "bg-red-50",
+      icon: <ClipboardList className="h-6 w-6" />,
     },
     {
       label: "Upload Berkas",
       status: stepDone("Upload Berkas") ? "Berkas Lengkap" : "Belum Upload",
       href: "/dashboard/upload",
-      color: stepDone("Upload Berkas")
-        ? "bg-blue-50 text-blue-600"
-        : "bg-red-50 text-red-500",
-      icon: "📁",
+      color: stepDone("Upload Berkas") ? "bg-blue-50" : "bg-red-50",
+      icon: <FileUp className="h-6 w-6" />,
     },
     {
       label: "Status",
       status: isRegistered ? "Menunggu Verifikasi" : "Belum Dikirim",
       href: "/dashboard/pengumuman",
-      color: isRegistered
-        ? "bg-emerald-50 text-emerald-600"
-        : "bg-slate-100 text-slate-500",
-      icon: "📢",
+      color: isRegistered ? "bg-emerald-50" : "bg-slate-100",
+      icon: <Megaphone className="h-6 w-6" />,
     },
   ];
 
@@ -289,7 +283,7 @@ export default function DashboardPage() {
             className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
           >
             <div
-              className={`mb-4 flex h-11 w-11 items-center justify-center rounded-xl text-xl ${item.color}`}
+              className={`mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-blue-200/70 text-blue-600 ${item.color}`}
             >
               {item.icon}
             </div>

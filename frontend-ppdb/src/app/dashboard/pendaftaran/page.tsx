@@ -4,6 +4,8 @@ import dynamic from "next/dynamic";
 import { useEffect, useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 
+import { MapPin, Trophy } from "lucide-react";
+
 import {
   createPendaftaran,
   getDashboardPendaftaran,
@@ -25,20 +27,27 @@ const ZonasiMap = dynamic(() => import("@/components/zonasiMap"), {
   ssr: false,
 });
 
-const jalurPendaftaran = [
+const jalurPendaftaran: JalurOption[] = [
   {
     id: "zonasi",
     label: "Zonasi",
-    icon: "📍",
+    icon: <MapPin className="h-5 w-5" />,
     desc: "Berdasarkan jarak tempat tinggal ke sekolah",
   },
   {
     id: "prestasi",
     label: "Prestasi",
-    icon: "🏆",
+    icon: <Trophy className="h-5 w-5" />,
     desc: "Berdasarkan nilai rapor atau prestasi lomba",
   },
 ];
+
+type JalurOption = {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  desc: string;
+};
 
 type FormState = {
   nisn: string;
@@ -274,6 +283,13 @@ export default function PendaftaranPage() {
 
   useEffect(() => {
     const loadInitialData = async () => {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        router.push("/auth/login");
+        return;
+      }
+
       try {
         const [sekolahRes, pendaftaranRes] = await Promise.all([
           getSekolah(),
@@ -340,7 +356,21 @@ export default function PendaftaranPage() {
         }
       } catch (error) {
         console.error(error);
-        alert("Gagal mengambil data pendaftaran");
+
+        const message = error instanceof Error ? error.message : "";
+
+        // Biasanya terjadi kalau token hilang/invalid -> backend balikin 401
+        if (
+          message.toLowerCase().includes("unauthorized") ||
+          message.toLowerCase().includes("token")
+        ) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          router.push("/auth/login");
+          return;
+        }
+
+        alert(message || "Gagal mengambil data pendaftaran");
       } finally {
         setLoadingSkeleton(false);
       }
@@ -615,8 +645,12 @@ export default function PendaftaranPage() {
               >
                 <div className="flex items-center gap-3">
                   <span
-                    className={`flex h-10 w-10 items-center justify-center rounded-xl text-xl ${
-                      active ? "bg-white/15" : "bg-white"
+                    className={`flex h-10 w-10 items-center justify-center rounded-xl border ${
+                      active
+                        ? "border-white/20 bg-white/15 text-white"
+                        : item.id === "prestasi"
+                          ? "border-purple-100 bg-white text-purple-600"
+                          : "border-blue-100 bg-white text-blue-600"
                     }`}
                   >
                     {item.icon}
