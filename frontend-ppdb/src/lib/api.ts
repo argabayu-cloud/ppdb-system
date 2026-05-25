@@ -170,6 +170,7 @@ export async function seleksiPendaftar(data: {
   pilihanId: string;
   status: "DITERIMA" | "DITOLAK";
   alasan?: string;
+  jenisPenolakan?: "DOKUMEN" | "ZONASI" | "LAINNYA";
 }) {
   return fetcher("/admin/seleksi", {
     method: "POST",
@@ -218,3 +219,4 @@ export async function validasiFinalSuperAdmin(data: {
     body: JSON.stringify(data),
   });
 }
+
