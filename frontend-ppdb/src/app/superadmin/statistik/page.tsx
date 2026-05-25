@@ -1,5 +1,9 @@
 "use client";
 
+import SidebarSuperAdmin from "@/components/sidebarSuperAdmin";
+import NavbarSuperAdmin from "@/components/navbarSuperAdmin";
+import FooterSuperAdmin from "@/components/footer";
+
 import {
     BadgeCheck,
     ChartColumnBig,
