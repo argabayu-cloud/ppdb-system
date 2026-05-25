@@ -1,5 +1,4 @@
 import {
-  Jalur,
   JenisPenolakan,
   StatusDokumen,
   StatusFinal,
@@ -61,11 +60,11 @@ export const getDashboardAdmin = async (adminId: string) => {
   ).length;
 
   const zonasi = pilihan.filter(
-    (item) => item.pendaftaran.jalur === Jalur.ZONASI,
+    (item) => item.pendaftaran.jalur === "ZONASI",
   ).length;
 
   const prestasi = pilihan.filter(
-    (item) => item.pendaftaran.jalur === Jalur.PRESTASI,
+    (item) => item.pendaftaran.jalur === "PRESTASI",
   ).length;
 
   const progress =
@@ -189,24 +188,27 @@ export const seleksiSiswa = async (
     throw new Error("Dokumen belum diupload");
   }
 
-  const adaDokumenMenunggu = dokumen.some(
-    (item) => item.status === StatusDokumen.MENUNGGU,
-  );
-
-  if (adaDokumenMenunggu) {
-    throw new Error("Semua dokumen harus divalidasi terlebih dahulu");
-  }
-
   if (status === "DITERIMA") {
     const adaDokumenDitolak = dokumen.some(
       (item) => item.status === StatusDokumen.DITOLAK,
     );
 
     if (adaDokumenDitolak) {
-      throw new Error("Tidak bisa menerima siswa karena ada dokumen ditolak");
+      throw new Error(
+        "Masih ada dokumen yang ditolak. Peserta belum bisa diterima.",
+      );
     }
 
     await prisma.$transaction(async (tx) => {
+      await tx.dokumen.updateMany({
+        where: {
+          pendaftaranId: pilihan.pendaftaranId,
+        },
+        data: {
+          status: StatusDokumen.DITERIMA,
+        },
+      });
+
       await tx.pilihanSekolah.update({
         where: { id: pilihanId },
         data: {
