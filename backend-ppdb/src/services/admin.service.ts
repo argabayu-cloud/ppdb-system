@@ -1,3 +1,5 @@
+import { sendEmail } from "../utils/mailer";
+
 import {
   JenisPenolakan,
   StatusDokumen,
@@ -259,6 +261,33 @@ export const seleksiSiswa = async (
       });
     });
 
+    console.log("AKAN MENGIRIM EMAIL DITERIMA");
+    console.log("EMAIL TUJUAN:", pilihan.pendaftaran.user.email);
+
+    await sendEmail(
+      pilihan.pendaftaran.user.email,
+      "Hasil Seleksi PPDB",
+      `
+    <div style="font-family: Arial, sans-serif;">
+      <h2>Selamat 🎉</h2>
+
+      <p>
+        Kamu dinyatakan <b>DITERIMA</b> di:
+      </p>
+
+      <h3>${pilihan.sekolah.nama}</h3>
+
+      <p>
+        Silakan login ke sistem PPDB untuk melihat detail pengumuman.
+      </p>
+
+      <br />
+
+      <p>PPDB SMP</p>
+    </div>
+  `,
+    );
+
     return {
       message: "Siswa berhasil diterima",
     };
@@ -337,6 +366,37 @@ export const seleksiSiswa = async (
     });
   });
 
+  console.log("AKAN MENGIRIM EMAIL DITOLAK");
+  console.log("EMAIL TUJUAN:", pilihan.pendaftaran.user.email);
+
+  await sendEmail(
+    pilihan.pendaftaran.user.email,
+    "Hasil Seleksi PPDB",
+    `
+    <div style="font-family: Arial, sans-serif;">
+      <h2>Informasi Hasil Seleksi</h2>
+
+      <p>
+        Mohon maaf, kamu belum diterima di:
+      </p>
+
+      <h3>${pilihan.sekolah.nama}</h3>
+
+      <p>
+        <b>Alasan:</b> ${alasan}
+      </p>
+
+      <p>
+        Silakan login ke sistem PPDB untuk informasi lebih lanjut.
+      </p>
+
+      <br />
+
+      <p>PPDB SMP</p>
+    </div>
+  `,
+  );
+
   return {
     message: "Siswa berhasil ditolak",
   };
@@ -382,9 +442,7 @@ export const validasiDokumen = async (
     where: { id: dokumenId },
     data: {
       status:
-        status === "DITERIMA"
-          ? StatusDokumen.DITERIMA
-          : StatusDokumen.DITOLAK,
+        status === "DITERIMA" ? StatusDokumen.DITERIMA : StatusDokumen.DITOLAK,
     },
   });
 
