@@ -7,6 +7,8 @@ import {
   validasiDokumenAdmin,
 } from "@/lib/api";
 
+type StatusPenolakan = "DOKUMEN" | "ZONASI" | "LAINNYA";
+
 type Dokumen = {
   id: string;
   namaFile: string;
@@ -52,11 +54,36 @@ type Pendaftar = {
   };
 };
 
+const jenisPenolakanOptions: {
+  value: StatusPenolakan;
+  label: string;
+  desc: string;
+}[] = [
+  {
+    value: "DOKUMEN",
+    label: "Dokumen",
+    desc: "Berkas peserta salah atau tidak sesuai.",
+  },
+  {
+    value: "ZONASI",
+    label: "Zonasi",
+    desc: "Lokasi peserta tidak masuk radius zonasi.",
+  },
+  {
+    value: "LAINNYA",
+    label: "Lainnya",
+    desc: "Alasan lain di luar dokumen dan zonasi.",
+  },
+];
+
 export default function AdminPendaftarPage() {
   const [pendaftar, setPendaftar] = useState<Pendaftar[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [alasan, setAlasan] = useState<Record<string, string>>({});
+  const [jenisPenolakan, setJenisPenolakan] = useState<
+    Record<string, StatusPenolakan>
+  >({});
 
   const loadPendaftar = async () => {
     try {
@@ -78,23 +105,18 @@ export default function AdminPendaftarPage() {
     loadPendaftar();
   }, []);
 
-  const handleValidasiDokumen = async (
-    dokumenId: string,
-    status: "DITERIMA" | "DITOLAK",
-  ) => {
+  const handleTolakDokumen = async (dokumenId: string) => {
     try {
       setProcessingId(dokumenId);
 
       await validasiDokumenAdmin({
         dokumenId,
-        status,
+        status: "DITOLAK",
       });
 
       await loadPendaftar();
     } catch (error) {
-      alert(
-        error instanceof Error ? error.message : "Gagal validasi dokumen",
-      );
+      alert(error instanceof Error ? error.message : "Gagal menolak dokumen");
     } finally {
       setProcessingId(null);
     }
@@ -103,11 +125,26 @@ export default function AdminPendaftarPage() {
   const handleSeleksi = async (
     pilihanId: string,
     status: "DITERIMA" | "DITOLAK",
+    bisaDiterima: boolean,
   ) => {
     try {
-      if (status === "DITOLAK" && !alasan[pilihanId]?.trim()) {
-        alert("Alasan penolakan wajib diisi");
+      if (status === "DITERIMA" && !bisaDiterima) {
+        alert(
+          "Peserta belum bisa diterima karena dokumen belum lengkap atau masih ada dokumen yang ditolak.",
+        );
         return;
+      }
+
+      if (status === "DITOLAK") {
+        if (!alasan[pilihanId]?.trim()) {
+          alert("Alasan penolakan wajib diisi.");
+          return;
+        }
+
+        if (!jenisPenolakan[pilihanId]) {
+          alert("Jenis penolakan wajib dipilih.");
+          return;
+        }
       }
 
       setProcessingId(pilihanId);
@@ -116,6 +153,8 @@ export default function AdminPendaftarPage() {
         pilihanId,
         status,
         alasan: status === "DITOLAK" ? alasan[pilihanId] : undefined,
+        jenisPenolakan:
+          status === "DITOLAK" ? jenisPenolakan[pilihanId] : undefined,
       });
 
       await loadPendaftar();
@@ -179,9 +218,19 @@ export default function AdminPendaftarPage() {
           {pendaftar.map((item) => {
             const biodata = item.pendaftaran.user.biodata;
             const dokumen = item.pendaftaran.dokumen;
+
+            const dokumenLengkap = dokumen.length > 0;
+            const adaDokumenDitolak = dokumen.some(
+              (doc) => doc.status === "DITOLAK",
+            );
+            const adaDokumenMenunggu = dokumen.some(
+              (doc) => doc.status === "MENUNGGU",
+            );
             const semuaDokumenDiterima =
-              dokumen.length > 0 &&
+              dokumenLengkap &&
               dokumen.every((doc) => doc.status === "DITERIMA");
+
+            const bisaDiterima = dokumenLengkap && !adaDokumenDitolak;
 
             return (
               <div
@@ -199,7 +248,7 @@ export default function AdminPendaftarPage() {
                     </h2>
 
                     <p className="mt-1 text-sm text-slate-500">
-                      NISN: {item.pendaftaran.nisn || "-"} · Jalur:{" "}
+                      NISN: {item.pendaftaran.nisn || "-"} - Jalur:{" "}
                       {item.pendaftaran.jalur}
                     </p>
 
@@ -221,7 +270,10 @@ export default function AdminPendaftarPage() {
 
                     <div className="mt-3 grid grid-cols-1 gap-2 text-sm text-slate-600 sm:grid-cols-2">
                       <p>NIK: {biodata?.nik || "-"}</p>
-                      <p>No. HP: {biodata?.noHp || item.pendaftaran.user.noTlpn || "-"}</p>
+                      <p>
+                        No. HP:{" "}
+                        {biodata?.noHp || item.pendaftaran.user.noTlpn || "-"}
+                      </p>
                       <p>Tempat Lahir: {biodata?.tempatLahir || "-"}</p>
                       <p>Tanggal Lahir: {biodata?.tanggalLahir || "-"}</p>
                       <p className="sm:col-span-2">
@@ -252,14 +304,28 @@ export default function AdminPendaftarPage() {
                       className={`rounded-full px-3 py-1 text-xs font-bold ${
                         semuaDokumenDiterima
                           ? "bg-emerald-50 text-emerald-600"
-                          : "bg-amber-50 text-amber-600"
+                          : adaDokumenDitolak
+                            ? "bg-red-50 text-red-600"
+                            : adaDokumenMenunggu
+                              ? "bg-amber-50 text-amber-600"
+                              : "bg-slate-100 text-slate-500"
                       }`}
                     >
                       {semuaDokumenDiterima
                         ? "Dokumen valid"
-                        : "Perlu validasi"}
+                        : adaDokumenDitolak
+                          ? "Ada dokumen ditolak"
+                          : adaDokumenMenunggu
+                            ? "Belum ada dokumen ditolak"
+                            : "Dokumen belum lengkap"}
                     </span>
                   </div>
+
+                  <p className="mb-4 text-xs leading-5 text-slate-500">
+                    Jika ada berkas yang salah, klik Tolak Berkas pada dokumen
+                    tersebut. Jika semua berkas sudah sesuai, langsung klik
+                    Terima Siswa di bagian bawah.
+                  </p>
 
                   <div className="flex flex-col gap-3">
                     {dokumen.length === 0 ? (
@@ -305,27 +371,13 @@ export default function AdminPendaftarPage() {
                             </span>
 
                             {doc.status === "MENUNGGU" && (
-                              <>
-                                <button
-                                  onClick={() =>
-                                    handleValidasiDokumen(doc.id, "DITERIMA")
-                                  }
-                                  disabled={processingId === doc.id}
-                                  className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-emerald-700 disabled:bg-slate-300"
-                                >
-                                  Terima
-                                </button>
-
-                                <button
-                                  onClick={() =>
-                                    handleValidasiDokumen(doc.id, "DITOLAK")
-                                  }
-                                  disabled={processingId === doc.id}
-                                  className="rounded-lg bg-red-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-red-700 disabled:bg-slate-300"
-                                >
-                                  Tolak
-                                </button>
-                              </>
+                              <button
+                                onClick={() => handleTolakDokumen(doc.id)}
+                                disabled={processingId === doc.id}
+                                className="rounded-lg bg-red-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-red-700 disabled:bg-slate-300"
+                              >
+                                Tolak Berkas
+                              </button>
                             )}
                           </div>
                         </div>
@@ -338,6 +390,45 @@ export default function AdminPendaftarPage() {
                   <h3 className="text-sm font-bold text-slate-800">
                     Keputusan Seleksi
                   </h3>
+
+                  <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
+                    <div>
+                      <label className="text-xs font-bold text-slate-600">
+                        Jenis Penolakan
+                      </label>
+
+                      <select
+                        value={jenisPenolakan[item.id] || ""}
+                        onChange={(e) =>
+                          setJenisPenolakan((prev) => ({
+                            ...prev,
+                            [item.id]: e.target.value as StatusPenolakan,
+                          }))
+                        }
+                        className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                      >
+                        <option value="">-- Pilih jika menolak --</option>
+                        {jenisPenolakanOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+                      <p className="text-xs font-bold text-slate-600">
+                        Status Dokumen
+                      </p>
+                      <p className="mt-1 text-sm text-slate-500">
+                        {adaDokumenDitolak
+                          ? "Ada dokumen yang ditolak."
+                          : dokumenLengkap
+                            ? "Tidak ada dokumen yang ditolak."
+                            : "Dokumen belum lengkap."}
+                      </p>
+                    </div>
+                  </div>
 
                   <textarea
                     value={alasan[item.id] || ""}
@@ -354,21 +445,42 @@ export default function AdminPendaftarPage() {
 
                   <div className="mt-3 flex flex-wrap gap-3">
                     <button
-                      onClick={() => handleSeleksi(item.id, "DITERIMA")}
-                      disabled={processingId === item.id}
-                      className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-blue-700 disabled:bg-slate-300"
+                      onClick={() =>
+                        handleSeleksi(item.id, "DITERIMA", bisaDiterima)
+                      }
+                      disabled={processingId === item.id || !bisaDiterima}
+                      className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
                     >
                       Terima Siswa
                     </button>
 
                     <button
-                      onClick={() => handleSeleksi(item.id, "DITOLAK")}
+                      onClick={() =>
+                        handleSeleksi(item.id, "DITOLAK", bisaDiterima)
+                      }
                       disabled={processingId === item.id}
-                      className="rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-red-700 disabled:bg-slate-300"
+                      className="rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-slate-300"
                     >
                       Tolak Siswa
                     </button>
                   </div>
+
+                  {!bisaDiterima && (
+                    <p className="mt-3 text-xs font-semibold text-amber-600">
+                      Peserta hanya bisa diterima jika dokumen sudah lengkap dan
+                      tidak ada dokumen yang ditolak.
+                    </p>
+                  )}
+
+                  {jenisPenolakan[item.id] && (
+                    <p className="mt-2 text-xs text-slate-500">
+                      {
+                        jenisPenolakanOptions.find(
+                          (option) => option.value === jenisPenolakan[item.id],
+                        )?.desc
+                      }
+                    </p>
+                  )}
                 </div>
               </div>
             );

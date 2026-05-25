@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { AlertTriangle, LogIn } from "lucide-react";
+
 import { fetcher } from "@/lib/api";
 
 export default function LoginPage() {
@@ -161,8 +163,8 @@ export default function LoginPage() {
             <div className="w-full max-w-md rounded-[2rem] border border-white/15 bg-white/10 p-4 shadow-2xl shadow-blue-950/30 backdrop-blur">
               <div className="rounded-[1.5rem] bg-white p-6 text-slate-900 shadow-xl sm:p-8">
                 <div className="text-center">
-                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 text-2xl shadow-lg shadow-blue-200">
-                    🔐
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 shadow-lg shadow-blue-200">
+                    <LogIn className="h-7 w-7 text-white" />
                   </div>
 
                   <h1 className="mt-5 text-2xl font-bold text-slate-900">
@@ -175,8 +177,18 @@ export default function LoginPage() {
                 </div>
 
                 {error && (
-                  <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-                    ⚠️ {error}
+                  <div className="mt-6 overflow-hidden rounded-2xl border border-red-200/70 bg-gradient-to-r from-red-50 to-white shadow-sm">
+                    <div className="flex gap-3 px-4 py-3">
+                      <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-xl bg-red-600/10 text-red-700">
+                        <AlertTriangle className="h-5 w-5" />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold text-red-700">Login gagal</p>
+                        <p className="mt-0.5 break-words text-sm text-slate-700">{error}</p>
+                      </div>
+                    </div>
+                    <div className="h-1 w-full bg-red-500/20" />
                   </div>
                 )}
 

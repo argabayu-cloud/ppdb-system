@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
-  ClipboardCheck,
   ChartColumnBig,
+  ClipboardCheck,
+  LayoutDashboard,
 } from "lucide-react";
 
 const menu = [
@@ -35,17 +35,17 @@ export default function SidebarSuperAdmin() {
         <nav className="flex-1 space-y-1.5 p-4">
           {menu.map((item) => {
             const Icon = item.icon;
-            const active =
-              pathname === item.href || pathname.startsWith(`${item.href}/`);
+            const active = pathname === item.href;
 
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${active
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "text-slate-600 hover:bg-blue-50 hover:text-blue-700"
-                  }`}
+                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
+                  active
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "text-slate-600 hover:bg-blue-50 hover:text-blue-700"
+                }`}
               >
                 <Icon className="h-5 w-5" />
                 <span>{item.label}</span>

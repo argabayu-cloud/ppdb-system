@@ -1,5 +1,5 @@
 const BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+  process.env.NEXT_PUBLIC_API_URL || "/api";
 
 async function parseResponse(res: Response) {
   const contentType = res.headers.get("content-type") || "";
@@ -170,6 +170,7 @@ export async function seleksiPendaftar(data: {
   pilihanId: string;
   status: "DITERIMA" | "DITOLAK";
   alasan?: string;
+  jenisPenolakan?: "DOKUMEN" | "ZONASI" | "LAINNYA";
 }) {
   return fetcher("/admin/seleksi", {
     method: "POST",
@@ -200,3 +201,22 @@ export async function resetPendaftaranZonasi() {
 export async function getDokumenSaya() {
   return fetcher("/dokumen/me");
 }
+
+export async function getSuperAdminPendaftaran() {
+  return fetcher("/super-admin/pendaftaran");
+}
+
+export async function getSuperAdminHasil() {
+  return fetcher("/super-admin/hasil");
+}
+
+export async function validasiFinalSuperAdmin(data: {
+  pendaftaranId: string;
+  status: "DITERIMA" | "DITOLAK";
+}) {
+  return fetcher("/super-admin/validasi", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
