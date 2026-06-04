@@ -48,15 +48,27 @@ export const uploadDokumen = async (
 
   const fileName = `${userId}/${pendaftaran.id}/${tipeDokumen}-${safeName}-${Date.now()}.${ext}`;
 
-  const { error } = await supabase.storage
-    .from(bucket)
-    .upload(fileName, file.buffer, {
-      contentType: file.mimetype,
-      upsert: true,
-    });
+  let uploadResult;
+  try {
+    uploadResult = await supabase.storage
+      .from(bucket)
+      .upload(fileName, file.buffer, {
+        contentType: file.mimetype,
+        upsert: true,
+      });
+  } catch (fetchErr: any) {
+    console.error("Supabase storage fetch error:", fetchErr);
+    throw new Error(
+      `Gagal terhubung ke storage: ${fetchErr?.message || "fetch failed"}. ` +
+      `Pastikan SUPABASE_URL dan bucket '${bucket}' sudah benar dan aktif.`
+    );
+  }
 
-  if (error) {
-    throw new Error(error.message);
+  if (uploadResult.error) {
+    console.error("Supabase upload error:", uploadResult.error);
+    throw new Error(
+      `Upload gagal: ${uploadResult.error.message} (bucket: ${bucket})`
+    );
   }
 
   const { data: publicUrlData } = supabase.storage
