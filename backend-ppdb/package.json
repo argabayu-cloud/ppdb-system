@@ -20,9 +20,9 @@
   "type": "commonjs",
   "dependencies": {
     "@prisma/client": "^6.19.3",
-    "@supabase/ssr": "^0.10.2",
-    "@supabase/supabase-js": "^2.106.0",
-    "@vercel/node": "^5.7.17",
+    "@supabase/ssr": "^0.10.3",
+    "@supabase/supabase-js": "^2.107.0",
+    "@vercel/node": "^5.8.11",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
