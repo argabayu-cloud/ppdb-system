@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { getDokumenSaya, submitPendaftaran, uploadDokumen } from "@/lib/api";
+import { getDokumenSaya, getDashboardPendaftaran, submitPendaftaran, uploadDokumen } from "@/lib/api";
 
 const daftarBerkas = [
   {
@@ -121,11 +121,37 @@ export default function UploadBerkasPage() {
   >({});
   const [loading, setLoading] = useState(false);
   const [loadingSkeleton, setLoadingSkeleton] = useState(true);
+  const [isPrestasiRapor, setIsPrestasiRapor] = useState(false);
+
+  const activeDaftarBerkas = useMemo(() => {
+    if (isPrestasiRapor) {
+      return daftarBerkas
+        .filter((b) => b.id !== "rapor")
+        .map((b) => {
+          if (b.id === "prestasi") {
+            return {
+              ...b,
+              label: "Rapor Kelas 4, 5, 6 (Jalur Prestasi)",
+              desc: "Format PDF, maks 5MB (Diunggah saat pendaftaran)",
+              required: true,
+              maxSizeMb: 5,
+              accept: ".pdf,application/pdf",
+              allowedTypes: ["application/pdf"],
+            };
+          }
+          return b;
+        });
+    }
+    return daftarBerkas;
+  }, [isPrestasiRapor]);
 
   const loadDokumen = async () => {
     try {
-      const res = await getDokumenSaya();
-      const docs: ExistingDokumen[] = res.data || [];
+      const [docsRes, pendaftaranRes] = await Promise.all([
+        getDokumenSaya(),
+        getDashboardPendaftaran().catch(() => null),
+      ]);
+      const docs: ExistingDokumen[] = docsRes?.data || [];
 
       const mapped = Object.fromEntries(
         docs
@@ -134,6 +160,18 @@ export default function UploadBerkasPage() {
       ) as Record<string, ExistingDokumen>;
 
       setExistingDocs(mapped);
+
+      const saved =
+        pendaftaranRes?.data?.pendaftaran ||
+        pendaftaranRes?.pendaftaran ||
+        pendaftaranRes?.data;
+      if (saved) {
+        const isPrestasi = String(saved.jalur).toUpperCase() === "PRESTASI";
+        const isRapor = String(saved.jenisPrestasi) === "Nilai Rapor";
+        if (isPrestasi && isRapor) {
+          setIsPrestasiRapor(true);
+        }
+      }
     } catch (error) {
       console.error(error);
     } finally {
@@ -151,7 +189,7 @@ export default function UploadBerkasPage() {
 
   const handleFileChange = (id: string, e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    const berkasConfig = daftarBerkas.find((b) => b.id === id);
+    const berkasConfig = activeDaftarBerkas.find((b) => b.id === id);
 
     if (!file || !berkasConfig) return;
 
@@ -228,26 +266,26 @@ export default function UploadBerkasPage() {
   };
 
   const uploadedCount = useMemo(() => {
-    return daftarBerkas.filter((berkas) => {
+    return activeDaftarBerkas.filter((berkas) => {
       const existing = existingDocs[berkas.tipeDokumen];
       const selected = files[berkas.id];
 
-      return Boolean(existing) || selected.status === "uploaded";
+      return Boolean(existing) || selected?.status === "uploaded";
     }).length;
-  }, [existingDocs, files]);
+  }, [activeDaftarBerkas, existingDocs, files]);
 
-  const requiredCount = daftarBerkas.filter((b) => b.required).length;
+  const requiredCount = activeDaftarBerkas.filter((b) => b.required).length;
 
   const requiredUploaded = useMemo(() => {
-    return daftarBerkas
+    return activeDaftarBerkas
       .filter((b) => b.required)
       .filter((berkas) => {
         const existing = existingDocs[berkas.tipeDokumen];
         const selected = files[berkas.id];
 
-        return Boolean(existing) || selected.status === "uploaded";
+        return Boolean(existing) || selected?.status === "uploaded";
       }).length;
-  }, [existingDocs, files]);
+  }, [activeDaftarBerkas, existingDocs, files]);
 
   const rejectedDocs = Object.values(existingDocs).filter(
     (doc) => doc.status === "DITOLAK",
@@ -256,7 +294,7 @@ export default function UploadBerkasPage() {
   const hasRejectedDocs = rejectedDocs.length > 0;
 
   const progressPercent = Math.round(
-    (uploadedCount / daftarBerkas.length) * 100,
+    (uploadedCount / activeDaftarBerkas.length) * 100,
   );
 
   const handleSubmit = async () => {
@@ -269,7 +307,7 @@ export default function UploadBerkasPage() {
       return;
     }
 
-    const selectedFiles = daftarBerkas.filter(
+    const selectedFiles = activeDaftarBerkas.filter(
       (berkas) => files[berkas.id]?.file,
     );
 
@@ -343,7 +381,7 @@ export default function UploadBerkasPage() {
           <div className="min-w-[165px] rounded-2xl border border-white/10 bg-white/15 px-5 py-4 text-center backdrop-blur">
             <p className="text-xs text-blue-100">Progress Upload</p>
             <p className="mt-1 text-xl font-bold text-white">
-              {uploadedCount}/{daftarBerkas.length}
+              {uploadedCount}/{activeDaftarBerkas.length}
             </p>
             <p className="mt-1 text-xs text-blue-200">
               {progressPercent}% selesai
@@ -373,7 +411,7 @@ export default function UploadBerkasPage() {
             <p className="mt-1 text-xs text-slate-500">
               Wajib: {requiredUploaded}/{requiredCount} · Opsional:{" "}
               {uploadedCount - requiredUploaded}/
-              {daftarBerkas.length - requiredCount}
+              {activeDaftarBerkas.length - requiredCount}
             </p>
           </div>
 
@@ -399,12 +437,12 @@ export default function UploadBerkasPage() {
         </div>
 
         <div className="flex flex-col gap-3">
-          {daftarBerkas.map((berkas) => {
+          {activeDaftarBerkas.map((berkas) => {
             const fileData = files[berkas.id];
             const existing = existingDocs[berkas.tipeDokumen];
 
-            const isUploaded = fileData.status === "uploaded";
-            const isError = fileData.status === "error";
+            const isUploaded = fileData?.status === "uploaded";
+            const isError = fileData?.status === "error";
             const isExisting = Boolean(existing);
             const isRejected = existing?.status === "DITOLAK";
             const isAccepted = existing?.status === "DITERIMA";
