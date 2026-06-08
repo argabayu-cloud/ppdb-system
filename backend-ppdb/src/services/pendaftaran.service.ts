@@ -1,4 +1,5 @@
 import {
+  Jalur,
   JenisPenolakan,
   StatusDokumen,
   StatusPendaftaran,
@@ -9,7 +10,7 @@ import {
 import prisma from "../config/prisma";
 import { haversineDistance } from "../utils/distance";
 
-const requiredDokumen = [
+const requiredDokumen: TipeDokumen[] = [
   TipeDokumen.AKTA,
   TipeDokumen.KK,
   TipeDokumen.IJAZAH,
@@ -86,8 +87,8 @@ export const createPendaftaran = async (userId: string, data: any) => {
 
   const sekolah2 = sekolah2Id
     ? await prisma.sekolah.findUnique({
-      where: { id: sekolah2Id },
-    })
+        where: { id: sekolah2Id },
+      })
     : null;
 
   if (sekolah2Id && !sekolah2) {
@@ -102,11 +103,11 @@ export const createPendaftaran = async (userId: string, data: any) => {
 
   const jarak1 = bisaHitungJarak
     ? haversineDistance(
-      latitude,
-      longitude,
-      sekolah1.latitude as number,
-      sekolah1.longitude as number,
-    )
+        latitude,
+        longitude,
+        sekolah1.latitude as number,
+        sekolah1.longitude as number,
+      )
     : null;
 
   const nilaiRapor =
@@ -194,7 +195,21 @@ export const submitPendaftaran = async (userId: string) => {
     pendaftaran.dokumen.map((dokumen) => dokumen.tipeDokumen).filter(Boolean),
   );
 
-  const missing = requiredDokumen.filter((tipe) => !uploadedTypes.has(tipe));
+  // Cek jika pendaftaran berada di Jalur PRESTASI dengan jenis prestasi "Nilai Rapor"
+  const isJalurPrestasiRapor =
+    pendaftaran.jalur === Jalur.PRESTASI &&
+    pendaftaran.jenisPrestasi === "Nilai Rapor";
+
+  // Jika ya, gantikan kewajiban dokumen RAPOR dengan PRESTASI
+  const currentRequiredDokumen = isJalurPrestasiRapor
+    ? requiredDokumen
+        .filter((tipe) => tipe !== TipeDokumen.RAPOR)
+        .concat(TipeDokumen.PRESTASI)
+    : requiredDokumen;
+
+  const missing = currentRequiredDokumen.filter(
+    (tipe) => !uploadedTypes.has(tipe),
+  );
 
   if (missing.length > 0) {
     throw new Error(`Berkas wajib belum lengkap: ${missing.join(", ")}`);
@@ -377,7 +392,19 @@ export const getDashboardPendaftaran = async (userId: string) => {
     pendaftaran?.dokumen.map((d) => d.tipeDokumen).filter(Boolean) || [],
   );
 
-  const requiredUploaded = requiredDokumen.every((tipe) =>
+  // Cek jika pendaftaran berada di Jalur PRESTASI dengan jenis prestasi "Nilai Rapor"
+  const isJalurPrestasiRapor =
+    pendaftaran?.jalur === Jalur.PRESTASI &&
+    pendaftaran?.jenisPrestasi === "Nilai Rapor";
+
+  // Jika ya, gantikan kewajiban dokumen RAPOR dengan PRESTASI
+  const currentRequiredDokumen = isJalurPrestasiRapor
+    ? requiredDokumen
+        .filter((tipe) => tipe !== TipeDokumen.RAPOR)
+        .concat(TipeDokumen.PRESTASI)
+    : requiredDokumen;
+
+  const requiredUploaded = currentRequiredDokumen.every((tipe) =>
     uploadedTypes.has(tipe),
   );
 
@@ -386,11 +413,11 @@ export const getDashboardPendaftaran = async (userId: string) => {
   const progressPercent = isSubmitted
     ? 100
     : Math.round(
-      ([true, hasBiodata, hasPendaftaran, requiredUploaded].filter(Boolean)
-        .length /
-        4) *
-      100,
-    );
+        ([true, hasBiodata, hasPendaftaran, requiredUploaded].filter(Boolean)
+          .length /
+          4) *
+          100,
+      );
 
   return {
     user: {
