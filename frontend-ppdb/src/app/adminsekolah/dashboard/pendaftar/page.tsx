@@ -538,58 +538,58 @@ export default function AdminPendaftarPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-blue-700 to-blue-900 p-8 text-white shadow-sm">
+    <div className="flex flex-col gap-4 md:gap-6">
+      <section className="relative overflow-hidden rounded-2xl md:rounded-3xl bg-gradient-to-r from-blue-600 via-blue-700 to-blue-900 p-6 md:p-8 text-white shadow-sm">
         <div className="absolute -right-10 -top-10 h-44 w-44 rounded-full bg-white/10" />
         <div className="absolute bottom-0 right-24 h-28 w-28 rounded-full bg-white/10" />
 
-        <div className="relative z-10 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        <div className="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-center">
           <div>
-            <span className="rounded-full bg-white/15 px-4 py-2 text-sm font-semibold text-white">
+            <span className="rounded-full bg-white/15 px-4 py-2 text-xs md:text-sm font-semibold text-white">
               Admin Sekolah
             </span>
 
-            <h1 className="mt-5 text-3xl font-bold tracking-tight">
+            <h1 className="mt-4 md:mt-5 text-2xl md:text-3xl font-bold tracking-tight">
               Data Pendaftar
             </h1>
 
-            <p className="mt-2 max-w-xl text-sm leading-6 text-blue-100">
+            <p className="mt-2 max-w-xl text-xs md:text-sm leading-relaxed md:leading-6 text-blue-100">
               Kelola data peserta dalam bentuk tabel agar proses seleksi lebih
               cepat dan rapi.
             </p>
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-white/15 px-5 py-4 text-center backdrop-blur">
-            <p className="text-xs text-blue-100">Total Pendaftar</p>
-            <p className="mt-1 text-2xl font-bold">{pendaftar.length}</p>
+          <div className="w-fit rounded-2xl border border-white/10 bg-white/15 px-5 py-4 text-center backdrop-blur md:min-w-[140px]">
+            <p className="text-[10px] md:text-xs text-blue-100 uppercase font-bold tracking-wider">Total Pendaftar</p>
+            <p className="mt-1 text-xl md:text-2xl font-bold">{pendaftar.length}</p>
           </div>
         </div>
       </section>
 
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-          <p className="text-xs font-bold uppercase text-slate-400">
+      <section className="grid grid-cols-1 gap-3 sm:grid-cols-3 md:gap-4">
+        <div className="rounded-2xl border border-slate-100 bg-white p-4 md:p-5 shadow-sm">
+          <p className="text-[10px] md:text-xs font-bold uppercase text-slate-400">
             Diproses
           </p>
-          <p className="mt-2 text-2xl font-bold text-blue-700">
+          <p className="mt-1 md:mt-2 text-xl md:text-2xl font-bold text-blue-700">
             {totalDiproses}
           </p>
         </div>
 
-        <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-          <p className="text-xs font-bold uppercase text-slate-400">
+        <div className="rounded-2xl border border-slate-100 bg-white p-4 md:p-5 shadow-sm">
+          <p className="text-[10px] md:text-xs font-bold uppercase text-slate-400">
             Diterima
           </p>
-          <p className="mt-2 text-2xl font-bold text-emerald-600">
+          <p className="mt-1 md:mt-2 text-xl md:text-2xl font-bold text-emerald-600">
             {totalDiterima}
           </p>
         </div>
 
-        <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-          <p className="text-xs font-bold uppercase text-slate-400">
+        <div className="rounded-2xl border border-slate-100 bg-white p-4 md:p-5 shadow-sm">
+          <p className="text-[10px] md:text-xs font-bold uppercase text-slate-400">
             Ditolak
           </p>
-          <p className="mt-2 text-2xl font-bold text-red-600">
+          <p className="mt-1 md:mt-2 text-xl md:text-2xl font-bold text-red-600">
             {totalDitolak}
           </p>
         </div>

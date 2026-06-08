@@ -15,9 +15,11 @@ export default function AdminSekolahLayout({
 }) {
   const pathname = usePathname();
   const [loading, setLoading] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     setLoading(true);
+    setSidebarOpen(false); // Close sidebar on route change (mobile)
 
     const timer = setTimeout(() => {
       setLoading(false);
@@ -28,11 +30,11 @@ export default function AdminSekolahLayout({
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans">
-      <NavbarAdmin />
-      <SidebarAdmin />
+      <NavbarAdmin onMenuClick={() => setSidebarOpen(true)} />
+      <SidebarAdmin isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <main className="ml-60 pt-16 min-h-screen flex flex-col">
-        <div className="flex-1 p-6">
+      <main className="min-h-screen flex flex-col transition-all duration-300 lg:ml-60 pt-16">
+        <div className="flex-1 p-4 md:p-6">
           {loading ? (
             <div className="flex min-h-[70vh] items-center justify-center">
               <div className="flex flex-col items-center gap-4">

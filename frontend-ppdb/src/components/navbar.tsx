@@ -8,6 +8,7 @@ import {
   ChevronDown,
   FileText,
   LogOut,
+  Menu,
   Settings,
   User,
 } from "lucide-react";
@@ -19,7 +20,7 @@ type UserData = {
   email?: string;
 };
 
-export default function Navbar() {
+export default function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const [user, setUser] = useState<UserData | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -73,9 +74,18 @@ export default function Navbar() {
       .toUpperCase() || "P";
 
   return (
-    <nav className="fixed left-0 right-0 top-0 z-50 h-16 border-b border-slate-200 bg-white px-6 shadow-sm">
+    <nav className="fixed left-0 right-0 top-0 z-50 h-16 border-b border-slate-200 bg-white px-4 md:px-6 shadow-sm">
       <div className="flex h-full items-center justify-between">
-        <Link href="/dashboard" className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3">
+          <button
+            type="button"
+            onClick={onMenuClick}
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 transition hover:bg-slate-100 lg:hidden"
+          >
+            <Menu className="h-6 w-6" />
+          </button>
+
+          <Link href="/dashboard" className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 ring-1 ring-blue-100">
             <Image
               src="/images/logo-ppdb.png"
@@ -87,13 +97,14 @@ export default function Navbar() {
             />
           </div>
 
-          <div>
-            <p className="text-sm font-bold text-slate-900">
-              PPDB SMP Terpadu
-            </p>
-            <p className="text-xs text-slate-500">Portal Peserta</p>
-          </div>
-        </Link>
+            <div className="hidden sm:block">
+              <p className="text-sm font-bold text-slate-900">
+                PPDB SMP Terpadu
+              </p>
+              <p className="text-xs text-slate-500">Portal Peserta</p>
+            </div>
+          </Link>
+        </div>
 
         <div className="flex items-center gap-3">
           <NotificationBell />
@@ -123,7 +134,7 @@ export default function Navbar() {
             </button>
 
             {isDropdownOpen && (
-              <div className="absolute right-0 mt-3 w-72 overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-xl">
+              <div className="absolute right-0 mt-3 w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-xl sm:w-72">
                 <div className="border-b border-slate-100 p-5">
                   <div className="flex items-center gap-3">
                     <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white">
