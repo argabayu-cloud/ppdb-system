@@ -57,6 +57,7 @@ enum JenisPenolakan {
   DOKUMEN
   ZONASI
   PRESTASI
+  LAINNYA
 }
 
 model User {
