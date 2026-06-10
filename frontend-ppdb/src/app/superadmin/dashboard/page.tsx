@@ -126,14 +126,14 @@ export default function DashboardSuperAdminPage() {
         <QuickCard
           title="Monitoring Pendaftar"
           desc="Lihat data pendaftar jalur Zonasi dan Prestasi dari seluruh sekolah."
-          href="/superadmin/monitoring"
+          href="/superadmin/dashboard/monitoring"
           icon={<ClipboardCheck className="h-7 w-7" />}
         />
 
         <QuickCard
-          title="Statistik Kota"
+          title="Statistik Kuota"
           desc="Lihat perkembangan statistik PPDB berdasarkan jalur dan sekolah."
-          href="/superadmin/statistik"
+          href="/superadmin/dashboard/statistik"
           icon={<ChartColumnBig className="h-7 w-7" />}
         />
       </section>
