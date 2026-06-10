@@ -55,7 +55,7 @@ export const createSekolah = async (data: SekolahInput) => {
 };
 
 export const getAllSekolah = async () => {
-  return await prisma.sekolah.findMany({
+  const data = await prisma.sekolah.findMany({
     select: {
       id: true,
       nama: true,
@@ -67,9 +67,12 @@ export const getAllSekolah = async () => {
       createdAt: true,
       updatedAt: true,
     },
-    orderBy: {
-      nama: "asc",
-    },
+  });
+
+  return data.sort((a, b) => {
+    const numA = parseInt(a.nama.match(/\d+/)?.[0] ?? "0");
+    const numB = parseInt(b.nama.match(/\d+/)?.[0] ?? "0");
+    return numA - numB;
   });
 };
 
